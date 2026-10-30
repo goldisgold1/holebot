@@ -11,7 +11,7 @@ Everything below is built and tested. Move day is setup, not development.
 | Wake bridge | `deploy/vps/wake-bridge/server.ts`: Bearer-key wake in, signed OpenBot webhook out | Tested against OpenBot's own signature check |
 | Backend | `deploy/vps/` (Caddy, auth-api in workerd, Signal, coturn, scheduler) | The built Worker was run the VPS way: migrations, access codes, scheduled job |
 | 24/7 agent server | `deploy/vps/agents.Dockerfile`, compose profile `agents` | Built on the VPS from this repository (the release workflow's Linux steps) |
-| The team | `deploy/team/holeai-team-import.zip`: 10 agents and the HoleA.I team channel | Passes OpenBot's import checks. Rebuild: `bash deploy/team/pull-skills.sh && bun deploy/team/build-team-import.ts` |
+| The team | `deploy/team/holeai-team-import.zip`: 10 agents and the HoleA.I team channel | Previewed through the real importer (web app → relay → server): 10 agents, the channel, no warnings. Rebuild: `bash deploy/team/pull-skills.sh && bun deploy/team/build-team-import.ts` |
 | One-command install | `deploy/vps/ship.sh` (PC) → `deploy/vps/bootstrap.sh` (VPS) | Run again to update |
 
 ## Move day
