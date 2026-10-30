@@ -49,7 +49,6 @@ import { sourceText } from "@openbot/i18n/source";
 import { Context, Effect, Layer, Result, Schema } from "effect";
 import { importJWK, type JWK, type JWTPayload, SignJWT } from "jose";
 import { getServerEntitlement, SERVER_MEMBER_LIMIT_SQL } from "./billing-entitlement";
-import { OPEN_STATUSES_SQL } from "./billing-errors";
 import { decodeBase64Url, hmacSha256, importHmacSha256Key, randomToken, sha256 } from "./crypto";
 import { PERSISTENT_SESSION_EXPIRES_AT } from "./session-policy";
 import type { AuthUser, WorkerBindings } from "./types";
@@ -68,24 +67,12 @@ const MEMBER_SEAT_AVAILABLE_SQL = `(
   EXISTS(SELECT 1 FROM remote_memberships WHERE host_id = ? AND user_id = ? AND status = 'active')
   OR (SELECT COUNT(*) FROM remote_memberships WHERE host_id = ? AND status = 'active') < ?
 )`;
-// The commercial license of the host's owner counts people across all the owner's servers: the owner,
-// and each other account with an active membership. A person who is already counted joins another
-// server of the owner freely; anyone else needs a free license user. Binds: owner, user, owner, owner,
-// license users.
-const LICENSE_SEAT_AVAILABLE_SQL = `(
-  EXISTS(SELECT 1 FROM remote_memberships m JOIN remote_hosts h ON h.host_id = m.host_id
-          WHERE h.owner_user_id = ? AND m.user_id = ? AND m.status = 'active')
-  OR (SELECT COUNT(DISTINCT m.user_id) FROM remote_memberships m JOIN remote_hosts h ON h.host_id = m.host_id
-       WHERE h.owner_user_id = ? AND m.user_id <> ? AND m.status = 'active') + 1 < ?
-)`;
 
-/** The seat checks for one user on one host: the server plan's member limit and the owner's license. */
+/** The seat check for one user on one host: the server plan's member limit. */
 interface MemberSeat {
   readonly sql: string;
   readonly binds: readonly (string | number)[];
   readonly limit: number;
-  readonly memberBinds: readonly (string | number)[];
-  readonly licenseBinds: readonly (string | number)[] | null;
 }
 
 /** The membership row that this accept wrote: its id and its update time. */
@@ -2787,36 +2774,16 @@ export class RemoteControlPlane {
   });
 
   /**
-   * The seat checks for a user who joins a host or comes back to it. The license check applies only
-   * while the owner has an open license. A lower limit removes no one: active members keep their seats.
+   * The seat check for a user who joins a host or comes back to it. A lower limit removes no one: active
+   * members keep their seats.
    */
   readonly #memberSeat = Effect.fn("RemoteControlPlane.memberSeat")(function* (
     this: RemoteControlPlane,
     hostId: string,
     userId: string,
   ): Effect.fn.Return<MemberSeat, RemoteFailure, RemoteDependencies> {
-    const dependencies = yield* RemoteDependencies;
     const limit = yield* this.#memberLimit(hostId);
-    const license = yield* remoteCall(() =>
-      dependencies.database
-        .prepare(
-          `SELECT l.user_id AS owner_id, l.users FROM remote_hosts h
-             JOIN licenses l ON l.user_id = h.owner_user_id AND l.status IN ${OPEN_STATUSES_SQL}
-            WHERE h.host_id = ? ORDER BY l.updated_at DESC LIMIT 1`,
-        )
-        .bind(hostId)
-        .first<{ owner_id: string; users: number }>(),
-    );
-    const memberBinds = [hostId, userId, hostId, limit];
-    if (!license) return { sql: MEMBER_SEAT_AVAILABLE_SQL, binds: memberBinds, limit, memberBinds, licenseBinds: null };
-    const licenseBinds = [license.owner_id, userId, license.owner_id, license.owner_id, license.users];
-    return {
-      sql: `(${MEMBER_SEAT_AVAILABLE_SQL} AND ${LICENSE_SEAT_AVAILABLE_SQL})`,
-      binds: [...memberBinds, ...licenseBinds],
-      limit,
-      memberBinds,
-      licenseBinds,
-    };
+    return { sql: MEMBER_SEAT_AVAILABLE_SQL, binds: [hostId, userId, hostId, limit], limit };
   });
 
   readonly #requireMemberSeat = Effect.fn("RemoteControlPlane.requireMemberSeat")(function* (
@@ -2826,14 +2793,11 @@ export class RemoteControlPlane {
     const dependencies = yield* RemoteDependencies;
     const available = yield* remoteCall(() =>
       dependencies.database
-        .prepare(
-          `SELECT ${MEMBER_SEAT_AVAILABLE_SQL} AS member, ${seat.licenseBinds ? LICENSE_SEAT_AVAILABLE_SQL : "1"} AS license`,
-        )
-        .bind(...seat.memberBinds, ...(seat.licenseBinds ?? []))
-        .first<{ member: number; license: number }>(),
+        .prepare(`SELECT ${seat.sql} AS available`)
+        .bind(...seat.binds)
+        .first<{ available: number }>(),
     );
-    if (!available?.member) return yield* memberLimitReached(seat.limit);
-    if (!available.license) return yield* licenseUsersFull();
+    if (!available?.available) return yield* memberLimitReached(seat.limit);
   });
 
   /**
@@ -3054,14 +3018,6 @@ function handoverConflict(): RemoteControlPlaneError {
     409,
     "host_key_handover_conflict",
     "The host key handover does not start at the current host key.",
-  );
-}
-
-function licenseUsersFull(): RemoteControlPlaneError {
-  return new RemoteControlPlaneError(
-    409,
-    "license_users_full",
-    "The owner's license has no free user. The owner can add users to the license.",
   );
 }
 

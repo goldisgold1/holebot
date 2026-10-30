@@ -18,7 +18,7 @@ export const LANDING_FAQ: readonly LandingQuestion[] = [
   {
     question: "Is OpenBot open source?",
     answer:
-      "All of the source code is public on GitHub, so you can check what OpenBot does. You can change and run it for free for noncommercial use, such as personal projects, study or research. Commercial use needs a separate license. The license is PolyForm Noncommercial 1.0.0.",
+      "Yes. All of the source code is public on GitHub under the MIT License, so you can check what OpenBot does, and change and run it for free, also for commercial use.",
     link: { label: "See the source code on GitHub", href: "https://github.com/nightly-labs/openbot" },
   },
   {

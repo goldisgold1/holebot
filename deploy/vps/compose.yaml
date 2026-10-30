@@ -1,0 +1,106 @@
+# The whole HoleA.I backend on one VPS: the control plane (`apps/auth-api`), Signal (`remote/api`),
+# coturn, and Caddy for HTTPS. Run from the repository root:
+#   docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env up -d --build
+name: holeai-bot
+
+services:
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required}
+      SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN is required}
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN is required}
+      SIGNAL_DOMAIN: ${SIGNAL_DOMAIN:?SIGNAL_DOMAIN is required}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  auth-api:
+    build:
+      context: ../..
+      dockerfile: deploy/vps/auth-api.Dockerfile
+    restart: unless-stopped
+    volumes:
+      - auth-data:/data
+      - ./auth-api.env:/run/auth-api.env:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3100/.well-known/jwks.json >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  # Cloudflare runs the Worker's cron every 5 minutes. On the VPS this calls the same handler.
+  scheduler:
+    image: curlimages/curl:8.17.0
+    restart: unless-stopped
+    depends_on:
+      auth-api:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - 'while true; do curl -fsS "http://auth-api:3100/__scheduled?cron=*%2F5+*+*+*+*" >/dev/null || echo "scheduled run failed"; sleep 300; done'
+
+  remote-api:
+    build:
+      context: ../..
+      dockerfile: remote/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      auth-api:
+        condition: service_healthy
+    environment:
+      REMOTE_SIGNAL_HOST: 0.0.0.0
+      REMOTE_SIGNAL_PORT: 8443
+      REMOTE_HEALTH_PORT: 8080
+      # Caddy ends TLS and passes the client address on.
+      REMOTE_TLS_DISABLED: "true"
+      REMOTE_TRUST_PROXY: "true"
+      REMOTE_TICKET_JWKS_URL: http://auth-api:3100/.well-known/jwks.json
+      REMOTE_CONTROL_PLANE_URL: http://auth-api:3100
+      REMOTE_SESSION_SECRET: ${REMOTE_SESSION_SECRET:?REMOTE_SESSION_SECRET is required}
+      REMOTE_AUTH_WEBHOOK_SECRET: ${REMOTE_AUTH_WEBHOOK_SECRET:?REMOTE_AUTH_WEBHOOK_SECRET is required}
+      REMOTE_METRICS_TOKEN: ${REMOTE_METRICS_TOKEN:?REMOTE_METRICS_TOKEN is required}
+      SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET:-}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
+      DISCORD_MESSAGE_CONTENT: ${DISCORD_MESSAGE_CONTENT:-}
+      TELEGRAM_BOT_TOKENS: ${TELEGRAM_BOT_TOKENS:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      TELEGRAM_WEBHOOK_ORIGIN: https://${SIGNAL_DOMAIN}
+      TURN_SHARED_SECRET: ${TURN_SHARED_SECRET:?TURN_SHARED_SECRET is required}
+      TURN_HOST: ${SIGNAL_DOMAIN}
+      TURN_PORT: 3478
+      TURN_TLS_PORT: 5349
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  # TURN over UDP and TCP on 3478. Without certificate paths it runs with no TLS on 5349.
+  coturn:
+    build:
+      context: ../..
+      dockerfile: remote/coturn/Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TURN_PUBLIC_IP: ${TURN_PUBLIC_IP:?TURN_PUBLIC_IP is required}
+      TURN_REALM: ${SIGNAL_DOMAIN}
+      TURN_SHARED_SECRET: ${TURN_SHARED_SECRET:?TURN_SHARED_SECRET is required}
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  caddy-data:
+  caddy-config:
+  auth-data:

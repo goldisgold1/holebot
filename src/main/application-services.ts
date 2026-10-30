@@ -32,7 +32,6 @@ import {
   HOSTED_UPDATE_TRIGGER,
   HostedUpdateAdapter,
 } from "./hosted-update-adapter";
-import { LicenseDesktopService } from "./license-service";
 import { LocalSignInWindows } from "./local-sign-in-window";
 import { LocalSkillLibrary } from "./local-skill-library";
 import { localSkillTools } from "./local-skill-tools";
@@ -575,7 +574,6 @@ export interface ApplicationServices {
   skills: SkillMarketplaceService;
   hostedSites: HostedSiteDesktopService;
   billing: BillingDesktopService;
-  license: LicenseDesktopService;
   hostedServers: HostedServerDesktopService;
   routineFeed: RoutineFeedServer;
   events: HostEventsService;
@@ -925,7 +923,7 @@ export async function createApplicationServices({
   teardown.push(TEARDOWN_ORDER.dynamicIsland, "the Dynamic Island", () => dynamicIsland.destroy());
   const centralAuthApiUrl = readCentralAuthApiUrl(
     process.env.OPENBOT_AUTH_API_URL,
-    app.isPackaged ? "https://api.openbot.run" : "http://127.0.0.1:3100",
+    app.isPackaged ? "https://api.bot.hole.fm" : "http://127.0.0.1:3100",
   );
   const centralAuth = new CentralAuthManager({
     apiUrl: centralAuthApiUrl,
@@ -1028,7 +1026,6 @@ export async function createApplicationServices({
     return hostId ? centralAuth.hostSiteCredential(hostId) : null;
   });
   const billing = new BillingDesktopService(centralAuth, openLink);
-  const license = new LicenseDesktopService(centralAuth, openLink);
   const hostedServers = new HostedServerDesktopService(
     withHostingDeveloperKey(centralAuth, hostingDeveloperKey),
     openLink,
@@ -2526,7 +2523,8 @@ export async function createApplicationServices({
         : resolve(__dirname, "../../resources/plugin-catalog"),
     ),
   );
-  const analyticsEnabled = (app.isPackaged && appVariant === "production") || analyticsCaptureUrl !== null;
+  // HoleA.I builds send no analytics or failure reports unless a capture URL names a collector.
+  const analyticsEnabled = analyticsCaptureUrl !== null;
   const failureReports = analyticsEnabled
     ? new ReportQueue(
         fileReportStorage(join(app.getPath("userData"), "openbot-error-reports-v1.json")),
@@ -3111,7 +3109,6 @@ export async function createApplicationServices({
     skills,
     hostedSites,
     billing,
-    license,
     hostedServers,
     routineFeed,
     events,

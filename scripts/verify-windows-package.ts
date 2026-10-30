@@ -24,7 +24,7 @@ if (process.platform !== "win32") {
 }
 
 const requireUpdateMetadata = process.argv.includes("--require-update-metadata");
-// A tag build signs with `electron-builder.windows-signing.yml`. Local and dry-run builds stay unsigned.
+// Windows builds are unsigned. `--require-signature` checks a build that someone signed by hand.
 const requireSignature = process.argv.includes("--require-signature");
 const appPathArgument = process.argv.slice(2).find((argument) => !argument.startsWith("--"));
 const appPath = resolve(appPathArgument ?? "dist/win-unpacked");

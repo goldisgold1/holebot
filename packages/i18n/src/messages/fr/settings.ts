@@ -155,7 +155,7 @@ export const messages = {
   "settings.tab.updates.title": "Mises à jour",
   "settings.tab.updates.description": "Garder OpenBot à jour sur cet ordinateur.",
   "settings.tab.billing.title": "Facturation",
-  "settings.tab.billing.description": "Licence, offres des serveurs, moyen de paiement et factures.",
+  "settings.tab.billing.description": "Offres des serveurs, moyen de paiement et factures.",
   "settings.tab.hostedServers.title": "Serveurs hébergés",
   "settings.tab.hostedServers.description":
     "Créer des serveurs OpenBot qui fonctionnent quand cet ordinateur est éteint.",
@@ -463,8 +463,6 @@ export const messages = {
   "settings.hostedServers.plan.linux": "Machine Linux",
   "settings.hostedServers.plan.startsOnUse": "Démarre quand vous l’utilisez",
   "settings.hostedServers.plan.members": { one: "Jusqu’à {count} membre", other: "Jusqu’à {count} membres" },
-  "settings.hostedServers.plan.license.starter": "Licence commerciale : {price} / mois",
-  "settings.hostedServers.plan.license.team": "Le travail nécessite une licence Team",
   "settings.hostedServers.plan.speed.base": "Vitesse de base",
   "settings.hostedServers.plan.speed.faster": "{factor}× plus rapide",
   "settings.hostedServers.plan.starter.name": "Starter",

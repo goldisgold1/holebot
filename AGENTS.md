@@ -31,7 +31,7 @@ and state which default you set aside. Do not argue by citing this file.
 - **Keep the renderer-to-main trust boundary:** Electron sandboxing, context isolation, navigation
   policy, IPC sender validation, and their tests. Coding agents already have `danger-full-access`.
 - **Redact secrets** on every log, export, and send path, including diagnostics and analytics.
-- **Keep PolyForm Noncommercial 1.0.0.** Do not add incompatible dependencies or relicense files.
+- **Keep the MIT License.** Do not add dependencies with incompatible licenses.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md#security-sensitive-changes) when a change touches the trust
 boundary or a security test, and [architecture change rules](docs/architecture/change-rules.md#change-rules) when
@@ -260,10 +260,7 @@ They describe the enforced syntax, fixture behavior, and reasons for removed rul
 ## Pull requests
 
 - Open a PR only when asked.
-- Write the PR body from `.github/PULL_REQUEST_TEMPLATE.md`. Do not add the Contributor Assignment
-  Agreement box: organization members and users with write access do not sign. The `CLA` workflow
-  adds the box only for an author who must sign. Only the human author can sign it: tick that box
-  only after their explicit approval in this conversation.
+- Write the PR body from `.github/PULL_REQUEST_TEMPLATE.md`.
 - For UI changes, show before and after. State the model and harness in the PR body.
   Do not commit screenshots or other PR review image assets to the repository.
 - Do not run wider checks locally before a PR. Report focused checks and leave broad checks to CI.

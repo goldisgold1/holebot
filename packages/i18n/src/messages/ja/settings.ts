@@ -141,7 +141,7 @@ export const messages = {
   "settings.tab.updates.title": "アップデート",
   "settings.tab.updates.description": "このコンピューターの OpenBot を最新に保ちます。",
   "settings.tab.billing.title": "お支払い",
-  "settings.tab.billing.description": "ライセンス、サーバーのプラン、支払い方法、請求書。",
+  "settings.tab.billing.description": "サーバーのプラン、支払い方法、請求書。",
   "settings.tab.hostedServers.title": "ホスト型サーバー",
   "settings.tab.hostedServers.description":
     "このコンピューターの電源が切れているときも動作する OpenBot サーバーを作成します。",
@@ -442,8 +442,6 @@ export const messages = {
   "settings.hostedServers.plan.linux": "Linux マシン",
   "settings.hostedServers.plan.startsOnUse": "使うときに起動",
   "settings.hostedServers.plan.members": { other: "最大 {count} 人のメンバー" },
-  "settings.hostedServers.plan.license.starter": "商用ライセンス: {price} / 月",
-  "settings.hostedServers.plan.license.team": "業務には Team ライセンスが必要です",
   "settings.hostedServers.plan.speed.base": "標準の速度",
   "settings.hostedServers.plan.speed.faster": "{factor} 倍の速度",
   "settings.hostedServers.plan.starter.name": "Starter",

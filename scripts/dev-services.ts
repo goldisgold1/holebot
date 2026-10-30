@@ -44,7 +44,8 @@ import { prepareDevelopmentEnvironment } from "./prepare-dev-environment";
 const logger = createOpenBotLogger("dev-services");
 
 export type DevelopmentService = "api" | "remote" | "app" | "test-client";
-type DevelopmentTarget = Exclude<DevelopmentService, "remote"> | "all";
+// `backend` runs the account API and Signal without a dev app, for an installed app to use (start-local.cmd).
+type DevelopmentTarget = Exclude<DevelopmentService, "remote"> | "all" | "backend";
 type DevelopmentNetworkInterfaces = NodeJS.Dict<Array<Pick<NetworkInterfaceInfo, "address" | "family" | "internal">>>;
 
 export interface DevelopmentServiceSpec {
@@ -108,6 +109,7 @@ export function servicesForTarget(target: DevelopmentTarget): DevelopmentService
   if (target === "all") return ["api", "remote", "app"];
   if (target === "test-client") return ["api", "remote", "app", "test-client"];
   if (target === "api") return ["api"];
+  if (target === "backend") return ["api", "remote"];
   return ["api", "remote", "app"];
 }
 
@@ -257,8 +259,8 @@ export interface DevelopmentInvocation {
 
 export function parseDevelopmentTarget(args: string[]): DevelopmentInvocation {
   const target = args.find((argument) => !argument.startsWith("--")) ?? "all";
-  if (target !== "api" && target !== "app" && target !== "test-client" && target !== "all") {
-    throw new Error(`Unknown development target: ${target}. Use api, app, test-client, or all.`);
+  if (target !== "api" && target !== "backend" && target !== "app" && target !== "test-client" && target !== "all") {
+    throw new Error(`Unknown development target: ${target}. Use api, backend, app, test-client, or all.`);
   }
   const unsupportedOption = args.find(
     (argument) => argument.startsWith("--") && !DEVELOPMENT_OPTIONS.some((option) => option === argument),
@@ -666,12 +668,13 @@ function isPrivateIpv4(address: string): boolean {
 async function waitForDevelopmentApi(portValue: string | undefined, child: ChildProcess): Promise<void> {
   const port = readPort(portValue);
   if (!port) throw new Error("The development API port is missing.");
-  const deadline = Date.now() + 30_000;
+  // A cold Vite start and the first Worker compile take over 30 s on slower Windows machines.
+  const deadline = Date.now() + 120_000;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error("The development Auth API stopped before it became ready.");
     try {
       const response = await fetch(`http://127.0.0.1:${port}/health/live`, {
-        signal: AbortSignal.timeout(1_000),
+        signal: AbortSignal.timeout(10_000),
       });
       if (response.ok) return;
     } catch {

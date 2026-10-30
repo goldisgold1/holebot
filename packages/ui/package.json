@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/primitives.css",
@@ -80,9 +80,6 @@
     "./features/billing/BillingPanel": "./src/features/billing/BillingPanel.tsx",
     "./features/billing/billing-store": "./src/features/billing/billing-store.ts",
     "./features/billing/billing.css": "./src/features/billing/billing.css",
-    "./features/billing/LicenseSection": "./src/features/billing/LicenseSection.tsx",
-    "./features/billing/OrderForm": "./src/features/billing/OrderForm.tsx",
-    "./features/billing/license-store": "./src/features/billing/license-store.ts",
     "./features/channels/ChannelActivityIndicator": "./src/features/channels/ChannelActivityIndicator.tsx",
     "./features/channels/ChannelAvatar": "./src/features/channels/ChannelAvatar.tsx",
     "./features/channels/ChannelMemberRow": "./src/features/channels/ChannelMemberRow.tsx",

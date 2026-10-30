@@ -26,7 +26,7 @@ import { fileURLToPath } from "node:url";
 
 // `wrangler.jsonc` pins the active ticket key ID in its top-level `vars`, and `parseJwks` rejects a
 // JWKS that does not carry that `kid`, so the generated pair has to claim the same one.
-const TICKET_KEY_ID = "openbot-remote-1";
+const TICKET_KEY_ID = "holeai-remote-1";
 const DEVELOPMENT_STATE_VERSION = 1 as const;
 const DEVELOPMENT_STATE_DIRECTORY = ".openbot";
 const DEVELOPMENT_STATE_FILE = "dev-state.json";

@@ -28,7 +28,8 @@ export function configureDesktopReports(
   user: Pick<CentralAuthUser, "id" | "email"> | null,
 ): void {
   const capture = info.analyticsCaptureUrl;
-  if (capture === undefined && (!import.meta.env.PROD || info.variant !== "production")) return;
+  // HoleA.I builds send no failure reports unless a capture URL names a collector.
+  if (capture === undefined) return;
   queue ??= new ReportQueue(
     indexedReportStorage("openbot-desktop-error-reports-v1"),
     openPanelTransport({

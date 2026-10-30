@@ -86,23 +86,6 @@ export const messages = defineMessages("server", {
   "server.add.billing.monthly": "Monthly",
   "server.add.billing.yearly": "Yearly",
   "server.add.billing.save": "Save {percent}%",
-  // The switch left of the billing period, when the account has no license. Work adds a license to the server.
-  "server.add.use.label": "Use",
-  "server.add.use.personal": "Personal",
-  "server.add.use.work": "Work",
-  // The row under the plans that sets the users of the license. It is disabled for personal use.
-  "server.add.license.people": "People at work",
-  // A toast when "Fewer members" is at the people who use the account's servers now. The license must include them.
-  "server.add.license.minimum": {
-    one: "{count} person uses your servers now, so you cannot choose fewer.",
-    other: "{count} people use your servers now, so you cannot choose fewer.",
-  },
-  // On each plan that the people fit, for work. {percent} is a whole number, such as 20.
-  "server.add.license.bundle": "Bundle −{percent}%",
-  // The plan summary for work: the price includes the license. {license} is the license line, such as
-  // "Team license, 5 members".
-  "server.add.license.included": "Includes {license}",
-  "server.add.license.includedTrial": "Includes {license}, free until {date}",
   "server.add.billedMonthly": "Billed monthly",
   "server.add.billedYearly": "{price} billed yearly",
   // {amount} is a formatted amount, such as "€120". It follows the yearly price.

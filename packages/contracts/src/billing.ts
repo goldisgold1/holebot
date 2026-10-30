@@ -253,3 +253,27 @@ export function isStripeCheckoutUrl(value: unknown): value is string {
 export function parseBillingSessionUrl(value: unknown): string | null {
   return isDynamicRecord(value) && isStripeHostedUrl(value.url) ? value.url : null;
 }
+
+/** An order from the pricing page: a server plan at one interval and currency. */
+export interface PricingOrder {
+  server: BillingPlanId;
+  interval: BillingInterval;
+  currency: BillingCurrency;
+}
+
+/** The query parameters that carry a pricing page order to `/app`. */
+export const PRICING_ORDER_PARAMS = ["plan", "interval", "currency"] as const;
+
+/** Returns null when the query has no complete pricing page order. */
+export function parsePricingOrder(params: URLSearchParams): PricingOrder | null {
+  const plan = params.get("plan");
+  const interval = params.get("interval");
+  const currency = params.get("currency");
+  if (
+    !isOneOf(BILLING_PLAN_IDS, plan) ||
+    !isOneOf(BILLING_INTERVALS, interval) ||
+    !isOneOf(BILLING_CURRENCIES, currency)
+  )
+    return null;
+  return { server: plan, interval, currency };
+}

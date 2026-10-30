@@ -68,17 +68,16 @@ import { stringPayload } from "./validation";
  * `mailto:` address, which `openUrl` refuses; the web client opens the same constant.
  */
 const EXTERNAL_DESTINATIONS: Record<ExternalDestination, string> = {
-  "agent-setup": "https://github.com/nightly-labs/openbot/blob/main/docs/TROUBLESHOOTING.md",
+  "agent-setup": "https://hole.fm",
   "opencode-install": "https://opencode.ai/docs/",
   "opencode-auth": "https://opencode.ai/auth",
   "claude-install": "https://code.claude.com/docs",
-  feedback: "https://x.com/intent/post?text=Feedback%20for%20OpenBot%20%40norbertbodziony%3A%20",
-  message: "https://x.com/norbertbodziony",
-  changelog: "https://openbot.run/changelog",
-  guides: "https://openbot.run/guides",
-  // A Redirect Rule in the openbot.run Cloudflare zone sends this to the current Discord invite.
-  discord: "https://discord.openbot.run",
-  x: "https://x.com/OpenBot_",
+  feedback: "https://hole.fm",
+  message: "https://hole.fm",
+  changelog: "https://hole.fm",
+  guides: "https://hole.fm",
+  discord: "https://hole.fm",
+  x: "https://hole.fm",
   "grok-bot-export": GROK_BOT_EXPORT_URL,
   "hosted-server-contact": HOSTED_SERVER_CONTACT_URL,
   "mac-screen-recording": MAC_PERMISSION_URLS["screen-recording"],

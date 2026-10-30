@@ -288,26 +288,11 @@ interface DesktopAnalyticsEvents {
     failure_code?: string;
   };
   limit_reached: {
-    kind: "servers" | "members" | "license_users";
-    action: "shown" | "manage_clicked" | "confirmed" | "dismissed" | "contact_clicked";
-    role?: "admin" | "member";
+    kind: "servers" | "members";
+    action: "shown" | "manage_clicked";
   };
-  license_action: {
-    action:
-      | "buy_opened"
-      | "checkout_opened"
-      | "users_change_requested"
-      | "plan_change_requested"
-      | "cancel_requested"
-      | "cancel_kept"
-      | "renewal_resumed"
-      | "over_limit_shown";
-    result?: AnalyticsOutcome;
-    direction?: "up" | "down";
-    failure_code?: string;
-  };
-  sales_contact_clicked: { entry_point: "add_server" | "license" | "members" };
-  billing_return_viewed: { outcome: "completed" | "cancelled"; kind?: "plan" | "license" | "portal" };
+  sales_contact_clicked: { entry_point: "add_server" };
+  billing_return_viewed: { outcome: "completed" | "cancelled"; kind?: "plan" | "portal" };
   usage_limit_action: {
     action: "shown" | "model_switched" | "waited";
     from_provider?: AgentProviderId;
@@ -436,8 +421,7 @@ const EVENT_PROPERTY_ALLOWLIST = {
   hosted_site_action: ["action", "entry_point", "result", "failure_code"],
   hosted_server_upsell: ["action", "entry_point"],
   hosted_server_plans_action: ["action", "entry_point", "plan", "interval", "currency", "failure_code"],
-  limit_reached: ["kind", "action", "role"],
-  license_action: ["action", "result", "direction", "failure_code"],
+  limit_reached: ["kind", "action"],
   sales_contact_clicked: ["entry_point"],
   billing_return_viewed: ["outcome", "kind"],
   usage_limit_action: ["action", "from_provider", "to_provider", "to_model"],
@@ -531,7 +515,6 @@ const SAFE_FAILURE_CODES = new Set([
   "mcp_server_remove_failed",
   "mcp_server_toggle_failed",
   "member_limit_reached",
-  "license_users_full",
   "payment_open_failed",
   "checkout_failed",
   "export_failed",
@@ -615,17 +598,7 @@ const EVENT_ACTIONS: Partial<Record<AnalyticsEventName, readonly string[]>> = {
     "closed",
     "join_opened",
   ],
-  limit_reached: ["shown", "manage_clicked", "confirmed", "dismissed", "contact_clicked"],
-  license_action: [
-    "buy_opened",
-    "checkout_opened",
-    "users_change_requested",
-    "plan_change_requested",
-    "cancel_requested",
-    "cancel_kept",
-    "renewal_resumed",
-    "over_limit_shown",
-  ],
+  limit_reached: ["shown", "manage_clicked"],
   onboarding_step: ["viewed", "next", "back", "skipped"],
   usage_limit_action: ["shown", "model_switched", "waited"],
   agent_template_action: ["published", "updated", "unpublished", "link_copied", "installed"],
@@ -647,9 +620,9 @@ const EVENT_ENUMS: Partial<Record<AnalyticsEventName, Readonly<Record<string, re
   speech_model_action: { entry_point: ["settings", "voice_conversation"] },
   voice_conversation_action: { trigger: ["button", "voice"] },
   hosted_server_plans_action: { entry_point: HOSTED_SERVER_ENTRY_POINTS },
-  limit_reached: { kind: ["servers", "members", "license_users"] },
-  sales_contact_clicked: { entry_point: ["add_server", "license", "members"] },
-  billing_return_viewed: { kind: ["plan", "license", "portal"] },
+  limit_reached: { kind: ["servers", "members"] },
+  sales_contact_clicked: { entry_point: ["add_server"] },
+  billing_return_viewed: { kind: ["plan", "portal"] },
   agent_template_action: { entry_point: ["deep_link", "in_app"] },
   usage_viewed: { scope: ["agent", "server"] },
   workflow_action: { node_kind: WORKFLOW_NODE_KINDS },
@@ -722,8 +695,9 @@ const UPDATE_PHASES = new Set([
   "unsupported",
 ]);
 
-function shouldEnableDesktopAnalytics(appInfo: AppInfo, productionBuild: boolean): boolean {
-  return appInfo.analyticsCaptureUrl !== undefined || (productionBuild && appInfo.variant === "production");
+// HoleA.I builds send no product analytics. Only a capture URL, such as a local test collector, turns them on.
+function shouldEnableDesktopAnalytics(appInfo: AppInfo, _productionBuild: boolean): boolean {
+  return appInfo.analyticsCaptureUrl !== undefined;
 }
 
 function sanitizeDesktopAnalyticsEvent(

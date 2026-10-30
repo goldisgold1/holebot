@@ -33,7 +33,7 @@ Pod::Spec.new do |s|
   s.version        = '1.0.0'
   s.summary        = 'Reads replies aloud for OpenBot'
   s.description    = 'Reads replies aloud with Supertonic 3 through sherpa-onnx on the phone, and plays speech audio.'
-  s.license        = 'PolyForm-Noncommercial-1.0.0'
+  s.license        = 'MIT'
   s.author         = 'OpenBot'
   s.homepage       = 'https://openbot.run'
   s.platforms      = { :ios => '16.4' }

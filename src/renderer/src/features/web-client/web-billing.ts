@@ -1,14 +1,12 @@
-import { parseBillingSessionUrl, parseBillingState } from "@openbot/contracts/billing";
 import {
   PRICING_ORDER_PARAMS,
   type PricingOrder,
-  parseLicenseCheckoutUrl,
-  parseLicenseState,
+  parseBillingSessionUrl,
+  parseBillingState,
   parsePricingOrder,
-} from "@openbot/contracts/license";
+} from "@openbot/contracts/billing";
 import { isDynamicRecord, isString } from "@openbot/contracts/runtime-values";
 import type { BillingCalls } from "@openbot/ui/features/billing/billing-store";
-import type { LicenseCalls } from "@openbot/ui/features/billing/license-store";
 import { currentText } from "@openbot/ui/text";
 
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -36,35 +34,6 @@ export function createWebBillingCalls(
       return state;
     },
     openPortal: (portal) => openStripe("v1/me/billing/portal", JSON.stringify(portal)),
-  };
-}
-
-/**
- * The license calls for a signed-in browser, through the `/api/browser/v1/me/license...` operations.
- * Checkout goes only to a Stripe Checkout URL.
- */
-export function createWebLicenseCalls(
-  accountFetch: typeof fetch,
-  navigate: (url: string) => void = (url) => window.location.assign(url),
-): LicenseCalls {
-  const request = browserRequest(accountFetch);
-
-  async function state(path: string, body?: string) {
-    const license = await request(path, parseLicenseState, body);
-    if (!license) throw new Error(currentText().sourceText("error.billing.invalidResponse"));
-    return license;
-  }
-
-  return {
-    getState: () => state("v1/me/license"),
-    async openCheckout(checkout) {
-      const url = await request("v1/me/license/checkout", parseLicenseCheckoutUrl, JSON.stringify(checkout));
-      if (!url) throw new Error(currentText().sourceText("error.billing.notStripePage"));
-      navigate(url);
-    },
-    setUsers: (users) => state("v1/me/license/users", JSON.stringify(users)),
-    changePlan: (plan) => state("v1/me/license/plan", JSON.stringify(plan)),
-    setRenewal: (renewal) => state("v1/me/license/renewal", JSON.stringify(renewal)),
   };
 }
 
@@ -97,14 +66,14 @@ function errorMessage(value: unknown): string {
 /** The Customer Portal returns to `/app?billing=portal`. */
 export const WEB_APP_BILLING_PARAM = "billing";
 
-/** The pricing page sends `/app?start=server` or `/app?start=license`, with the order of its form. */
+/** The pricing page sends `/app?start=server`, with the order of its form. */
 const WEB_APP_START_PARAM = "start";
 /**
- * What a pricing page button opens: the add server dialog or Billing, where the license is. With the order, the
- * dialog fills it in and goes on to Checkout. An old link has no order.
+ * What a pricing page button opens: the add server dialog. With the order, the dialog fills it in and goes on to
+ * Checkout. An old link has no order.
  */
 export interface WebAppStart {
-  kind: "server" | "license";
+  kind: "server";
   order: PricingOrder | null;
 }
 
@@ -115,5 +84,5 @@ export function takeWebAppStart(url: URL): WebAppStart | null {
   const order = parsePricingOrder(url.searchParams);
   url.searchParams.delete(WEB_APP_START_PARAM);
   for (const param of PRICING_ORDER_PARAMS) url.searchParams.delete(param);
-  return start === "server" || start === "license" ? { kind: start, order } : null;
+  return start === "server" ? { kind: start, order } : null;
 }

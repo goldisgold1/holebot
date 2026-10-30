@@ -23,10 +23,9 @@ import { Effect, Schema } from "effect";
 const OPENPANEL_API_URL = "https://analytics.openbot.run/api";
 /**
  * The current generation. Generation 10 adds the account events, first-touch properties, and
- * `reactivated` and `end_reason` on plan events. Generation 11 adds the license to the billing events
- * (`product`, `users`, `direction`), `entry_point` on `checkout_started`, and the license totals of
- * `billing_snapshot`. A billing event without `product` is from a server plan. No generation 10
- * property changes. Generation 12 adds `email_sent`.
+ * `reactivated` and `end_reason` on plan events. Generation 11 adds `product` and `direction` to the
+ * billing events and `entry_point` on `checkout_started`. A billing event without `product` is from a
+ * server plan. No generation 10 property changes. Generation 12 adds `email_sent`.
  */
 export const ACCOUNT_ANALYTICS_SCHEMA_VERSION = 12;
 const SEND_TIMEOUT_MS = 5_000;
@@ -59,22 +58,12 @@ const HOSTED_SERVER_ACTIONS = [
 type HostedServerAction = (typeof HOSTED_SERVER_ACTIONS)[number];
 
 const PORTAL_FLOWS = ["manage", "update", "cancel"] as const;
-/** What a billing event is for: a hosted server plan or the commercial license. */
-export const BILLING_PRODUCTS = ["server", "license"] as const;
+/** What a billing event is for: a hosted server plan. */
+export const BILLING_PRODUCTS = ["server"] as const;
 export type BillingProduct = (typeof BILLING_PRODUCTS)[number];
-/** On `plan_changed`: the new plan or user count costs more (`up`) or less (`down`). */
+/** On `plan_changed`: the new plan costs more (`up`) or less (`down`). */
 export const PLAN_CHANGE_DIRECTIONS = ["up", "down"] as const;
 export type PlanChangeDirection = (typeof PLAN_CHANGE_DIRECTIONS)[number];
-/**
- * The largest license user count that analytics accepts. The app sells up to 10 users; a license
- * from the Stripe Dashboard can have more, so the bound only stops a value that is not a count.
- */
-const ANALYTICS_MAX_LICENSE_USERS = 10_000;
-
-/** True for a license user count that analytics can send. */
-export function isAnalyticsLicenseUsers(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 && value <= ANALYTICS_MAX_LICENSE_USERS;
-}
 const WAKE_REASONS = ["message", "restart", "schedule", "retention"] as const;
 /** Why a plan ended: the account cancelled it, or Stripe ended it after unpaid invoices. */
 const PLAN_END_REASONS = ["canceled", "unpaid"] as const;
@@ -102,8 +91,6 @@ export type AccountAnalyticsEvent =
       /** Absent means `server`, as in generation 10. */
       product?: BillingProduct;
       plan?: BillingPlanId;
-      /** For a license: the number of users that it pays for. */
-      users?: number;
       /** On `plan_changed`. */
       direction?: PlanChangeDirection;
       /** On `checkout_started`: where the journey started in the app. */
@@ -209,10 +196,8 @@ function accountEventProperties(event: AccountAnalyticsEvent): AnalyticsProperti
   if (event.name === "billing_action") {
     if (!isOneOf(BILLING_ACTIONS, event.action)) return null;
     properties.action = event.action;
-    const product = isOneOf(BILLING_PRODUCTS, event.product) ? event.product : "server";
-    properties.product = product;
-    if (product === "server" && isOneOf(BILLING_PLAN_IDS, event.plan)) properties.plan = event.plan;
-    if (product === "license" && isAnalyticsLicenseUsers(event.users)) properties.users = event.users;
+    properties.product = isOneOf(BILLING_PRODUCTS, event.product) ? event.product : "server";
+    if (isOneOf(BILLING_PLAN_IDS, event.plan)) properties.plan = event.plan;
     if (event.action === "plan_changed" && isOneOf(PLAN_CHANGE_DIRECTIONS, event.direction))
       properties.direction = event.direction;
     if (event.action === "checkout_started" && isOneOf(HOSTED_SERVER_ENTRY_POINTS, event.entryPoint))

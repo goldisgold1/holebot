@@ -70,30 +70,6 @@ export const getServerEntitlement = Effect.fn("Billing.getServerEntitlement")(fu
   return null;
 });
 
-/**
- * True when the account pays for a hosted server of any plan, so its license gets the bundle price. The
- * status and grace rules are the same as `getServerEntitlement`.
- */
-export const accountHasServerPlan = Effect.fn("Billing.accountHasServerPlan")(function* (
-  database: D1Database,
-  userId: string,
-  now = Date.now(),
-): Effect.fn.Return<boolean, BillingEntitlementError> {
-  const rows = yield* Effect.tryPromise({
-    try: () =>
-      database
-        .prepare(
-          `SELECT s.status, s.current_period_end FROM billing_subscriptions s
-       JOIN hosted_servers hs ON hs.server_id = s.server_id AND hs.owner_user_id = s.user_id
-       WHERE s.user_id = ? AND s.status IN ('active', 'trialing', 'past_due')`,
-        )
-        .bind(userId)
-        .all<{ status: BillingSubscriptionStatus; current_period_end: number | null }>(),
-    catch: () => new BillingEntitlementError({}),
-  });
-  return rows.results.some((row) => entitled(row, now));
-});
-
 /** A `past_due` subscription counts only until the end of its period. */
 function entitled(row: { status: BillingSubscriptionStatus; current_period_end: number | null }, now: number): boolean {
   return row.status !== "past_due" || (row.current_period_end !== null && row.current_period_end > now);

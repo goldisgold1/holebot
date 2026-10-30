@@ -58,17 +58,38 @@ export function requestAccountAttribution(): AccountAttribution {
 export function requestAuthService(): AuthService {
   const bindings = requireWorkerBindings(env);
   const exposeDevelopmentCode = bindings.AUTH_EXPOSE_DEVELOPMENT_CODE === "true";
+  const accessCodeHashes = readAccessCodeHashes(bindings.AUTH_ACCESS_CODE_HASHES);
   const analytics = accountAnalytics(bindings);
   return new AuthService({
     repository: new D1AuthRepository(bindings.DB),
-    delivery: exposeDevelopmentCode ? null : createEmailCodeDelivery(bindings, analytics),
-    exposeDevelopmentCode,
+    delivery: exposeDevelopmentCode || accessCodeHashes ? null : createEmailCodeDelivery(bindings, analytics),
+    exposeDevelopmentCode: exposeDevelopmentCode && !accessCodeHashes,
+    ...(accessCodeHashes ? { accessCodeHashes } : {}),
     // The revocation is already written and the cron redelivers it, so the answer does not wait.
     flushSessionRevocations: () => Effect.sync(() => schedule(deliverPendingRemoteAuthEvents(bindings, Date.now()))),
     profileChanged: (userId) => notifyAccountProfileChanged(bindings, userId, schedule),
     analytics,
     attribution: new AccountAttribution({ database: bindings.DB, analytics }),
   });
+}
+
+/**
+ * `AUTH_ACCESS_CODE_HASHES` is a JSON object of lowercase email -> SHA-256 (base64url) of the access code, as
+ * `deploy/vps/add-user.ts` prints it. A malformed value turns sign-in off rather than letting anyone in.
+ */
+function readAccessCodeHashes(value: string | undefined): ReadonlyMap<string, string> | null {
+  if (!value?.trim()) return null;
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error("not an object");
+    const entries = Object.entries(parsed).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string" && /^[A-Za-z0-9_-]{43}$/u.test(entry[1]),
+    );
+    return new Map(entries.map(([email, hash]) => [email.trim().toLowerCase(), hash]));
+  } catch (error) {
+    console.error("AUTH_ACCESS_CODE_HASHES is not valid JSON; sign-in stays off.", error);
+    return new Map([["", ""]]);
+  }
 }
 
 export function requestAvatarBucket(): R2Bucket {

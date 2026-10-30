@@ -1,5 +1,5 @@
 import { AppLogo } from "@openbot/brand";
-import { Button, buttonVariants, Download, ErrorReference, Heading, Link2, RefreshCw, Server, Text } from "@openbot/ui";
+import { Button, ErrorReference, Heading, Link2, RefreshCw, Server, Text } from "@openbot/ui";
 import { useText } from "@openbot/ui/text";
 import { Show } from "solid-js";
 
@@ -64,15 +64,6 @@ export function WebConnectComputer(props: {
 
         <footer class="web-connect-actions">
           <div class="web-connect-primary-actions">
-            <a
-              class={`web-connect-download ${buttonVariants({ variant: props.onCreateServer ? "outline" : "default" })}`}
-              href="/download"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Download aria-hidden="true" />
-              {t("webClient.notice.download")}
-            </a>
             <Button variant="outline" onClick={() => props.onJoin()}>
               <Link2 aria-hidden="true" />
               {t("webClient.notice.join")}

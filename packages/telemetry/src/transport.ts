@@ -8,9 +8,12 @@ export function openPanelTransport(options: {
   fetch?: typeof fetch;
 }): ReportTransport {
   const send = options.fetch ?? globalThis.fetch;
+  const endpoint = options.endpoint;
+  // HoleA.I builds have no analytics service: without an endpoint a report is dropped as if it was sent.
+  if (!endpoint) return () => telemetryIO(async () => true);
   return (report, signal) =>
     telemetryIO(async () => {
-      const response = await send(options.endpoint ?? "https://analytics.openbot.run/api/track", {
+      const response = await send(endpoint, {
         method: "POST",
         signal,
         credentials: "omit",

@@ -1,12 +1,6 @@
-import {
-  type BillingCurrency,
-  type BillingInterval,
-  type BillingPlanId,
-  isOpenBillingStatus,
-} from "@openbot/contracts/billing";
+import type { BillingCurrency, BillingInterval, BillingPlanId, PricingOrder } from "@openbot/contracts/billing";
 import type { HostedServerEntryPoint, HostedServerList, HostedServerSummary } from "@openbot/contracts/hosted-servers";
-import type { HostedServersDesktopApi, LicenseDesktopApi, ServerSummary } from "@openbot/contracts/ipc";
-import type { LicenseOrder, LicenseState, PricingOrder } from "@openbot/contracts/license";
+import type { HostedServersDesktopApi, ServerSummary } from "@openbot/contracts/ipc";
 import { classifyFailure } from "@openbot/telemetry";
 import type {
   CreatedHostedServer,
@@ -55,8 +49,6 @@ interface AddServerOverlayProps {
   resume?: AddServerResume | null | undefined;
   /** The order from the pricing page. The dialog fills it in and goes on to the payment page. */
   order?: PricingOrder | null | undefined;
-  /** Reads the account's license. When the account has none, the dialog sells one with the server for work use. */
-  license?: Pick<LicenseDesktopApi, "getState"> | undefined;
   onClose: () => void;
   onOpenServer: (serverId: string) => void;
   onContactUs?: (() => void) | undefined;
@@ -75,37 +67,24 @@ interface AddServerState {
   maxServers: number | null;
   server: HostedServerSummary | null;
   paid: boolean;
-  /** Set when the account has no open license, so the dialog offers one. */
-  licenseOffer: { used: number; trialEnd?: number } | null;
   /** The currency of the account's open subscriptions. A Stripe customer pays in one currency. */
   currency: HostedCurrency | null;
   /** The pricing page order, as the dialog's choices. */
   order: CreateHostedServerInput | null;
 }
 
-/** The license offer of an account with no open license. A failed read offers no license. */
-function licenseOfferOf(state: LicenseState | null): { used: number; trialEnd?: number } | null {
-  if (!state?.available) return null;
-  if (state.license && isOpenBillingStatus(state.license.status)) return null;
-  return { used: state.used, ...(state.trialEnd === undefined ? {} : { trialEnd: state.trialEnd }) };
-}
-
-/**
- * The pricing page order as the dialog's choices. An account with its own license buys the server alone. When the
- * license read failed, the dialog cannot sell the license, so it gets no order and the user chooses again.
- */
-function dialogOrderOf(order: PricingOrder | null, state: LicenseState | null): CreateHostedServerInput | null {
-  if (!order?.server) return null;
+/** The pricing page order as the dialog's choices. */
+function dialogOrderOf(order: PricingOrder | null): CreateHostedServerInput | null {
+  if (!order) return null;
   const currency = HOSTED_CURRENCIES.find((entry) => HOSTED_BILLING_CURRENCY[entry] === order.currency);
   if (!currency) return null;
-  const ownLicense = state?.license ? isOpenBillingStatus(state.license.status) : false;
-  if (order.license && !ownLicense && !licenseOfferOf(state)) return null;
-  return {
-    plan: order.server,
-    billing: order.interval === "year" ? "yearly" : "monthly",
-    currency,
-    license: ownLicense ? undefined : (order.license ?? undefined),
-  };
+  return { plan: order.server, billing: order.interval === "year" ? "yearly" : "monthly", currency };
+}
+
+/** The currency of the account's paid servers. A Stripe customer pays in one currency. */
+function paidCurrency(list: HostedServerList): HostedCurrency | null {
+  const paid = list.servers.find((server) => server.state !== "awaiting_payment");
+  return HOSTED_CURRENCIES.find((currency) => HOSTED_BILLING_CURRENCY[currency] === paid?.currency) ?? null;
 }
 
 /**
@@ -154,7 +133,6 @@ function AddServerSession(
     maxServers: null,
     server: null,
     paid: false,
-    licenseOffer: null,
     currency: null,
     order: null,
   });
@@ -175,12 +153,7 @@ function AddServerSession(
 
   async function load(): Promise<void> {
     try {
-      const license = untrack(() => props.license);
-      const [catalog, list, licenseState] = await Promise.all([
-        props.calls.plans(),
-        props.calls.list(),
-        license ? license.getState().catch(() => null) : Promise.resolve(null),
-      ]);
+      const [catalog, list] = await Promise.all([props.calls.plans(), props.calls.list()]);
       const resumed = resume
         ? list.servers.find((server) => server.serverId === resume.serverId)
         : newestInSetup(
@@ -201,10 +174,8 @@ function AddServerSession(
         draft.maxServers = list.maxServers;
         draft.server = resumed ?? null;
         draft.paid = resume?.paid ?? false;
-        draft.licenseOffer = licenseOfferOf(licenseState);
-        draft.currency =
-          HOSTED_CURRENCIES.find((currency) => HOSTED_BILLING_CURRENCY[currency] === licenseState?.currency) ?? null;
-        draft.order = resume ? null : dialogOrderOf(untrack(() => props.order) ?? null, licenseState);
+        draft.currency = paidCurrency(list);
+        draft.order = resume ? null : dialogOrderOf(untrack(() => props.order) ?? null);
       });
       trackPlans("viewed");
       if (serverLimit() !== null) analytics.track("limit_reached", { kind: "servers", action: "shown" });
@@ -297,18 +268,15 @@ function AddServerSession(
 
   function create(input: CreateHostedServerInput): Promise<CreatedHostedServer> {
     const interval: BillingInterval = input.billing === "yearly" ? "year" : "month";
-    return createPlan(input.plan, interval, HOSTED_BILLING_CURRENCY[input.currency], input.license ?? null);
+    return createPlan(input.plan, interval, HOSTED_BILLING_CURRENCY[input.currency]);
   }
 
   async function createPlan(
     plan: BillingPlanId,
     interval: BillingInterval,
     currency: BillingCurrency,
-    license: LicenseOrder | null,
   ): Promise<CreatedHostedServer> {
-    const choice = license
-      ? `${plan}:${interval}:${currency}:${license.tier}:${license.users}`
-      : `${plan}:${interval}:${currency}`;
+    const choice = `${plan}:${interval}:${currency}`;
     const key = requestIds.get(choice) ?? { requestId: crypto.randomUUID(), serverId: null };
     requestIds.set(choice, key);
     trackPlans("plan_selected", { plan, interval, currency });
@@ -320,7 +288,6 @@ function AddServerSession(
         currency,
         requestId: key.requestId,
         ...(entryPoint ? { entryPoint } : {}),
-        ...(license ? { license } : {}),
       })
       .catch(async (error: unknown) => {
         await refreshCount();
@@ -375,7 +342,6 @@ function AddServerSession(
           <AddServerDialog
             plans={plans()}
             recommendedPlan="standard"
-            licenseOffer={state.licenseOffer ?? undefined}
             currency={state.currency ?? undefined}
             currencyLocked={state.currency !== null}
             order={state.order ?? undefined}

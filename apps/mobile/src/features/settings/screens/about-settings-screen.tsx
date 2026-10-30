@@ -28,11 +28,8 @@ export function AboutSettingsScreen() {
   return (
     <SettingsContent>
       <SettingsSection title={t("mobile.settings.about.resources")}>
-        <SettingsRow onPress={() => open("https://openbot.run")}>
+        <SettingsRow onPress={() => open("https://bot.hole.fm")}>
           <Typography.Paragraph>{t("mobile.settings.about.website")}</Typography.Paragraph>
-        </SettingsRow>
-        <SettingsRow onPress={() => open("https://openbot.run/privacy-policy")}>
-          <Typography.Paragraph>{t("mobile.settings.about.privacy")}</Typography.Paragraph>
         </SettingsRow>
         {error ? <SettingsNote>{error}</SettingsNote> : null}
       </SettingsSection>

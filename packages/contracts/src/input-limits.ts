@@ -131,9 +131,9 @@ export const INPUT_LIMITS = {
   sessionsPerMember: 10,
 } as const;
 
-// Active members of one host with no plan, owner included: the owner and two others. A plan sets
-// its own limit (`memberLimitForPlan`). `INPUT_LIMITS.teamMembers` stays the wire cap for stored members.
-export const DEFAULT_TEAM_MEMBER_LIMIT = 3;
+// Active members of one host with no plan, owner included. HoleA.I servers are its own PCs with no paid
+// plans, so the limit is the wire cap for stored members (`INPUT_LIMITS.teamMembers`).
+export const DEFAULT_TEAM_MEMBER_LIMIT = INPUT_LIMITS.teamMembers;
 
 export const ATTACHMENT_LIMITS = {
   fileBytes: 100 * 1024 * 1024,

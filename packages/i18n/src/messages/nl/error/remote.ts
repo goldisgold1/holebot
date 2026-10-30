@@ -185,8 +185,6 @@ export const messages = {
   "error.remote.directoryTimeout": "De OpenBot-service reageerde niet op tijd. Probeer het opnieuw.",
   "error.remote.inviteAlreadyUsed": "Deze uitnodiging is al gebruikt. Vraag om een nieuwe uitnodiging.",
   "error.remote.inviteNotFound": "Deze uitnodiging bestaat niet of is verlopen. Vraag om een nieuwe uitnodiging.",
-  "error.remote.licenseUsersFull":
-    "De licentie van de eigenaar van de server heeft geen vrije gebruiker. Vraag de eigenaar om een gebruiker aan de licentie toe te voegen.",
   "error.remote.memberLimitReached":
     "Deze host heeft het maximumaantal leden bereikt. Vraag de eigenaar om ruimte te maken.",
   "error.remote.hostNotRegistered": "Deze host is niet meer geregistreerd bij de OpenBot-service.",

@@ -1,5 +1,4 @@
 import {
-  BILLING_CURRENCIES,
   BILLING_INTERVALS,
   BILLING_PLAN_IDS,
   type BillingCurrency,
@@ -8,25 +7,12 @@ import {
   billingListPrices,
   billingLookupKey,
 } from "@openbot/contracts/billing";
-import {
-  LICENSE_LOOKUP_KEYS,
-  LICENSE_METADATA,
-  LICENSE_METADATA_KIND,
-  LICENSE_PLANS,
-  LICENSE_PRODUCT_ID,
-  type LicensePlan,
-  type LicensePrice,
-  licenseIncludedUsers,
-  licenseLookupKey,
-  licensePlanPrice,
-} from "@openbot/contracts/license";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { z } from "zod";
 
 /**
  * Creates the Stripe catalog that the account server reads: one Product for each plan, and one Price
- * for each plan and interval with the lookup key `openbot_{plan}_{interval}`. It also creates the
- * license Product and one Price for each license plan (`LICENSE_PLANS`), and sets the Customer Portal
+ * for each plan and interval with the lookup key `openbot_{plan}_{interval}`, and sets the Customer Portal
  * features. Run it again at any time: it changes only what differs.
  *
  *   STRIPE_SECRET_KEY=sk_test_... bun scripts/stripe-bootstrap.ts [--live] [--webhook-url <url>]
@@ -192,95 +178,6 @@ async function ensurePrice(
   return created.id;
 }
 
-/** The amounts of a license plan as one metadata value, so a run can see that the Price is up to date. */
-/** The amounts and the users of the base tier. A change of either makes a new Price. */
-function licensePriceSignature(prices: Readonly<Record<string, LicensePrice>>, included: number): string {
-  const amounts = Object.entries(prices)
-    .map(([currency, price]) => `${currency}:${price.base}+${price.extraUser}`)
-    .join(",");
-  return `${amounts};${included}`;
-}
-
-async function ensureLicenseProduct(stripe: StripeAdmin): Promise<void> {
-  const body = new URLSearchParams({
-    name: "OpenBot commercial license",
-    active: "true",
-    [`metadata[${LICENSE_METADATA.kind}]`]: LICENSE_METADATA_KIND,
-  });
-  if (await stripe.findProduct(LICENSE_PRODUCT_ID)) {
-    await stripe.request("POST", `/v1/products/${LICENSE_PRODUCT_ID}`, body, productSchema);
-    logger.info(`Product ${LICENSE_PRODUCT_ID} is up to date.`);
-    return;
-  }
-  body.set("id", LICENSE_PRODUCT_ID);
-  await stripe.request("POST", "/v1/products", body, productSchema);
-  logger.info(`Created product ${LICENSE_PRODUCT_ID}.`);
-}
-
-/**
- * The Price of one license plan. The quantity is the number of users. A Team Price is graduated tiers:
- * the first tier is the base amount for the included users, and the second tier is the amount of each
- * extra user. A 1-user Price is a flat amount for each user. A bundle Price is for an account that pays
- * for a hosted server. EUR is the base currency, and USD and PLN are currency options with their own
- * amounts. Only an active Price with the same amounts is kept, so
- * an archived Price stays archived and a new Price takes its lookup key.
- */
-async function ensureLicensePrice(stripe: StripeAdmin, existing: readonly Price[], plan: LicensePlan): Promise<string> {
-  const lookupKey = licenseLookupKey(plan);
-  const prices = Object.fromEntries(
-    BILLING_CURRENCIES.map((currency) => [currency, licensePlanPrice(plan, currency)] as const),
-  );
-  const bundle = String(plan.bundle);
-  const included = licenseIncludedUsers(plan.tier);
-  const signature = licensePriceSignature(prices, included);
-  const current = existing.find((price) => price.lookup_key === lookupKey);
-  if (
-    current &&
-    current.active !== false &&
-    current.product === LICENSE_PRODUCT_ID &&
-    current.currency === "eur" &&
-    current.recurring?.interval === plan.interval &&
-    current.metadata?.openbot_license_prices === signature &&
-    current.metadata?.[LICENSE_METADATA.tier] === plan.tier &&
-    current.metadata?.[LICENSE_METADATA.interval] === plan.interval &&
-    current.metadata?.[LICENSE_METADATA.bundle] === bundle
-  ) {
-    logger.info(`Price ${lookupKey} is up to date.`);
-    return current.id;
-  }
-  const body = new URLSearchParams({
-    product: LICENSE_PRODUCT_ID,
-    currency: "eur",
-    "recurring[interval]": plan.interval,
-    lookup_key: lookupKey,
-    transfer_lookup_key: "true",
-    [`metadata[${LICENSE_METADATA.kind}]`]: LICENSE_METADATA_KIND,
-    [`metadata[${LICENSE_METADATA.tier}]`]: plan.tier,
-    [`metadata[${LICENSE_METADATA.interval}]`]: plan.interval,
-    [`metadata[${LICENSE_METADATA.bundle}]`]: bundle,
-    "metadata[openbot_license_prices]": signature,
-  });
-  if (plan.tier === "team") {
-    body.set("billing_scheme", "tiered");
-    body.set("tiers_mode", "graduated");
-  }
-  for (const [currency, price] of Object.entries(prices)) {
-    if (plan.tier !== "team") {
-      body.set(currency === "eur" ? "unit_amount" : `currency_options[${currency}][unit_amount]`, String(price.base));
-      continue;
-    }
-    const prefix = currency === "eur" ? "tiers" : `currency_options[${currency}][tiers]`;
-    body.set(`${prefix}[0][up_to]`, String(included));
-    body.set(`${prefix}[0][flat_amount]`, String(price.base));
-    body.set(`${prefix}[0][unit_amount]`, "0");
-    body.set(`${prefix}[1][up_to]`, "inf");
-    body.set(`${prefix}[1][unit_amount]`, String(price.extraUser));
-  }
-  const created = await stripe.request("POST", "/v1/prices", body, priceSchema);
-  logger.info(`${current ? "Replaced" : "Created"} price ${lookupKey}.`);
-  return created.id;
-}
-
 /**
  * Portal sessions use the default configuration, and the API cannot create a default one. Stripe makes
  * it for the first Portal session, so this opens one session for a temporary customer and deletes it.
@@ -414,10 +311,9 @@ export async function bootstrapStripe(options: StripeBootstrapOptions): Promise<
   }
   const stripe = new StripeAdmin(secretKey);
 
-  const lookupKeys = [
-    ...BILLING_PLAN_IDS.flatMap((plan) => BILLING_INTERVALS.map((interval) => billingLookupKey(plan, interval))),
-    ...LICENSE_LOOKUP_KEYS,
-  ];
+  const lookupKeys = BILLING_PLAN_IDS.flatMap((plan) =>
+    BILLING_INTERVALS.map((interval) => billingLookupKey(plan, interval)),
+  );
   const existing: Price[] = [];
   // Stripe accepts at most 10 lookup keys in one list request.
   for (let start = 0; start < lookupKeys.length; start += 10) {
@@ -434,11 +330,6 @@ export async function bootstrapStripe(options: StripeBootstrapOptions): Promise<
   }
 
   for (const plan of BILLING_PLAN_IDS) logger.info(`Prices ${productId(plan)}: ${prices[plan].join(", ")}`);
-
-  // The license is not in the Portal product list, so the Portal cannot change its users or price.
-  await ensureLicenseProduct(stripe);
-  for (const plan of LICENSE_PLANS)
-    logger.info(`Price ${licenseLookupKey(plan)}: ${await ensureLicensePrice(stripe, existing, plan)}`);
 
   await updatePortalConfiguration(stripe, prices);
   return webhookUrl ? await ensureWebhookEndpoint(stripe, webhookUrl, options.replaceWebhook ?? false) : null;

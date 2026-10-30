@@ -85,9 +85,8 @@ function takePluginLink(): string | null {
 type BillingReturn = DesktopAnalyticsProperties<"billing_return_viewed">;
 
 /**
- * A return from Stripe to Billing: `/app?billing=portal` from the Customer Portal, or
- * `/app?billing=license` from license Checkout, with `&cancelled=1` when the user went back. The
- * query is removed after it is read.
+ * A return from Stripe to Billing: `/app?billing=portal` from the Customer Portal, with `&cancelled=1`
+ * when the user went back. The query is removed after it is read.
  */
 function takeBillingReturn(): BillingReturn | null {
   const url = new URL(window.location.href);
@@ -96,10 +95,10 @@ function takeBillingReturn(): BillingReturn | null {
   const outcome = url.searchParams.get("cancelled") === "1" ? "cancelled" : "completed";
   for (const name of [WEB_APP_BILLING_PARAM, "cancelled"]) url.searchParams.delete(name);
   window.history.replaceState(window.history.state, "", url);
-  return kind === "license" || kind === "portal" ? { outcome, kind } : { outcome };
+  return kind === "portal" ? { outcome, kind } : { outcome };
 }
 
-/** What a `/app?start=<server|license>` link from the pricing page opens. The query is removed after it is read. */
+/** What a `/app?start=server` link from the pricing page opens. The query is removed after it is read. */
 function takeStartLink(): WebAppStart | null {
   const url = new URL(window.location.href);
   const start = takeWebAppStart(url);

@@ -159,7 +159,7 @@ export const messages = {
   "settings.tab.updates.title": "更新",
   "settings.tab.updates.description": "让这台电脑上的 OpenBot 保持最新。",
   "settings.tab.billing.title": "账单",
-  "settings.tab.billing.description": "许可证、服务器套餐、支付方式和发票。",
+  "settings.tab.billing.description": "服务器套餐、支付方式和发票。",
   "settings.tab.hostedServers.title": "托管服务器",
   "settings.tab.hostedServers.description": "创建即使这台电脑关机也能运行的 OpenBot 服务器。",
   "settings.sections.label": "设置分区",
@@ -454,9 +454,6 @@ export const messages = {
   "settings.hostedServers.plan.startsOnUse": "使用时启动",
   // The most active members of the server, the owner included.
   "settings.hostedServers.plan.members": { one: "最多 {count} 名成员", other: "最多 {count} 名成员" },
-  // Work at a company needs a commercial license. With a Starter server, the 1-user license costs less.
-  "settings.hostedServers.plan.license.starter": "商业许可证：{price} / 月",
-  "settings.hostedServers.plan.license.team": "工作需要团队版许可证",
   // The speed of a plan compared with Starter. {factor} is a number, such as 2.
   "settings.hostedServers.plan.speed.base": "基础速度",
   "settings.hostedServers.plan.speed.faster": "快 {factor} 倍",

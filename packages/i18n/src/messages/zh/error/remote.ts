@@ -172,7 +172,6 @@ export const messages = {
   "error.remote.directoryTimeout": "OpenBot 服务未及时响应，请重试。",
   "error.remote.inviteAlreadyUsed": "该邀请已被使用，请申请新的邀请。",
   "error.remote.inviteNotFound": "该邀请不存在或已过期，请申请新的邀请。",
-  "error.remote.licenseUsersFull": "服务器所有者的许可证已没有空闲用户名额。请让所有者为许可证添加用户。",
   "error.remote.memberLimitReached": "该主机已达到成员上限，请让所有者腾出位置。",
   "error.remote.hostNotRegistered": "该主机已不再注册于 OpenBot 服务。",
   "error.remote.membershipEnded": "你已不再是该主机的成员，请向所有者申请新的邀请。",

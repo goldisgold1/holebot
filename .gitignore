@@ -67,3 +67,6 @@ keys
 
 # Persistent local development identity and migration recovery.
 .openbot/
+deploy/vps/.env
+deploy/vps/auth-api.env
+.claude/launch.json

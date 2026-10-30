@@ -5,7 +5,6 @@ import {
   ACCOUNT_ANALYTICS_SCHEMA_VERSION,
   BILLING_PRODUCTS,
   FIRST_TOUCH_PROPERTIES,
-  isAnalyticsLicenseUsers,
   PLAN_CHANGE_DIRECTIONS,
 } from "./account-analytics";
 
@@ -67,7 +66,6 @@ const SALES_ANALYTICS_EVENT_PROPERTIES = {
     "action",
     "product",
     "plan",
-    "users",
     "direction",
     "entry_point",
     "interval",
@@ -95,7 +93,6 @@ const SALES_ANALYTICS_EVENT_PROPERTIES = {
     "fx_date",
     "product",
     "plan",
-    "users",
     "interval",
     "payment_kind",
     "recovery",
@@ -116,9 +113,6 @@ const SALES_ANALYTICS_EVENT_PROPERTIES = {
     "checkout_converted_accounts",
     "checkout_pending_accounts",
     "skipped_subscriptions",
-    "license_mrr",
-    "license_accounts",
-    "licensed_users",
     "total_mrr",
     "total_arr",
   ],
@@ -433,9 +427,6 @@ function eventPropertyValuesAreValid(properties: SalesAnalyticsProperties): bool
           "checkout_converted_accounts",
           "checkout_pending_accounts",
           "skipped_subscriptions",
-          "license_mrr",
-          "license_accounts",
-          "licensed_users",
           "total_mrr",
           "total_arr",
           "as_of",
@@ -445,10 +436,8 @@ function eventPropertyValuesAreValid(properties: SalesAnalyticsProperties): bool
         if (!Number.isSafeInteger(value) || value < 0) return false;
       }
       if (["fx_rate"].includes(key) && value <= 0) return false;
-      if (key === "users" && !isAnalyticsLicenseUsers(value)) return false;
       continue;
     }
-    if (key === "users") return false;
     if (key === "product" && !isOneOf(BILLING_PRODUCTS, value)) return false;
     if (key === "direction" && !isOneOf(PLAN_CHANGE_DIRECTIONS, value)) return false;
     if (key === "entry_point" && !isOneOf(HOSTED_SERVER_ENTRY_POINTS, value)) return false;

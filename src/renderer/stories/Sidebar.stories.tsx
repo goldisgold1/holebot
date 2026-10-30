@@ -583,7 +583,7 @@ export const Compact: Story = {
 };
 
 export const LongServerName: Story = {
-  args: { serverName: "Synthetify production workspace with a long name" },
+  args: { serverName: "HoleA.I production workspace with a long name" },
   decorators: [(Story) => <div style={{ width: "240px", height: "100vh" }}>{Story()}</div>],
 };
 

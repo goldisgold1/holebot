@@ -11,10 +11,8 @@ const ALLOWED_DIRECTORIES = [
   "src/renderer/stories/assets/",
   // Expo icons and splash screens.
   "apps/mobile/assets/",
-  // Public site files, news and guide art, and guide images.
+  // Public site files.
   "apps/auth-api/public/",
-  "apps/auth-api/content-art/",
-  "apps/auth-api/src/content/guides/media/",
 ] as const;
 
 const IMAGE_FILE = /\.(avif|bmp|gif|heic|icns|ico|jpe?g|mov|mp4|png|svg|tiff?|webm|webp)$/i;

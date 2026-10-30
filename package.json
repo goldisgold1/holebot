@@ -8,7 +8,7 @@
     "name": "Norbert Bodziony",
     "url": "https://x.com/norbertbodziony"
   },
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nightly-labs/openbot.git"
@@ -83,7 +83,6 @@
     "postinstall": "bun scripts/electron-dist-cache.ts restore && bun scripts/install-electron.ts && bun scripts/electron-dist-cache.ts save && bun scripts/stamp-install.ts",
     "api:start": "bun run --cwd apps/auth-api start",
     "api:build": "bun run --cwd apps/auth-api build",
-    "api:images": "bun run --cwd apps/auth-api images",
     "api:deploy": "bun run --cwd apps/auth-api deploy",
     "hosting:template": "bun scripts/hosting/build-boat-template.ts",
     "hosting:setup": "bun scripts/hosting/setup-account-server.ts",

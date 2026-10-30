@@ -96,7 +96,6 @@ const SAFE_CONNECTION_ERRORS = new Set(
       "error.remote.inviteAlreadyUsed",
       "error.remote.inviteNotFound",
       "error.remote.memberLimitReached",
-      "error.remote.licenseUsersFull",
       "error.remote.hostNotRegistered",
       "error.remote.membershipEnded",
       "error.remote.accountSessionInactive",

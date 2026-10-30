@@ -21,8 +21,6 @@ interface FlowProps {
   failFirstTry?: boolean;
   /** The account has this many servers, the maximum, so the plans are disabled. */
   serverLimit?: number;
-  /** The account has no license: the dialog offers personal or work use, with a license for work. */
-  licenseOffer?: { used: number; trialEnd?: number };
 }
 
 /**
@@ -110,7 +108,6 @@ function AddServerFlow(props: FlowProps) {
           recommendedPlan="standard"
           setupStatus={setupStatus()}
           serverLimit={props.serverLimit}
-          licenseOffer={props.licenseOffer}
           onManageServers={() => setManageNote(true)}
           onClose={() => setAddOpen(false)}
           onContactUs={() => setContactNote(true)}
@@ -197,23 +194,4 @@ export const ServerLimit: Story = {
 export const Narrow: Story = {
   globals: { viewport: { value: "addServerNarrow", isRotated: false } },
   render: () => <AddServerFlow startOpen />,
-};
-
-/**
- * The account has no license, and 3 people use its servers. Work adds a license to each plan that fits
- * the people, at the bundle price; the people row starts at 3, and "Fewer" there tells why in a toast.
- */
-export const WithLicense: Story = {
-  render: () => <AddServerFlow startOpen licenseOffer={{ used: 3 }} />,
-};
-
-/** A promotion: the license of the order is free until 1 December. */
-export const WithLicenseTrial: Story = {
-  render: () => <AddServerFlow startOpen licenseOffer={{ used: 3, trialEnd: Date.UTC(2026, 11, 1) }} />,
-};
-
-/** A license offer in a narrow window. */
-export const WithLicenseNarrow: Story = {
-  globals: { viewport: { value: "addServerNarrow", isRotated: false } },
-  render: () => <AddServerFlow startOpen licenseOffer={{ used: 3 }} />,
 };

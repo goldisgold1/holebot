@@ -85,18 +85,6 @@ export const messages = {
   "server.add.billing.monthly": "按月",
   "server.add.billing.yearly": "按年",
   "server.add.billing.save": "省 {percent}%",
-  // The switch left of the billing period, when the account has no license. Work adds a license to the server.
-  "server.add.use.label": "用途",
-  "server.add.use.personal": "个人",
-  "server.add.use.work": "工作",
-  // The row under the plans that sets the users of the license. It is disabled for personal use.
-  "server.add.license.people": "工作人数",
-  "server.add.license.minimum": { other: "目前有 {count} 人在使用你的服务器，因此不能选择更少。" },
-  // On each plan that the people fit, for work. {percent} is a whole number, such as 20.
-  "server.add.license.bundle": "组合 −{percent}%",
-  // The plan summary for work. {license} is the license line, such as "Team license, 5 members".
-  "server.add.license.included": "包含{license}",
-  "server.add.license.includedTrial": "包含{license}，{date} 前免费",
   "server.add.billedMonthly": "按月计费",
   "server.add.billedYearly": "每年计费 {price}",
   // {amount} is a formatted amount, such as "€120". It follows the yearly price.

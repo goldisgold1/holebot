@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
   s.version        = '1.0.0'
   s.summary        = 'Share extension data for OpenBot'
   s.description    = 'Gives the share extension the session of the app, and offers agents in the share sheet.'
-  s.license        = 'PolyForm-Noncommercial-1.0.0'
+  s.license        = 'MIT'
   s.author         = 'OpenBot'
   s.homepage       = 'https://openbot.run'
   s.platforms      = { :ios => '16.4' }

@@ -1,6 +1,6 @@
 appId: app.openbot.desktop
 productName: OpenBot
-copyright: Copyright © 2026 Synthetify Labs spółka z ograniczoną odpowiedzialnością
+copyright: Copyright © 2026 HoleA.I
 protocols:
   - name: OpenBot invitations
     schemes:
@@ -18,10 +18,8 @@ electronFuses:
   onlyLoadAppFromAsar: true
   loadBrowserProcessSpecificV8Snapshot: false
   grantFileProtocolExtraPrivileges: false
-publish:
-  provider: github
-  owner: nightly-labs
-  repo: openbot
+# HoleA.I internal builds publish nowhere and write no app-update.yml, so installed apps never auto-update.
+publish: null
 files:
   - out/**/*
   - package.json

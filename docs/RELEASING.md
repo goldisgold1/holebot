@@ -8,9 +8,8 @@ The mobile workflows are separate from the desktop tag release described below.
 
 OpenBot updates are published through GitHub Releases and installed with `electron-updater`.
 macOS requires every auto-updatable build to be signed with a Developer ID Application certificate.
-The release workflow also notarizes and staples the macOS application before publishing it. A Windows
-x64 tag release is signed with Azure Artifact Signing (see [Windows signing](#windows-signing)). Linux
-releases are unsigned, and the Linux AppImage carries no signature.
+The release workflow also notarizes and staples the macOS application before publishing it. Windows
+and Linux releases are unsigned, and the Linux AppImage carries no signature.
 All three platforms must pass before one release is published. A release also requires the pinned
 Sunshine and Moonlight Web runtime artifacts. GitHub Actions downloads those artifacts, checks SHA-256, and
 verifies their native executables as part of the final OpenBot package. Release packages are not built
@@ -124,40 +123,6 @@ creating a temporary production server and checking its initial installed versio
 result under `.openbot-build/`; remove only that temporary server after the check. This remote check
 is separate from local checks and requires production access.
 
-## Windows signing
-
-A tag build signs the Windows release with Azure Artifact Signing. It needs no secret:
-
-- The Artifact Signing account `synthetifyartifactsign` (East US, `https://eus.codesigning.azure.net/`)
-  holds the Public Trust certificate profile `SYNTHETIFY`, issued to
-  `SYNTHETIFY LABS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ`. Microsoft issues a new short-lived
-  certificate each day with the same subject.
-- The Entra app registration `openbot-release-signing` has the **Artifact Signing Certificate Profile
-  Signer** role on that profile only. Its federated credential trusts the subject
-  `repo:nightly-labs@100160810/openbot@1332461149:environment:release`, because this repository uses
-  GitHub's immutable OIDC subject format. A dry run has no environment, so it cannot sign.
-- The `windows` job logs in with `azure/login`, caches a token for the signing service, and runs
-  `bun run dist:win --config electron-builder.windows-signing.yml`, then runs `az account clear`, so
-  the steps after the build have no Azure session. That overlay adds
-  `win.azureSignOptions` and `forceCodeSigning`. electron-builder signs `OpenBot.exe`, every `.exe` from
-  `extraResources` (the remote desktop runtime and the Computer Use driver), the NSIS
-  installer, and its uninstaller. It does not sign the `.node` and `.dll` files of the voice runtime,
-  because the overlay sets no `win.signExts`. The provider CLIs are not packaged on Windows, so their
-  vendor signatures do not change.
-- `verify:package:win --require-signature` requires a valid signature with the `app-update.yml`
-  publisher on each of those executables, and the next step requires the same signer on the
-  installer. A dry run requires `NotSigned` instead.
-- `-f mode=windows-signing` checks the login and the signing service without a release (see
-  [Publish a version](#publish-a-version) for the command).
-
-electron-builder writes `publisherName` to `app-update.yml`. An installed signed build accepts an
-update only when its installer certificate has that CN. A change of the legal name or of the identity
-validation therefore stops auto-updates for every signed install: ship a release that lists both names
-in `publisherName` before the certificate changes. An unsigned install has no `publisherName` and
-accepts the first signed update.
-
-The signature removes the Unknown publisher warning. SmartScreen can still warn until the new
-certificate builds download reputation.
 
 ## Build the remote desktop runtime
 
@@ -570,24 +535,7 @@ The dry run runs the tag validation (without the tag and `main` checks), the Win
 Docker builds, and all their verification steps. It does not run the macOS job or the publish jobs,
 and it makes no attestation: the macOS job needs the `release` secrets, which only tag runs receive,
 and an attestation of this public repository is a public Sigstore record. Use `-f mode=host-signing` on a
-tag ref to check the macOS Host signing keychain, and `-f mode=windows-signing` on a tag ref to check
-Windows signing. `--ref` selects the workflow and the overlay, so the tag must point to the commit
-to test. Use a temporary `v0.0.0-*` tag. It matches the `release` environment policy. Its push
-starts a release run, but `Validate release tag` stops that run, because the tag never matches the
-`package.json` version:
-
-```sh
-git tag v0.0.0-windows-signing-test <commit>
-git push origin v0.0.0-windows-signing-test
-gh workflow run release.yml --ref v0.0.0-windows-signing-test -f mode=windows-signing
-# After the run:
-git tag -d v0.0.0-windows-signing-test
-git push origin :refs/tags/v0.0.0-windows-signing-test
-```
-
-It logs in to Azure, then signs a throwaway executable once immediately and once 20 minutes later,
-the delay between login and signing in a release build. It uploads and publishes nothing. Run it once
-after a change to the Azure setup or to `electron-builder.windows-signing.yml`, before the next tag.
+tag ref to check the macOS Host signing keychain.
 
 Installed OpenBot builds check for updates shortly after launch and every four minutes. New versions
 download automatically while **Automatically download updates** is on, which is the default and is

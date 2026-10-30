@@ -1,0 +1,17 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# The site, sign-in pages and invite links, and the API. One Worker serves both hosts.
+{$SITE_DOMAIN}, {$API_DOMAIN} {
+	@internal path /__scheduled* /cdn-cgi/*
+	respond @internal 404
+	reverse_proxy auth-api:3100
+}
+
+# Signal: WebSocket relay, Slack/Discord/Telegram webhooks. TLS ends here, so remote-api runs without it.
+{$SIGNAL_DOMAIN} {
+	@internal path /internal/* /metrics*
+	respond @internal 404
+	reverse_proxy remote-api:8443
+}

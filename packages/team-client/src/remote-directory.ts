@@ -108,7 +108,6 @@ const DIRECTORY_ERROR_TEXT = new Map<string, string>([
   ["invite_already_used", sourceText("error.remote.inviteAlreadyUsed")],
   ["invite_not_found", sourceText("error.remote.inviteNotFound")],
   ["member_limit_reached", sourceText("error.remote.memberLimitReached")],
-  ["license_users_full", sourceText("error.remote.licenseUsersFull")],
   ["host_not_found", sourceText("error.remote.hostNotRegistered")],
   ["membership_not_found", sourceText("error.remote.membershipEnded")],
   ["session_inactive", sourceText("error.remote.accountSessionInactive")],
@@ -427,8 +426,8 @@ export class RemoteTeamDirectoryClient {
       // These production origins serve the same account Worker. Requests still use this client's origin.
       const publicWebsiteInvite =
         this.#authentication.kind === "browser" &&
-        origin === "https://openbot.run" &&
-        inviteOrigin === "https://api.openbot.run";
+        origin === "https://bot.hole.fm" &&
+        inviteOrigin === "https://api.bot.hole.fm";
       if (inviteOrigin !== origin && !publicWebsiteInvite) {
         return yield* directoryFailure(sourceText("error.remote.inviteOtherService"));
       }

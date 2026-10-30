@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/solid-router";
-import { LandingPage } from "../components/landing/LandingPage";
-import { openBotHomeHead } from "../lib/site-metadata";
-import { OPENBOT_SOFTWARE_APPLICATION } from "../lib/software-application";
+import { createFileRoute, redirect } from "@tanstack/solid-router";
 
+// HoleA.I has no public website: the root opens the web app, which asks for sign-in.
 export const Route = createFileRoute("/")({
-  head: () => openBotHomeHead(OPENBOT_SOFTWARE_APPLICATION),
-  component: LandingPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/app" });
+  },
 });

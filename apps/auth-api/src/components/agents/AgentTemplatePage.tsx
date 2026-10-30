@@ -1,7 +1,6 @@
 import { createOpenBotAgentTemplateUrl, createWebAppAgentTemplatePath } from "@openbot/contracts/agent-template-links";
 import type { AgentTemplateDetail } from "@openbot/contracts/ipc";
 import { markdownPlainText, markdownPreviewText } from "@openbot/contracts/markdown-preview-text";
-import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, Loading, lazy, onSettled, Show } from "solid-js";
 import { agentTemplatePath } from "../../lib/agent-template-path";
 import { landingAnalytics } from "../../lib/analytics";
@@ -144,7 +143,7 @@ export function AgentTemplatePage(props: AgentTemplatePageProps) {
         </article>
 
         <p class="agent-share-fallback">
-          OpenBot didn't open? <Link to="/download">Download it</Link>, <a href={openUrl()}>open the app</a>, or{" "}
+          OpenBot didn't open? <a href={openUrl()}>Open the app</a>, or{" "}
           <a href={createWebAppAgentTemplatePath(props.template.id)}>open in browser</a>.
         </p>
       </main>

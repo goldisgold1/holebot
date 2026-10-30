@@ -6,6 +6,10 @@ All notable changes to OpenBot will be documented here. The project follows
 
 ## [Unreleased]
 
+### Changed
+
+- Changed the project license from PolyForm Noncommercial 1.0.0 to MIT.
+
 ## [0.54.0] - 2026-10-29
 
 ### Added
@@ -1989,9 +1993,9 @@ All notable changes to OpenBot will be documented here. The project follows
 
 ### Changed
 
-- The license names Synthetify Labs spółka z ograniczoną odpowiedzialnością as the licensor. For a
+- The license names the previous owner as the licensor. For a
   commercial license, write to licenses@openbot.run. The macOS and Windows app copyright
-  also names Synthetify Labs.
+  also names the previous owner.
 - The desktop window has a page rail at the left and a darker frame. The sidebar, the chat and the side panel sit in one card. The rail opens Agents, Routines, Schedule, Usage, Marketplace and Settings, and it shows the plan limits of each provider as rings.
 - Settings is now a page of the window, not a dialog, with a search for settings. Server settings is a separate page: open it from the server menu. When you select a different server, the server settings page shows that server.
 - The server menu in the top row is now the default way to switch servers. If you chose the server rail before, it stays. To use the rail, open the server menu and select Server layout.
@@ -2172,7 +2176,7 @@ All notable changes to OpenBot will be documented here. The project follows
 - An agent that answers in Discord, Slack or Telegram no longer stops answering after a restart. Before, a restart could make one of its conversations the agent's own chat. Then, after a routine ran there, every new message waited with "OpenBot is working on another request" until OpenBot restarted. A restart no longer does this. An agent that is already in this state keeps its chat and its history, and answers again.
 - The chat of such an agent shows its new messages in the app again.
 - Stop the Windows download page and the OpenBot 101 guide from saying that the installer is not
-  code-signed. They now say that SYNTHETIFY LABS signs it, and tell you how to continue when
+  code-signed. They now say that the previous owner signs it, and tell you how to continue when
   SmartScreen still warns about a new release.
 - You can name a sidebar section with a Japanese, Chinese or Korean input method. Before, the Enter that confirms a conversion saved the section, and Escape closed the editor and lost the name.
 - Start custom agents that need Node or another tool from your shell when you open OpenBot from
@@ -3119,7 +3123,7 @@ All notable changes to OpenBot will be documented here. The project follows
 
 ### Security
 
-- The Windows installer and app are now signed by SYNTHETIFY LABS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ. Windows no longer shows "Unknown publisher" for them, and later updates install only when they have the same signature. Before, the Windows release was not signed.
+- The Windows installer and app are now signed by the previous owner. Windows no longer shows "Unknown publisher" for them, and later updates install only when they have the same signature. Before, the Windows release was not signed.
 - The account service now checks the skills and agent marketplace admin token in constant time. Before, the check time could show how much of a guessed token was correct.
 - Bitwarden fills require an exact HTTPS origin and a current item in the shared folder. Session keys and login values are not saved by OpenBot, and short authenticator codes are redacted from logs.
 
@@ -3166,7 +3170,7 @@ All notable changes to OpenBot will be documented here. The project follows
 
 - On openbot.run, News, Guides, Compare and Plugins in the header now open their pages when you
   click them. Hover over them to see the panel.
-- The openbot.run footer names Synthetify Labs as the owner.
+- The openbot.run footer names the previous owner as the owner.
 - A chat now shows consecutive messages to and from other agents as one row, such as "7 messages with 7 agents". Click the agents to see each message.
 - The openbot.run footer links to the self-hosted server guide.
 - The direct installer links are now `/download/<os>/latest`. An old `/download/<os>` link opens the

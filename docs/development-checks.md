@@ -152,7 +152,7 @@ These long suites belong in CI; local desktop runs can reach their time limits u
 The `Detect changed areas` job lets a pull request skip the lanes it cannot affect. It compares the
 merge commit with its first parent and first removes Markdown that no build or test reads: `docs/`,
 `plans/` and `changelog.d/` Markdown, every `AGENTS.md`, and the root Markdown files except
-`CHANGELOG.md`, which the API bundles, and `CLA.md`. Markdown under `resources/` is not removed either, because the
+`CHANGELOG.md`, which the API bundles. Markdown under `resources/` is not removed either, because the
 renderer bundles it. Then it selects the lanes:
 
 | Lane | Jobs | Runs when a changed path is |

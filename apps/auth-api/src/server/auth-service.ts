@@ -49,6 +49,11 @@ interface AuthServiceOptions {
   repository: AuthRepository;
   delivery: EmailCodeDelivery | null;
   exposeDevelopmentCode?: boolean;
+  /**
+   * Internal sign-in: email -> SHA-256 (base64url) of that person's permanent access code. With it, only these
+   * emails can sign in, nothing is emailed, and the person types their access code where the emailed code goes.
+   */
+  accessCodeHashes?: ReadonlyMap<string, string>;
   now?: () => number;
   flushSessionRevocations?: () => Effect.Effect<void, RemoteFailure>;
   profileChanged?: (userId: string) => Effect.Effect<void, RemoteFailure>;
@@ -77,6 +82,7 @@ class AuthDependencies extends Context.Service<
     repository: AuthRepository;
     delivery: EmailCodeDelivery | null;
     exposeDevelopmentCode: boolean;
+    accessCodeHashes: ReadonlyMap<string, string> | null;
     now: () => number;
     flushSessionRevocations: () => Effect.Effect<void, RemoteFailure>;
     profileChanged: (userId: string) => Effect.Effect<void, RemoteFailure>;
@@ -90,11 +96,14 @@ export class AuthService {
   readonly #configured: boolean;
 
   constructor(options: AuthServiceOptions) {
-    this.#configured = options.delivery !== null || (options.exposeDevelopmentCode ?? false);
+    const accessCodeHashes = options.accessCodeHashes?.size ? options.accessCodeHashes : null;
+    this.#configured =
+      options.delivery !== null || (options.exposeDevelopmentCode ?? false) || accessCodeHashes !== null;
     this.#layer = Layer.succeed(AuthDependencies)({
       repository: options.repository,
       delivery: options.delivery,
       exposeDevelopmentCode: options.exposeDevelopmentCode ?? false,
+      accessCodeHashes,
       now: options.now ?? Date.now,
       flushSessionRevocations: options.flushSessionRevocations ?? (() => Effect.void),
       profileChanged: options.profileChanged ?? (() => Effect.void),
@@ -140,6 +149,14 @@ export class AuthService {
 
       yield* this.#enforceRateLimit(`start:email:${email}`, 5, now);
       yield* this.#enforceRateLimit(`start:ip:${normalizeSourceIp(sourceIp)}`, 20, now);
+      const accessCodeHash = dependencies.accessCodeHashes?.get(email);
+      if (dependencies.accessCodeHashes && !accessCodeHash) {
+        return yield* new AuthServiceError(
+          403,
+          "account_not_allowed",
+          "This email cannot sign in. Ask the owner to add you.",
+        );
+      }
 
       if (idempotencyKey) {
         const existing = yield* dependencies.repository.findEmailChallenge(challengeHash);
@@ -161,7 +178,7 @@ export class AuthService {
         ? yield* developmentOneTimeCode(challengeId)
         : generateOneTimeCode();
       const expiresAt = now + CHALLENGE_TTL_MS;
-      const codeHash = yield* sha256(normalizeOneTimeCode(code));
+      const codeHash = accessCodeHash ?? (yield* sha256(normalizeOneTimeCode(code)));
       const sourceIpHash = yield* sha256(normalizeSourceIp(sourceIp));
       const created = yield* dependencies.repository.createEmailChallenge({
         idHash: challengeHash,
@@ -177,7 +194,7 @@ export class AuthService {
         if (!existing) return yield* new AuthOperationError({ message: "Account operation failed." });
         return yield* this.#replayEmailSignIn(existing, email, challengeId, now);
       }
-      const delivery = dependencies.delivery;
+      const delivery = accessCodeHash ? null : dependencies.delivery;
       const deliveryResult = yield* Effect.result(
         delivery ? delivery.send({ email, code, expiresAt }).pipe(Effect.mapError(safeDeliveryError)) : Effect.void,
       );
@@ -205,7 +222,7 @@ export class AuthService {
         challengeId,
         expiresAt,
         resendAt: now + RESEND_COOLDOWN_MS,
-        ...(dependencies.exposeDevelopmentCode ? { developmentCode: code } : {}),
+        ...(dependencies.exposeDevelopmentCode && !accessCodeHash ? { developmentCode: code } : {}),
       };
     },
     (operation) => operation.pipe(Effect.mapError(authFailure), Effect.provide(this.#layer)),

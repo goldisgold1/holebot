@@ -1,6 +1,6 @@
 import { AppLogo } from "@openbot/brand";
 import { prefersReducedMotion } from "@openbot/ui/utils";
-import { Link, useLocation } from "@tanstack/solid-router";
+import { useLocation } from "@tanstack/solid-router";
 import { createSignal, For, onSettled } from "solid-js";
 import { ButtonLink } from "../ui/button";
 import { LandingFooter } from "./LandingFooter";
@@ -13,13 +13,6 @@ const SEARCH_STEPS = [
   { label: "Searching workspaces", result: "empty" },
   { label: "Checking threads", result: "empty" },
   { label: "Asking teammates", result: "no answer" },
-] as const;
-
-const SUGGESTIONS = [
-  { to: "/guides", label: "Guides" },
-  { to: "/news", label: "News" },
-  { to: "/compare", label: "Compare" },
-  { to: "/plugins", label: "Plugins" },
 ] as const;
 
 export function NotFoundPage() {
@@ -91,9 +84,6 @@ export function NotFoundPage() {
             <ButtonLink to="/" variant="primary" size="lg" icon="open">
               Back to home
             </ButtonLink>
-            <ButtonLink to="/guides" variant="secondary" size="lg" icon="arrow-right">
-              Read the guides
-            </ButtonLink>
           </div>
         </section>
 
@@ -122,16 +112,6 @@ export function NotFoundPage() {
             </li>
           </ol>
         </div>
-
-        <nav class="not-found-links" aria-label="Popular pages">
-          <For each={SUGGESTIONS}>
-            {(link, index) => (
-              <Link to={link.to} class="not-found-link" style={{ "--link": index() }}>
-                {link.label}
-              </Link>
-            )}
-          </For>
-        </nav>
       </main>
 
       <LandingFooter />

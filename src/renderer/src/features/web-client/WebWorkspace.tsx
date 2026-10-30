@@ -17,7 +17,6 @@ import {
   type ServerConnectionState,
   type ServerSummary,
 } from "@openbot/contracts/ipc";
-import type { PricingOrder } from "@openbot/contracts/license";
 import { AGENT_BACKUP_MODELS_ROUTES } from "@openbot/contracts/team-protocol/agent-backup-models-v1";
 import { AGENT_HOST_SETTINGS_ROUTES } from "@openbot/contracts/team-protocol/agent-host-settings-v1";
 import { AGENT_IMPORT_CAPABILITY } from "@openbot/contracts/team-protocol/agent-import-v1";
@@ -74,8 +73,6 @@ import { computeAgentAvatarMoods } from "@openbot/ui/features/agents/agent-avata
 import { createFirstAgentDraft, type FirstAgentDraft } from "@openbot/ui/features/agents/FirstAgentSetup";
 import { BillingDialog } from "@openbot/ui/features/billing/BillingDialog";
 import { createBillingStore } from "@openbot/ui/features/billing/billing-store";
-import { LicenseSection } from "@openbot/ui/features/billing/LicenseSection";
-import { createLicenseStore } from "@openbot/ui/features/billing/license-store";
 import { unloadedHistory } from "@openbot/ui/features/conversation/ChatScrollRail";
 import type { DiagramModelChoice } from "@openbot/ui/features/diagrams/DiagramNewAgentCard";
 import { LeaveServerDialog } from "@openbot/ui/features/servers/LeaveServerDialog";
@@ -186,7 +183,6 @@ import {
   serverUpdateBadge,
   showServerUpdate,
 } from "../servers/server-update-flow";
-import { licenseContactUs, trackLicenseEvent } from "../settings/license-analytics";
 import type { HostPromptCacheTtlCalls } from "../settings/provider-prompt-cache";
 import { createCommunityCardVisibility } from "../sidebar/community-card";
 import { isReaderAuthor } from "../team/reader-identity";
@@ -203,7 +199,7 @@ import { createWebAccountUsage } from "./web-account-usage";
 import { createWebAgentImportCalls } from "./web-agent-import";
 import { createWebAgentThreads } from "./web-agent-threads";
 import { openWebLink } from "./web-attachments";
-import { createWebBillingCalls, createWebLicenseCalls, type WebAppStart } from "./web-billing";
+import { createWebBillingCalls, type WebAppStart } from "./web-billing";
 import { webBitwardenConnectorPort } from "./web-bitwarden-connector";
 import { createWebChannelsPort } from "./web-channels-runtime";
 import { createWebChatHistory, type WebChatHistoryEntry } from "./web-chat-history";
@@ -860,12 +856,8 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
     },
   );
   const [billingOpen, setBillingOpen] = createSignal(false);
-  /** `/app?start=license` opens Billing with the license dialog open, and with the order of the pricing page. */
-  const [licenseStart, setLicenseStart] = createSignal<{ order: PricingOrder | null } | null>(null);
   const billingCalls = createWebBillingCalls(props.accountFetch);
   const billing = createBillingStore(() => billingCalls, billingOpen);
-  const licenseCalls = createWebLicenseCalls(props.accountFetch);
-  const license = createLicenseStore(() => licenseCalls, billingOpen, trackLicenseEvent);
   // The web client has no Hosted servers settings, so a server whose plan ended is renewed or deleted in Billing.
   const billingHostedServers = createSettingsHostedServersStore(
     {
@@ -930,11 +922,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
     () => (props.start?.kind === "server" && !hostedServers.loaded() ? null : props.start),
     (start) => {
       if (!start) return;
-      if (start.kind === "server") hostedServers.openAddServer("pricing_page", start.order);
-      else {
-        setLicenseStart({ order: start.order });
-        setBillingOpen(true);
-      }
+      hostedServers.openAddServer("pricing_page", start.order);
       props.onStartConsumed?.();
     },
   );
@@ -1984,7 +1972,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                   servers={servers()}
                   onRefreshServers={workspace.retryHosts}
                   resume={hostedServers.addServer()?.resume}
-                  license={licenseCalls}
                   onClose={hostedServers.closeAddServer}
                   onOpenServer={(serverId) => {
                     hostedServers.closeAddServer();
@@ -2055,8 +2042,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                       // Publication and screen recording belong to the computer that runs the server.
                       onSetPublished={unavailable}
                       onCreateInvite={serverSettings.createInvite}
-                      license={licenseCalls}
-                      onContactUs={() => window.location.assign(HOSTED_SERVER_CONTACT_URL)}
                       onUpdateMember={serverSettings.updateMember}
                       onRemoveMember={serverSettings.removeMember}
                       onRevokeInvite={serverSettings.revokeInvite}
@@ -2172,21 +2157,9 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                 />
                 <BillingDialog
                   open={billingOpen()}
-                  onOpenChange={(open) => {
-                    setBillingOpen(open);
-                    if (!open) setLicenseStart(null);
-                  }}
+                  onOpenChange={setBillingOpen}
                   store={billing}
                   hostedServers={billingHostedServers}
-                  license={
-                    <LicenseSection
-                      store={license}
-                      onManagePayment={() => void billing.openPortal({ flow: "manage" })}
-                      onContactUs={licenseContactUs(() => window.location.assign(HOSTED_SERVER_CONTACT_URL))}
-                      startBuying={licenseStart() !== null}
-                      startOrder={licenseStart()?.order ?? undefined}
-                    />
-                  }
                 />
                 <ChannelCreateOverlay />
                 <GlobalSearchOverlay

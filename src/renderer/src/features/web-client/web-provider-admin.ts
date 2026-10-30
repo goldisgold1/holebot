@@ -85,12 +85,12 @@ const CODE_LOGIN_POLL_MS = 3000;
  */
 const WEB_EXTERNAL_DESTINATIONS: Partial<Record<ExternalDestination, string>> = {
   "opencode-auth": "https://opencode.ai/auth",
-  feedback: "https://x.com/intent/post?text=Feedback%20for%20OpenBot%20%40norbertbodziony%3A%20",
-  message: "https://x.com/norbertbodziony",
-  changelog: "https://openbot.run/changelog",
-  guides: "https://openbot.run/guides",
-  discord: "https://discord.openbot.run",
-  x: "https://x.com/OpenBot_",
+  feedback: "https://hole.fm",
+  message: "https://hole.fm",
+  changelog: "https://hole.fm",
+  guides: "https://hole.fm",
+  discord: "https://hole.fm",
+  x: "https://hole.fm",
 };
 
 export function openWebDestination(destination: ExternalDestination): Promise<void> {
@@ -334,8 +334,8 @@ export function createWebProviderSettings(options: WebProviderSettingsOptions) {
     },
     place: () => ({ kind: "web-server", server: options.server() }),
     openVerificationUrl: (url) => void window.open(url, "_blank", "noopener"),
-    // The web client is served by the site that has the download page.
-    openAppDownload: () => void window.open("/download", "_blank", "noopener"),
+    // HoleA.I has no public download page; the desktop installer is shared inside the company.
+    openAppDownload: () => void window.open("https://hole.fm", "_blank", "noopener"),
   });
   /** As on desktop: the accounts are read again when an account sign-in ends. */
   function accountSignIn(id: string) {

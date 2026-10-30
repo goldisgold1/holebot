@@ -1,7 +1,7 @@
 # OpenBot
 
 [![CI](https://github.com/nightly-labs/openbot/actions/workflows/ci.yml/badge.svg)](https://github.com/nightly-labs/openbot/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 OpenBot is a local-first desktop workspace for persistent AI teammates. It supports the local
 [Codex App Server](https://learn.chatgpt.com/docs/app-server) and
@@ -121,15 +121,13 @@ nix run github:nightly-labs/openbot
 nix profile install github:nightly-labs/openbot
 ```
 
-`overlays.default` adds `pkgs.openbot`. OpenBot is not free software, so your nixpkgs must allow it,
-for example with `nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "openbot";`.
+`overlays.default` adds `pkgs.openbot`.
 Nix installs OpenBot updates. OpenBot does not update itself from the Nix store. On Linux, the Nix
 package does not include the remote desktop runtime, because nixpkgs does not have a library that it
 needs.
 
 > [!IMPORTANT]
-> Windows releases are signed by `SYNTHETIFY LABS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ`. Older
-> releases are not code-signed. SmartScreen can still warn about a new release. Check the release
+> Windows releases are not code-signed. SmartScreen can still warn about a new release. Check the release
 > checksum or GitHub build attestation before you run the installer.
 
 ### Agent setup
@@ -599,23 +597,16 @@ popover. Release signing secrets and the complete procedure are documented in
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Before we merge a contribution, each
-author from outside the organization signs the [Contributor Assignment Agreement](CLA.md), which
-assigns its copyright to Synthetify Labs. Community behavior is governed by the
+See [CONTRIBUTING.md](CONTRIBUTING.md). Community behavior is governed by the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License and attribution
 
-Copyright 2026 Synthetify Labs spółka z ograniczoną odpowiedzialnością.
+Copyright 2026 HoleA.I.
 
-Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may use, modify, and
-distribute the code for permitted noncommercial purposes. Commercial use requires a separate license
-from the copyright owner. Buy a commercial license in Settings → Billing (Starter for 1 user, or
-Team for 2 to 10 users), or contact [licenses@openbot.run](mailto:licenses@openbot.run). Versions up to and including 0.1.11 remain
-available under Apache-2.0.
-See [NOTICE](NOTICE) for attribution and third-party notices.
+Licensed under the [MIT License](LICENSE). See [NOTICE](NOTICE) for attribution and third-party notices.
 
-OpenBot is an independent source-available project and is not affiliated with, endorsed by, or
+OpenBot is an independent open-source project and is not affiliated with, endorsed by, or
 sponsored by OpenAI. OpenAI, ChatGPT, and Codex are used only to describe compatibility with their
 respective products and services.
 

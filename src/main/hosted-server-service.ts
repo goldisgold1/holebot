@@ -147,7 +147,6 @@ export class HostedServerDesktopService {
             currency: input.currency,
             // Analytics only. An older account service ignores it.
             ...(input.entryPoint ? { entryPoint: input.entryPoint } : {}),
-            ...(input.license ? { license: input.license } : {}),
           }),
         },
         decodeCheckout,

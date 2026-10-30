@@ -167,7 +167,7 @@ export const messages = defineMessages("settings", {
   "settings.tab.updates.title": "Updates",
   "settings.tab.updates.description": "Keep OpenBot current on this computer.",
   "settings.tab.billing.title": "Billing",
-  "settings.tab.billing.description": "License, server plans, payment method and invoices.",
+  "settings.tab.billing.description": "Server plans, payment method and invoices.",
   "settings.tab.hostedServers.title": "Hosted servers",
   "settings.tab.hostedServers.description": "Create OpenBot servers that run when this computer is off.",
   "settings.sections.label": "Settings sections",
@@ -483,9 +483,6 @@ export const messages = defineMessages("settings", {
   "settings.hostedServers.plan.startsOnUse": "Starts when you use it",
   // The most active members of the server, the owner included.
   "settings.hostedServers.plan.members": { one: "Up to {count} member", other: "Up to {count} members" },
-  // Work at a company needs a commercial license. With a Starter server, the 1-user license costs less.
-  "settings.hostedServers.plan.license.starter": "Commercial license: {price} / month",
-  "settings.hostedServers.plan.license.team": "Work needs a Team license",
   // The speed of a plan compared with Starter. {factor} is a number, such as 2.
   "settings.hostedServers.plan.speed.base": "Base speed",
   "settings.hostedServers.plan.speed.faster": "{factor}× faster",
