@@ -6,6 +6,10 @@
 {$SITE_DOMAIN}, {$API_DOMAIN} {
 	@internal path /__scheduled* /cdn-cgi/*
 	respond @internal 404
+	# hole.fm bot wakes, signed and passed to OpenBot webhook routines.
+	handle /hook/* {
+		reverse_proxy wake-bridge:8790
+	}
 	reverse_proxy auth-api:3100
 }
 

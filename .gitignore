@@ -70,3 +70,4 @@ keys
 deploy/vps/.env
 deploy/vps/auth-api.env
 .claude/launch.json
+deploy/vps/wake-hooks.json

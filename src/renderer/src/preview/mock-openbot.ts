@@ -545,7 +545,7 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
       }));
   let mcpSignInApps: Record<string, McpSignInApp> = {};
   const mcpSignInAppState = (mcpServerId: string): McpSignInAppState => ({
-    redirectUrl: "http://127.0.0.1:28417/mcp-auth",
+    redirectUrl: "http://127.0.0.1:28417/callback",
     app: mcpSignInApps[mcpServerId] ?? null,
   });
   let sidebarLayout: SidebarLayoutSnapshot = clone(

@@ -45,7 +45,7 @@ import { OpenBotDatabase } from "../src/backend/openbot-database";
 import { NO_PROVIDER_CREDENTIALS } from "../src/backend/provider-drivers";
 
 const OUT = resolve(import.meta.dirname, "../.openbot-build/mcp-oauth-e2e");
-const REDIRECT_URL = "http://127.0.0.1:28417/mcp-auth";
+const REDIRECT_URL = "http://127.0.0.1:28417/callback";
 const DEADLINE_MS = 10_000;
 
 type TokenMode = "rotate" | "invalid_grant" | "invalid_client" | "drop";

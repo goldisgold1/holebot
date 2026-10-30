@@ -24,8 +24,12 @@
 import type { LanguageService } from "./language-service";
 import { type CallbackAnswer, startLoopbackCallbackServer } from "./loopback-callback-server";
 
-/** The one path this listener answers. Everything else is a 404, including `/`. */
-export const MCP_OAUTH_REDIRECT_PATH = "/mcp-auth";
+/**
+ * The one path this listener answers. Everything else is a 404, including `/`. It is `/callback`
+ * because the hole.fm connector accepts only an exact loopback `/callback` for a pre-registered
+ * client (`holefm-openbot`); servers that register OpenBot dynamically accept any path.
+ */
+export const MCP_OAUTH_REDIRECT_PATH = "/callback";
 
 /** The port tried first. Not assigned by IANA as far as this was checked; any other works the same. */
 export const MCP_OAUTH_REDIRECT_PORT = 28_417;

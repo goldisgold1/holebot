@@ -28,7 +28,7 @@ const OUT = resolve(import.meta.dirname, "../.openbot-build/mcp-oauth-store-e2e"
 const NOTION = "https://mcp.notion.com/mcp";
 const VERCEL = "https://mcp.vercel.com/";
 const STRIPE = "https://mcp.stripe.com/";
-const REDIRECT_URL = "http://127.0.0.1:28417/mcp-auth";
+const REDIRECT_URL = "http://127.0.0.1:28417/callback";
 const UNREADABLE = sourceText("error.mcp.signInFileUnreadable");
 
 function cipher(key: string): SecretCipher {

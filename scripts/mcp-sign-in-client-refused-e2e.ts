@@ -193,7 +193,7 @@ async function runCase(name: string, authMethods: string[], attempts: number, st
       assert.ok(state, "the page has a state");
       setTimeout(() => oauth.receiveAuthorizationCode(state, "e2e-grant"), 50);
     },
-    redirectUrl: "http://127.0.0.1:28417/mcp-auth",
+    redirectUrl: "http://127.0.0.1:28417/callback",
     signInTimeoutMs: 10_000,
   });
   try {

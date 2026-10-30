@@ -63,4 +63,7 @@ writeFileSync(
   ].join("\n"),
   { mode: 0o600 },
 );
+// The wake bridge mounts this file; Docker would make a folder of a missing one. add-wake-hook.ts fills it.
+const wakeHooks = join(directory, "wake-hooks.json");
+if (!existsSync(wakeHooks)) writeFileSync(wakeHooks, "{}\n", { mode: 0o600 });
 console.log(`Wrote ${composeEnv} and ${workerEnv}. Keep both private and back them up.`);

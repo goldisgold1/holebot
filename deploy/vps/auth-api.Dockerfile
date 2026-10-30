@@ -4,8 +4,9 @@
 FROM oven/bun:1.4.2 AS build
 WORKDIR /app
 COPY . .
+# The web app at /app is built from the desktop renderer, so the build needs every workspace package.
 # --ignore-scripts skips the root postinstall, which downloads Electron for the desktop app.
-RUN bun install --frozen-lockfile --ignore-scripts --filter @openbot/auth-api
+RUN bun install --frozen-lockfile --ignore-scripts
 # The Vite build of the Worker needs a large heap. Give the VPS at least 8 GB of memory, or swap.
 RUN cd apps/auth-api && NODE_OPTIONS=--max-old-space-size=6144 bun run build
 

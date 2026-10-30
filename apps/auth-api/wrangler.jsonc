@@ -23,6 +23,7 @@
   "routes": [],
   "secrets": {
     "required": [
+      "AUTH_ACCESS_CODE_HASHES",
       "SKILLS_ADMIN_TOKEN",
       "SITE_REPORT_HASH_SECRET",
       "REMOTE_TICKET_PRIVATE_JWK",

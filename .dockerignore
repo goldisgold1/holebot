@@ -6,3 +6,8 @@
 coverage
 dist
 out
+# HoleA.I VPS secrets and local test state never go into an image.
+deploy/vps/auth-api.env
+deploy/vps/wake-hooks.json
+.openbot
+.openbot-build

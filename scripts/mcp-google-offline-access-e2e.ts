@@ -50,7 +50,7 @@ async function runCase(name: string, scope: string): Promise<Case> {
     },
     // The browser never opens: the page is only read, and the sign-in then times out.
     openExternal: async (page) => void opened.push(page),
-    redirectUrl: "http://127.0.0.1:28417/mcp-auth",
+    redirectUrl: "http://127.0.0.1:28417/callback",
     signInTimeoutMs: 2_000,
   });
   const failures: string[] = [];

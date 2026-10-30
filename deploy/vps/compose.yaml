@@ -34,6 +34,19 @@ services:
       timeout: 5s
       retries: 20
 
+  # hole.fm wakes (Cursor-style Bearer webhooks) in, signed OpenBot webhook routines out. See wake-bridge/server.ts.
+  wake-bridge:
+    image: oven/bun:1.4.2
+    restart: unless-stopped
+    working_dir: /app
+    command: ["bun", "server.ts"]
+    environment:
+      WAKE_HOOKS_PATH: /run/wake-hooks.json
+      SIGNAL_INTERNAL_URL: http://remote-api:8443
+    volumes:
+      - ./wake-bridge/server.ts:/app/server.ts:ro
+      - ./wake-hooks.json:/run/wake-hooks.json:ro
+
   # Cloudflare runs the Worker's cron every 5 minutes. On the VPS this calls the same handler.
   scheduler:
     image: curlimages/curl:8.17.0
@@ -44,7 +57,7 @@ services:
     entrypoint:
       - /bin/sh
       - -c
-      - 'while true; do curl -fsS "http://auth-api:3100/__scheduled?cron=*%2F5+*+*+*+*" >/dev/null || echo "scheduled run failed"; sleep 300; done'
+      - 'while true; do curl -fsS "http://auth-api:3100/cdn-cgi/handler/scheduled?cron=*%2F5+*+*+*+*" >/dev/null || echo "scheduled run failed"; sleep 300; done'
 
   remote-api:
     build:
@@ -100,7 +113,30 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # The 24/7 agent server (headless OpenBot, built from this repository). Start it after the backend works:
+  #   docker compose ... --profile agents up -d --build agents
+  #   docker compose ... exec agents openbot login     (your email, then your access code)
+  agents:
+    profiles: ["agents"]
+    build:
+      context: ../..
+      dockerfile: deploy/vps/agents.Dockerfile
+    restart: unless-stopped
+    security_opt:
+      - seccomp=../../docker/seccomp.json
+      - no-new-privileges:true
+    shm_size: 1g
+    stop_grace_period: 60s
+    # The app reaches bot.hole.fm through this host's Caddy, not out and back in through the router.
+    extra_hosts:
+      - "${SITE_DOMAIN}:host-gateway"
+      - "${API_DOMAIN}:host-gateway"
+      - "${SIGNAL_DOMAIN}:host-gateway"
+    volumes:
+      - agents-data:/data
+
 volumes:
   caddy-data:
   caddy-config:
   auth-data:
+  agents-data:
