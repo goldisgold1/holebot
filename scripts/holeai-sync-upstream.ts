@@ -1,5 +1,6 @@
 // The weekly HoleA.I sync with nightly-labs/openbot (HOLEAI-FORK.md).
-//   bun scripts/holeai-sync-upstream.ts              fetch, merge into sync/upstream-<date>, check
+//   bun scripts/holeai-sync-upstream.ts              merge the newest released version (vX.Y.Z tag)
+//   bun scripts/holeai-sync-upstream.ts --main       merge unreleased upstream main instead
 //   bun scripts/holeai-sync-upstream.ts --continue   after resolving the conflicts it listed
 // It never merges into holeai-internal and never pushes.
 import { execFileSync, spawnSync } from "node:child_process";
@@ -11,6 +12,16 @@ const logger = createOpenBotLogger("holeai-sync-upstream");
 const root = join(import.meta.dir, "..");
 const BASE = "holeai-internal";
 const continuing = process.argv.includes("--continue");
+const fromMain = process.argv.includes("--main");
+
+/** The newest released version tag of upstream, such as v0.55.0. */
+function newestRelease(): string {
+  const tags = git("tag", "-l", "v*", "--sort=-v:refname")
+    .split("\n")
+    .filter((tag) => /^v\d+\.\d+\.\d+$/u.test(tag));
+  if (!tags[0]) throw new Error("No upstream release tag found.");
+  return tags[0];
+}
 
 function git(...args: string[]): string {
   return execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
@@ -41,15 +52,16 @@ if (!continuing) {
   git("switch", BASE);
   logger.info("Fetching nightly-labs/openbot…");
   git("fetch", "upstream", "--tags");
-  const fresh = git("log", "--oneline", `${BASE}..upstream/main`);
+  const target = fromMain ? "upstream/main" : newestRelease();
+  const fresh = git("log", "--oneline", `${BASE}..${target}`);
   if (!fresh) {
-    logger.info("No new upstream commits. Nothing to sync.");
+    logger.info(`${BASE} already has ${target}. No new version to sync.`);
     process.exit(0);
   }
-  logger.info(`New upstream commits:\n${fresh}`);
-  const branch = `sync/upstream-${new Date().toISOString().slice(0, 10)}`;
+  logger.info(`New upstream commits up to ${target}:\n${fresh}`);
+  const branch = `sync/upstream-${fromMain ? new Date().toISOString().slice(0, 10) : target}`;
   git("switch", "-C", branch);
-  const merge = spawnSync("git", ["merge", "--no-ff", "--no-edit", "upstream/main"], { cwd: root, stdio: "inherit" });
+  const merge = spawnSync("git", ["merge", "--no-ff", "--no-edit", target], { cwd: root, stdio: "inherit" });
   if (merge.status !== 0) {
     const unresolved = resolveDeletedByUs();
     if (unresolved.length > 0) {
@@ -88,6 +100,8 @@ if (git("status", "--porcelain", "--", "apps/auth-api/src/routeTree.gen.ts") !==
 }
 
 const checks = [
+  // Upstream commits can add packages (bun.lock); the type check needs them installed.
+  run("Install", "bun", ["install", "--frozen-lockfile"]),
   run("Fork guard", "bun", ["scripts/holeai-fork-guard.ts"]),
   run("Type check", "bun", ["run", "typecheck"]),
   run("auth-api tests", "bun", ["run", "test:api"]),
