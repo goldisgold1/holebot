@@ -42,7 +42,8 @@ the same way, and pick the agent server in the server list.
   in the live view. Optional: a ChatGPT or Gemini plan as the backup model.
 - **MCP → Add server:**
   - hole.fm: URL `https://ai.holeacquisition.com/mcp`, sign-in app client ID `holefm-openbot`, no secret.
-    Sign in with your hole.fm account and approve.
+    hole.fm checks your hole.fm login before anything else, so first open `https://ai.holeacquisition.com` in
+    the same browser (the server's live view) and sign in there. Then add the server and approve.
   - Higgsfield: URL `https://mcp.higgsfield.ai/mcp`, sign in with your Higgsfield account.
   - Kling: the official Kling MCP (`https://kling.ai/app/mcp`), if the Producer runs Kling.
 - **Import:** choose `deploy/team/holeai-team-import.zip`. It makes 10 agents and the HoleA.I team channel.
