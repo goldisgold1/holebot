@@ -18,5 +18,6 @@ docker run --rm -v "$work:/src" -v /root/mobile-web-out:/out oven/bun:1.4.2 bash
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash - >/dev/null && apt-get install -y -qq nodejs >/dev/null
   test -d /src/node_modules || (cd /src && bun install --frozen-lockfile --ignore-scripts)
   cd /src/apps/mobile && NODE_OPTIONS=--max-old-space-size=4096 npx expo export --platform web --output-dir /out/web'
-rm -rf deploy/vps/mobile-web && cp -r /root/mobile-web-out/web deploy/vps/mobile-web
+# Replace the contents, not the folder: Caddy bind-mounts this folder and would keep the deleted one.
+mkdir -p deploy/vps/mobile-web && find deploy/vps/mobile-web -mindepth 1 -delete && cp -r /root/mobile-web-out/web/. deploy/vps/mobile-web/
 echo "Built. Caddy serves it at /m/ (restart caddy the first time: docker compose ... up -d caddy)."

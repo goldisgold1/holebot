@@ -15,6 +15,7 @@ import type { MobileTextKey } from "@openbot/i18n/mobile";
 import * as Crypto from "expo-crypto";
 import * as Device from "expo-device";
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import { z } from "zod";
 import { isAndroid, isIOS } from "@/shared/lib/platform";
 import { currentText } from "@/shared/lib/text";
@@ -114,8 +115,12 @@ async function redeemMobileConnectSession(value: string): Promise<MobileSession>
   return session;
 }
 
-/** The account service for email sign-in. A development build can name a local one. */
+/**
+ * The account service for email sign-in. A development build can name a local one. HoleA.I: the web build
+ * runs on the site, which the same Worker serves, so it asks its own origin and needs no CORS.
+ */
 function mobileAccountApiUrl(): string {
+  if (Platform.OS === "web" && typeof location !== "undefined") return location.origin;
   const override = process.env.EXPO_PUBLIC_OPENBOT_API_URL;
   return (override && __DEV__ && normalizeAccountApiUrl(override)) || OPENBOT_CONTROL_PLANE_ORIGIN;
 }

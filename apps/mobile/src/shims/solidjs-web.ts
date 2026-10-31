@@ -15,3 +15,8 @@ export const ssrStyle = unsupportedSolidWebUi;
 const escapeHtml = unsupportedSolidWebUi;
 
 export { escapeHtml as escape };
+
+// The bundle calls these when it loads (the web build runs it in the page), so they return the stub
+// instead of throwing. The returned functions still throw if anything renders with them.
+export const template = () => unsupportedSolidWebUi;
+export const delegateEvents = () => {};
