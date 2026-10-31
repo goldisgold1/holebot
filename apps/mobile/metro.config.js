@@ -22,8 +22,11 @@ const nativeModuleShims = new Map([
   ["solid-js", path.resolve(__dirname, "src/shims/solid-js.ts")],
 ]);
 
+// HoleA.I: modules with no browser version, replaced in the web build (/m) only.
+const webModuleShims = new Map([["expo-secure-store", path.resolve(__dirname, "src/shims/secure-store-web.ts")]]);
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  const shim = nativeModuleShims.get(moduleName);
+  const shim = (platform === "web" && webModuleShims.get(moduleName)) || nativeModuleShims.get(moduleName);
   if (shim) return { filePath: shim, type: "sourceFile" };
   return context.resolveRequest(context, moduleName, platform);
 };
