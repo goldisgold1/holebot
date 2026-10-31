@@ -27,11 +27,37 @@ import { createPointerGaze } from "./avatar-pointer-gaze";
 const AVATAR_FPS = 30;
 const SIDEBAR_MOTION_HOLD_FACTOR = 1.25;
 
-// HoleA.I: a resting avatar on screen comes alive for a short burst now and then, so a quiet sidebar does
-// not look frozen. One burst every 8-20 s per avatar keeps the cost close to the hover-only rule below.
+// HoleA.I: now and then one resting avatar on screen comes alive for a short burst, so a quiet sidebar does
+// not look frozen. One shared clock picks a single avatar every 15-25 s, and only while the window has the
+// focus: a timer per avatar kept about three of them animating at once, at all times (11% GPU while idle).
 const AMBIENT_BURST_MS = 4_000;
-const AMBIENT_MIN_GAP_MS = 8_000;
-const AMBIENT_GAP_SPREAD_MS = 12_000;
+const AMBIENT_MIN_GAP_MS = 15_000;
+const AMBIENT_GAP_SPREAD_MS = 10_000;
+const ambientCandidates = new Set<(on: boolean) => void>();
+let ambientClock: ReturnType<typeof setTimeout> | undefined;
+
+function scheduleAmbientBurst(): void {
+  ambientClock = setTimeout(
+    () => {
+      const candidates = [...ambientCandidates];
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      if (chosen && document.visibilityState === "visible" && document.hasFocus()) {
+        chosen(true);
+        setTimeout(() => chosen(false), AMBIENT_BURST_MS);
+      }
+      if (ambientCandidates.size > 0) scheduleAmbientBurst();
+      else ambientClock = undefined;
+    },
+    AMBIENT_MIN_GAP_MS + Math.random() * AMBIENT_GAP_SPREAD_MS,
+  );
+}
+
+/** Puts an on-screen avatar in the draw for the next burst, or takes it out. */
+function setAmbientCandidate(setAmbient: (on: boolean) => void, onScreen: boolean): void {
+  if (onScreen) ambientCandidates.add(setAmbient);
+  else ambientCandidates.delete(setAmbient);
+  if (ambientCandidates.size > 0 && ambientClock === undefined) scheduleAmbientBurst();
+}
 
 // Resting montage shown on hover: shape-safe blocks only, so the seeded silhouette stays
 // on screen while the face carries the personality (blink, wink, wide eyes).
@@ -345,33 +371,16 @@ function GeneratedAvatar(props: {
     interactionTarget?.addEventListener("focusin", startFocusInteraction);
     interactionTarget?.addEventListener("focusout", stopFocusInteraction);
 
-    // The ambient bursts run only while the avatar is on screen and the window is visible.
-    let onScreen = false;
+    // Only an avatar on screen is in the draw for the shared ambient burst.
     const observer =
       element && typeof IntersectionObserver === "function"
-        ? new IntersectionObserver(([entry]) => {
-            onScreen = entry?.isIntersecting ?? false;
-          })
+        ? new IntersectionObserver(([entry]) => setAmbientCandidate(setAmbient, entry?.isIntersecting ?? false))
         : undefined;
     if (element) observer?.observe(element);
-    let ambientTimer: ReturnType<typeof setTimeout> | undefined;
-    const scheduleAmbient = () => {
-      ambientTimer = setTimeout(
-        () => {
-          if (!onScreen || document.visibilityState !== "visible") return scheduleAmbient();
-          setAmbient(true);
-          ambientTimer = setTimeout(() => {
-            setAmbient(false);
-            scheduleAmbient();
-          }, AMBIENT_BURST_MS);
-        },
-        AMBIENT_MIN_GAP_MS + Math.random() * AMBIENT_GAP_SPREAD_MS,
-      );
-    };
-    scheduleAmbient();
 
     return () => {
-      clearTimeout(ambientTimer);
+      setAmbientCandidate(setAmbient, false);
+      setAmbient(false);
       observer?.disconnect();
       media?.removeEventListener?.("change", syncReducedMotion);
       interactionTarget?.removeEventListener("pointerenter", startInteraction);
