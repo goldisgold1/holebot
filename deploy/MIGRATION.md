@@ -69,6 +69,16 @@ the same way, and pick the agent server in the server list.
 Bot ids for step 2: `producer`, `publisher`, `analyst`, `strategist`, `story_maker`, `rosie`, `chief`,
 `carousel_maker`.
 
+## Before the VPS: the team on this PC
+
+Running since 2026-10-31: the team is imported into the local app (`start-local.cmd`, `open-local-app.cmd`), models set
+(Producer, Analyst, Strategist on Opus 5.5; the rest on Sonnet 5.5), and the `holefm` MCP server added with sign-in app
+`holefm-openbot`. `start-wake-link.cmd` runs the wake bridge here and an SSH tunnel that opens `127.0.0.1:18790` on the
+hole.fm VPS (allowed in `url_allow`). To switch a bot: in the desktop app sign in to `holefm` (and add `higgsfield`,
+`kling`), ask the agent to create a webhook routine, reveal its secret on the card, run
+`bun deploy/vps/add-wake-hook.ts <bot> <webhook URL> <secret>`, and set the bot's hole.fm wake URL to
+`http://127.0.0.1:18790/hook/<bot>` with the printed `hob_` key. The PC and all three windows must stay on.
+
 ## Back to Grok, any time
 
 ```sh
