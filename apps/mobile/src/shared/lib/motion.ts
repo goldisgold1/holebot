@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { useReducedMotion as useSystemReducedMotion } from "react-native-reanimated";
 import { type MotionPreference, useMotionPreferences } from "../../features/settings/model/motion";
 
@@ -8,7 +9,8 @@ import { type MotionPreference, useMotionPreferences } from "../../features/sett
 export function useReducedMotion(): boolean {
   const system = useSystemReducedMotion();
   const animations = useMotionPreferences((state) => state.allAnimations);
-  return system || !animations;
+  // HoleA.I: the web build (/m) keeps only fades. Reanimated layout entrances can stop mid-move in Safari.
+  return Platform.OS === "web" || system || !animations;
 }
 
 /**
