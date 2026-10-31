@@ -9,7 +9,7 @@ import type {
   SaveMcpSignInAppInput,
   UpdateAgentInput,
 } from "@openbot/contracts/ipc";
-import { createMcpServerId, isAgentModel } from "@openbot/contracts/ipc";
+import { isAgentModel } from "@openbot/contracts/ipc";
 import type { SaveEventRoutineInput, SaveEventRoutineResult } from "@openbot/contracts/ipc-events";
 import type { Effect } from "effect";
 import { runCauseEffect } from "../backend/effect-boundary";
@@ -21,7 +21,7 @@ export interface ServerTeamControlOptions {
   listAgents(): AgentSummary[];
   updateAgent(input: UpdateAgentInput): Effect.Effect<unknown, { readonly cause: unknown }>;
   listMcpServers(): McpServerConfig[];
-  saveMcpServer(input: SaveMcpServerInput): Effect.Effect<unknown, { readonly cause: unknown }>;
+  saveMcpServer(input: SaveMcpServerInput): Effect.Effect<McpServerConfig[], { readonly cause: unknown }>;
   saveMcpSignInApp(input: SaveMcpSignInAppInput): Effect.Effect<unknown, { readonly cause: unknown }>;
   saveRoutine(input: SaveEventRoutineInput): Effect.Effect<SaveEventRoutineResult, { readonly cause: unknown }>;
   timezone(): string;
@@ -64,7 +64,8 @@ export function createServerTeamControl(options: ServerTeamControlOptions): Serv
       if (!trimmed || !/^https:\/\//u.test(url.trim())) throw new Error("Give a name and an https:// URL.");
       const existing = options.listMcpServers().find((server) => server.name.toLowerCase() === trimmed.toLowerCase());
       const config: McpServerConfig = {
-        id: existing?.id ?? createMcpServerId(),
+        // A new server is saved with an empty id; the store gives it one.
+        id: existing?.id ?? "",
         name: trimmed,
         transport: "http",
         enabled: true,
@@ -76,12 +77,13 @@ export function createServerTeamControl(options: ServerTeamControlOptions): Serv
         url: url.trim(),
         headers: [],
       };
-      await runCauseEffect(options.saveMcpServer({ config }));
+      const saved = await runCauseEffect(options.saveMcpServer({ config }));
+      const id = saved.find((server) => server.name.toLowerCase() === trimmed.toLowerCase())?.id ?? config.id;
       if (clientId.trim())
         await runCauseEffect(
-          options.saveMcpSignInApp({ mcpServerId: config.id, clientId: clientId.trim(), clientSecret: "", scope: "" }),
+          options.saveMcpSignInApp({ mcpServerId: id, clientId: clientId.trim(), clientSecret: "", scope: "" }),
         );
-      return { mcp: config.name, id: config.id, url: config.url, client_id: clientId.trim() || null };
+      return { mcp: config.name, id, url: config.url, client_id: clientId.trim() || null };
     },
     async wakeRoutine(agentName, routineName, instruction) {
       const agent = agentNamed(agentName);
