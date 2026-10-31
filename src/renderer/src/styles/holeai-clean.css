@@ -67,9 +67,11 @@
 
 /*
  * The copy, react and reply buttons and the time sit beside the bubble, not under it, and show on hover, also
- * on a computer with a touch screen. A phone opens the same actions with a long press.
+ * on a computer with a touch screen. A phone opens the same actions with a long press. Only the rows of the chat
+ * itself: an agent message opened under its marker sits in a box that sizes to its content, where a grid column
+ * of `minmax(0, auto)` shrinks to nothing and the text runs one letter per line.
  */
-.message-entry .ui-message-content {
+.virtual-chat-row > .message-entry > .ui-message-content {
   display: grid;
   grid-auto-flow: row dense;
   grid-template-columns: minmax(0, auto) auto;
@@ -78,20 +80,20 @@
   gap: 4px 6px;
 }
 
-.message-entry .ui-message-content > .message-author-name {
+.virtual-chat-row > .message-entry > .ui-message-content > .message-author-name {
   grid-column: 1 / -1;
 }
 
-.message-entry-user .ui-message-content {
+.virtual-chat-row > .message-entry-user > .ui-message-content {
   grid-template-columns: auto minmax(0, auto);
   justify-content: end;
 }
 
-.message-entry-user .ui-message-content > .message-shell {
+.virtual-chat-row > .message-entry-user > .ui-message-content > .message-shell {
   grid-column: 2;
 }
 
-.message-entry-user .ui-message-content > .message-action-row {
+.virtual-chat-row > .message-entry-user > .ui-message-content > .message-action-row {
   grid-column: 1;
 }
 
