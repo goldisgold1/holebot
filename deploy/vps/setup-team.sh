@@ -5,6 +5,7 @@
 #   bash deploy/vps/setup-team.sh                 everything (the models need Claude connected on the server)
 #   bash deploy/vps/setup-team.sh --models-only   after Claude is connected in the app
 #   bash deploy/vps/setup-team.sh --wakes-only    for bots whose routine had no URL yet
+#   bash deploy/vps/setup-team.sh --mcp-only      adds the hole.fm and Higgsfield MCP servers
 # The two lines hole.fm needs per bot go to /root/holefm-wake-lines/<bot> (root only). Switch hole.fm over
 # (switch-holefm-wakes.sh) only after Claude and the MCP servers are signed in, or wakes reach agents that cannot work.
 set -euo pipefail
@@ -13,7 +14,7 @@ export PATH="$HOME/.bun/bin:$PATH"
 C=(docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env)
 team() { "${C[@]}" exec -T agents openbot team "$@"; }
 mode=${1:-all}
-case $mode in all | --models-only | --wakes-only) ;; *) echo "Unknown option: $mode" >&2; exit 1 ;; esac
+case $mode in all | --models-only | --wakes-only | --mcp-only) ;; *) echo "Unknown option: $mode" >&2; exit 1 ;; esac
 
 echo "== Claude Code (the image has no bundled copy; the server finds ~/.local/bin/claude in its /data volume)"
 docker exec -u openbot -e HOME=/data "$("${C[@]}" ps -q agents)" bash -c \
@@ -25,6 +26,13 @@ if [ "$mode" = all ]; then
   "${C[@]}" exec -T -u 0 agents chown openbot:openbot /data/holeai-team-import.zip
   team import /data/holeai-team-import.zip
 fi
+
+if [ "$mode" = all ] || [ "$mode" = --mcp-only ]; then
+  echo "== MCP servers (the owner then presses Sign in on each in the app)"
+  team mcp holefm https://ai.holeacquisition.com/mcp holefm-openbot </dev/null
+  team mcp higgsfield https://mcp.higgsfield.ai/mcp </dev/null
+fi
+[ "$mode" = --mcp-only ] && exit 0
 
 if [ "$mode" != --wakes-only ]; then
   echo "== Models (Producer, Analyst, Strategist on Opus; the rest on Sonnet)"
