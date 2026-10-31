@@ -6,8 +6,11 @@ ARG BASE=ubuntu:24.04@sha256:a853f94d226358a79c740cfc7bce0c289748f3fe3488d921d03
 
 FROM oven/bun:1.4.2 AS appimage
 RUN apt-get update \
-  && apt-get install --yes --no-install-recommends ca-certificates curl xz-utils unzip tar \
+  && apt-get install --yes --no-install-recommends ca-certificates curl gnupg xz-utils unzip tar \
+  && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+  && apt-get install --yes --no-install-recommends nodejs \
   && rm -rf /var/lib/apt/lists/*
+# Node 24 above: Vite and electron-builder are Node programs and fail when `bun run` falls back to Bun.
 WORKDIR /src
 COPY . .
 # The root postinstall also installs git hooks and stamps a dev install; the image needs only Electron.
