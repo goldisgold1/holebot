@@ -30,6 +30,11 @@ Usage: openbot <command>
                                  account. It works for one sign-in and expires after two minutes.
   logout                         Sign out. The server stops until the next sign-in.
   name <name>                    Change the server name.
+  team import <file.zip>         Import every agent and group chat of an export (HoleA.I).
+  team model <agent> <provider> <model>
+                                 Set an agent's model, such as: team model Producer claude claude-opus-5-5
+  team wake <agent> [<instruction>]
+                                 Make a webhook routine for the agent; prints its URL and signing secret.
   logs [-f]                      Show the OpenBot log.
   start | stop | restart         Control the OpenBot service (sudo).
   update                         Install the newest release now (sudo).
@@ -316,6 +321,29 @@ uninstall_command() {
   echo "To delete the data too: sudo userdel --remove $user && sudo rm -rf /srv/openbot-hosted"
 }
 
+# HoleA.I: sets the team up with no app. The answer lines are printed as they come.
+team_command() {
+  local action=${1:-}
+  [ "$#" -eq 0 ] || shift
+  case $action in
+    import)
+      [ "$#" -eq 1 ] || fail "Usage: openbot team import <file.zip>"
+      control POST /v1/team/import "path=$(realpath "$1")"
+      ;;
+    model)
+      [ "$#" -eq 3 ] || fail "Usage: openbot team model <agent> <provider> <model>"
+      control POST /v1/team/model "agent=$1" "provider=$2" "model=$3"
+      ;;
+    wake)
+      [ "$#" -ge 1 ] || fail "Usage: openbot team wake <agent> [<instruction>]"
+      control POST /v1/team/wake "agent=$1" "name=hole.fm wake" "instruction=${2:-}"
+      ;;
+    *) fail "Usage: openbot team import|model|wake ..." ;;
+  esac
+  check_answer || exit 1
+  grep -v "^status=" <<<"$response"
+}
+
 command=${1:-}
 [ "$#" -eq 0 ] || shift
 case $command in
@@ -332,6 +360,7 @@ case $command in
     check_answer || exit 1
     show_status
     ;;
+  team) team_command "$@" ;;
   mobile-connect) mobile_connect_command ;;
   logs) logs_command "$@" ;;
   start | stop | restart)

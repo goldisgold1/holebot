@@ -75,8 +75,19 @@ export interface ServerModeOptions {
   /** The memory guard, so that `status` shows the memory ceiling and the turn limit. */
   memory: Pick<ServerMemory, "level" | "sample" | "turnLimit"> | null;
   onError: (message: string, error: unknown) => void;
+  /** HoleA.I: sets the team up from the terminal (`openbot team ...`), so a server needs no app for it. */
+  team?: ServerTeamControl | null;
   /** Tests only. */
   uid?: number;
+}
+
+/** HoleA.I: team setup on a server, by agent name. Each answer's lines are what `openbot team` prints. */
+export interface ServerTeamControl {
+  /** Imports every agent and channel of an export on this server's disk. */
+  importTeam(path: string): Promise<Answer["lines"]>;
+  setModel(agentName: string, provider: string, model: string): Promise<Answer["lines"]>;
+  /** Makes a webhook routine for the agent and answers its URL and its signing secret, shown only here. */
+  wakeRoutine(agentName: string, routineName: string, instruction: string): Promise<Answer["lines"]>;
 }
 
 interface Answer {
@@ -215,6 +226,16 @@ export class ServerMode {
         return runCauseEffect(this.#rename(body.get("name") ?? ""));
       case "POST /v1/mobile-connect":
         return runCauseEffect(this.#mobileConnect());
+      case "POST /v1/team/import":
+        return this.#team((team) => team.importTeam(body.get("path") ?? ""));
+      case "POST /v1/team/model":
+        return this.#team((team) =>
+          team.setModel(body.get("agent") ?? "", body.get("provider") ?? "", body.get("model") ?? ""),
+        );
+      case "POST /v1/team/wake":
+        return this.#team((team) =>
+          team.wakeRoutine(body.get("agent") ?? "", body.get("name") ?? "", body.get("instruction") ?? ""),
+        );
       case "POST /v1/logout":
         await runCauseEffect(
           this.#options.centralAuth.logout().pipe(Effect.mapError(({ cause }) => new RemoteWorkflowError({ cause }))),
@@ -223,6 +244,13 @@ export class ServerMode {
       default:
         return failure(404, "not_found");
     }
+  }
+
+  async #team(run: (team: ServerTeamControl) => Promise<Answer["lines"]>): Promise<Answer> {
+    const { team } = this.#options;
+    if (!team) return failure(404, "not_found");
+    if (this.#options.centralAuth.getState().status !== "signed_in") return failure(409, "account_signed_out");
+    return { status: 200, lines: await run(team) };
   }
 
   #status(): Answer {

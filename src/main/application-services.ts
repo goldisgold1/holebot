@@ -279,6 +279,7 @@ import { clearRoutineHold, ROUTINE_HOLD_FILE, takeRoutineHold, writeRoutineHold 
 import { ScreenCapturer } from "./screen-capture";
 import { agentProcessEnvironment, ServerMemory } from "./server-memory";
 import { ServerMode, type ServerModeEnvironment } from "./server-mode";
+import { createServerTeamControl } from "./server-team-control";
 import { ServerTimezonePreferenceStore } from "./server-timezone-preference-store";
 import {
   configureApplicationProtocol,
@@ -3016,6 +3017,13 @@ export async function createApplicationServices({
         host,
         memory: hostMemory,
         onError: (message, error) => logger.warn(message, toLogValue(error)),
+        team: createServerTeamControl({
+          agentImport,
+          listAgents: () => service.listAgents(),
+          updateAgent: (input) => service.updateAgent(input),
+          saveRoutine: (input) => events.saveRoutine(input),
+          timezone: () => serverTimezone.effective(),
+        }),
       })
     : null;
   if (serverMode) {
