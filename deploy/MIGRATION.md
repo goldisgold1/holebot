@@ -76,7 +76,7 @@ Running since 2026-10-31: the team is imported into the local app (`start-local.
 `holefm-openbot`. `start-wake-link.cmd` runs the wake bridge here and an SSH tunnel that opens `127.0.0.1:18790` on the
 hole.fm VPS (allowed in `url_allow`). To switch a bot: in the desktop app sign in to `holefm` (and add `higgsfield`,
 `kling`), ask the agent to create a webhook routine, reveal its secret on the card, run
-`bun deploy/vps/add-wake-hook.ts <bot> <webhook URL> <secret>`, and set the bot's hole.fm wake URL to
+`bun deploy/vps/add-wake-hook.ts --local <bot> <webhook URL> <secret>`, and set the bot's hole.fm wake URL to
 `http://127.0.0.1:18790/hook/<bot>` with the printed `hob_` key. The PC and all three windows must stay on.
 
 ## Back to Grok, any time
@@ -93,3 +93,10 @@ Use `all` for every bot. Then turn the routine on in Grok Bot again. Removing th
 `bun scripts/holeai-sync-upstream.ts` (new OpenBot versions only), then `bash deploy/vps/ship.sh root@<VPS IP>
 duy@holeacquisition.com --agents` to update the VPS. When a hole.fm skill changes, rebuild the team zip and
 import it again, or let the agents read the live skill (`holefm_skill_read`), which their instructions already ask for.
+
+## More than one Producer
+
+Make a second Producer agent (duplicate the first, same skills and model), give it its own webhook routine, and run
+`bun deploy/vps/add-wake-hook.ts --add producer <its webhook URL> <its secret>` (add `--local` before the VPS). The
+bridge then wakes the Producers in turn; if one is down, the wake goes to the next. hole.fm needs no change, but raise
+the Producer wake cap and jobs per day (Vincent's call) or the extra Producer sits idle.
