@@ -28,7 +28,7 @@ bun scripts/holeai-sync-upstream.ts
 | Paid commercial license | Removed everywhere (no `packages/contracts/src/license.ts`, no license service, no license UI or i18n keys) | Drop any new license code; keep the rest of the change |
 | Public website and legal pages | Removed. Kept routes: `/app`, `/app-preview`, `/join`, `/agents/*`, `/billing/return`, `/report-site`, `/health`, `/.well-known`, `/v1`, `/v2`, `/slack`, `/discord`, `/api`. When upstream adds `routes/v1/mobile/changelog.ts` (the mobile release notes), restore `lib/changelog.ts` and `lib/changelog-releases.ts` from upstream: that route needs them | Drop new website pages and content, but keep what an app route imports; regenerate `routeTree.gen.ts` |
 | Sign-in | Access codes: `AUTH_ACCESS_CODE_HASHES` in `auth-service.ts` and `request-auth.ts`; English sign-in text says "access code" | Keep the access-code branch in `start` |
-| Backend addresses | `bot.hole.fm`, `api.bot.hole.fm`, `signal.bot.hole.fm` (`invite-links.ts`, `agent-template-links.ts`, `plugin-links.ts`, `remote-directory.ts`, `application-services.ts`, `wrangler.jsonc`) | Keep ours |
+| Backend addresses | `bot.holeacquisition.com`, `api.bot.holeacquisition.com`, `signal.bot.holeacquisition.com` (`invite-links.ts`, `agent-template-links.ts`, `plugin-links.ts`, `remote-directory.ts`, `application-services.ts`, `wrangler.jsonc`) | Keep ours |
 | Analytics and failure reports | Off: `packages/telemetry/src/transport.ts` sends nothing without an endpoint; desktop gates need a capture URL; website analytics is a no-op | Keep off |
 | Auto-update | Off: `publish: null` in `electron-builder.yml` | Keep off |
 | Member limit without a plan | 100 (`DEFAULT_TEAM_MEMBER_LIMIT`) | Keep ours |

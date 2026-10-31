@@ -28,7 +28,7 @@ export function AboutSettingsScreen() {
   return (
     <SettingsContent>
       <SettingsSection title={t("mobile.settings.about.resources")}>
-        <SettingsRow onPress={() => open("https://bot.hole.fm")}>
+        <SettingsRow onPress={() => open("https://bot.holeacquisition.com")}>
           <Typography.Paragraph>{t("mobile.settings.about.website")}</Typography.Paragraph>
         </SettingsRow>
         {error ? <SettingsNote>{error}</SettingsNote> : null}

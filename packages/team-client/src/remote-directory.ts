@@ -426,8 +426,8 @@ export class RemoteTeamDirectoryClient {
       // These production origins serve the same account Worker. Requests still use this client's origin.
       const publicWebsiteInvite =
         this.#authentication.kind === "browser" &&
-        origin === "https://bot.hole.fm" &&
-        inviteOrigin === "https://api.bot.hole.fm";
+        origin === "https://bot.holeacquisition.com" &&
+        inviteOrigin === "https://api.bot.holeacquisition.com";
       if (inviteOrigin !== origin && !publicWebsiteInvite) {
         return yield* directoryFailure(sourceText("error.remote.inviteOtherService"));
       }

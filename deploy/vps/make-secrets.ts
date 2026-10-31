@@ -29,9 +29,9 @@ writeFileSync(
   composeEnv,
   [
     "ACME_EMAIL=duy@holeacquisition.com",
-    "SITE_DOMAIN=bot.hole.fm",
-    "API_DOMAIN=api.bot.hole.fm",
-    "SIGNAL_DOMAIN=signal.bot.hole.fm",
+    "SITE_DOMAIN=bot.holeacquisition.com",
+    "API_DOMAIN=api.bot.holeacquisition.com",
+    "SIGNAL_DOMAIN=signal.bot.holeacquisition.com",
     `TURN_PUBLIC_IP=${publicIp}`,
     `REMOTE_SESSION_SECRET=${secret()}`,
     `REMOTE_AUTH_WEBHOOK_SECRET=${webhookSecret}`,

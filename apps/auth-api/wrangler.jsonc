@@ -35,7 +35,7 @@
     // Sign-in uses access codes (AUTH_ACCESS_CODE_HASHES, deploy/vps/add-user.ts), not email.
     "AUTH_EXPOSE_DEVELOPMENT_CODE": "false",
     "REMOTE_TICKET_KEY_ID": "holeai-remote-1",
-    "REMOTE_SIGNAL_URL": "wss://signal.bot.hole.fm/v1/signal",
+    "REMOTE_SIGNAL_URL": "wss://signal.bot.holeacquisition.com/v1/signal",
     // Signal on the same Docker network (deploy/vps/compose.yaml). Caddy refuses /internal from outside.
     "REMOTE_AUTH_WEBHOOK_URL": "http://remote-api:8443/internal/auth-events",
     // Paid hosted servers were run by the previous owner. HoleA.I servers are its own PCs.

@@ -7,7 +7,7 @@ Everything below is built and tested. Move day is setup, not development.
 | Piece | Where | State |
 |---|---|---|
 | hole.fm accepts OpenBot | client `holefm-openbot` in the 4 hole.fm configs: holefm-grok's 518 tools and 42 scopes, 365-day sign-in, callbacks `http://127.0.0.1:28417/callback` and `http://localhost:28417/callback` | **Live** since 2026-10-30. Rollback: `/root/openbot_client/rollback.sh` |
-| hole.fm wakes can reach OpenBot | `state/wake_config.json`: `url_allow` has `https://bot.hole.fm/hook/`; `key_prefix` is empty, so Grok keys (`crsr_`) and wake-bridge keys (`hob_`) both pass | **Live**; no bot was switched. Grok keys backed up in `/root/openbot_client/wake_endpoints.grok-backup-20261030.json` |
+| hole.fm wakes can reach OpenBot | `state/wake_config.json`: `url_allow` has `https://bot.holeacquisition.com/hook/`; `key_prefix` is empty, so Grok keys (`crsr_`) and wake-bridge keys (`hob_`) both pass | **Live**; no bot was switched. Grok keys backed up in `/root/openbot_client/wake_endpoints.grok-backup-20261030.json` |
 | Wake bridge | `deploy/vps/wake-bridge/server.ts`: Bearer-key wake in, signed OpenBot webhook out | Tested against OpenBot's own signature check |
 | Backend | `deploy/vps/` (Caddy, auth-api in workerd, Signal, coturn, scheduler) | The built Worker was run the VPS way: migrations, access codes, scheduled job |
 | 24/7 agent server | `deploy/vps/agents.Dockerfile`, compose profile `agents` | Built on the VPS from this repository (the release workflow's Linux steps) |
@@ -33,7 +33,7 @@ It prints your first access code (also in `/root/holeai-first-access-code.txt` o
 cd /opt/holeai-bot && docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env exec agents openbot login
 ```
 
-Your email, then the access code. Then open the HoleA.I desktop app (or `https://bot.hole.fm/app`), sign in
+Your email, then the access code. Then open the HoleA.I desktop app (or `https://bot.holeacquisition.com/app`), sign in
 the same way, and pick the agent server in the server list.
 
 **4. On the agent server, in Server settings:**

@@ -127,7 +127,7 @@ services:
       - no-new-privileges:true
     shm_size: 1g
     stop_grace_period: 60s
-    # The app reaches bot.hole.fm through this host's Caddy, not out and back in through the router.
+    # The app reaches bot.holeacquisition.com through this host's Caddy, not out and back in through the router.
     extra_hosts:
       - "${SITE_DOMAIN}:host-gateway"
       - "${API_DOMAIN}:host-gateway"

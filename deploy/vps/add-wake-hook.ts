@@ -40,8 +40,8 @@ writeFileSync(hooksPath, `${JSON.stringify(hooks, null, 2)}\n`, { mode: 0o600 })
 
 const envPath = join(import.meta.dir, ".env");
 const site = existsSync(envPath)
-  ? (readFileSync(envPath, "utf8").match(/^SITE_DOMAIN=(.+)$/mu)?.[1] ?? "bot.hole.fm").trim()
-  : "bot.hole.fm";
+  ? (readFileSync(envPath, "utf8").match(/^SITE_DOMAIN=(.+)$/mu)?.[1] ?? "bot.holeacquisition.com").trim()
+  : "bot.holeacquisition.com";
 const url = local ? `http://127.0.0.1:18790/hook/${bot}` : `https://${site}/hook/${bot}`;
 console.log(
   add

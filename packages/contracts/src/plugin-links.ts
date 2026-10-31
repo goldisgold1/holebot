@@ -20,7 +20,7 @@
  * rule becomes weaker.
  */
 
-export const OPENBOT_PLUGIN_ORIGIN = "https://bot.hole.fm";
+export const OPENBOT_PLUGIN_ORIGIN = "https://bot.holeacquisition.com";
 export const OPENBOT_PLUGIN_PATH_PREFIX = "/plugins/";
 export const OPENBOT_PLUGIN_HOST = "plugins";
 export const WEB_APP_PLUGIN_PARAM = "plugin";

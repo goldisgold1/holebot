@@ -60,10 +60,10 @@ for (const file of trackedMatches(
 if (!fileContains("LICENSE", "MIT License")) problems.push("LICENSE: not the MIT License");
 if (!fileContains("electron-builder.yml", "publish: null"))
   problems.push("electron-builder.yml: auto-update publishing is on");
-if (!fileContains("packages/contracts/src/invite-links.ts", "https://api.bot.hole.fm"))
-  problems.push("packages/contracts/src/invite-links.ts: the API is not api.bot.hole.fm");
-if (!fileContains("src/main/application-services.ts", "https://api.bot.hole.fm"))
-  problems.push("src/main/application-services.ts: the packaged API is not api.bot.hole.fm");
+if (!fileContains("packages/contracts/src/invite-links.ts", "https://api.bot.holeacquisition.com"))
+  problems.push("packages/contracts/src/invite-links.ts: the API is not api.bot.holeacquisition.com");
+if (!fileContains("src/main/application-services.ts", "https://api.bot.holeacquisition.com"))
+  problems.push("src/main/application-services.ts: the packaged API is not api.bot.holeacquisition.com");
 if (fileContains("packages/telemetry/src/transport.ts", "analytics.openbot.run"))
   problems.push("packages/telemetry/src/transport.ts: sends to the previous owner's analytics");
 if (!fileContains("apps/auth-api/src/server/auth-service.ts", "accessCodeHashes"))

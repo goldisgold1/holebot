@@ -4,7 +4,7 @@ The whole backend runs on one VPS with Docker Compose:
 
 | Service | What it does |
 |---|---|
-| `caddy` | HTTPS for `bot.hole.fm`, `api.bot.hole.fm` and `signal.bot.hole.fm` (Let's Encrypt, automatic) |
+| `caddy` | HTTPS for `bot.holeacquisition.com`, `api.bot.holeacquisition.com` and `signal.bot.holeacquisition.com` (Let's Encrypt, automatic) |
 | `auth-api` | Accounts, sign-in, servers, invites, the web app. The Cloudflare Worker from `apps/auth-api`, run in workerd. D1 and R2 are files on the `auth-data` volume. |
 | `scheduler` | Calls the Worker's 5-minute job (Cloudflare's cron does it on Cloudflare) |
 | `remote-api` | Signal: the relay between the apps and the PCs, and the Slack, Discord and Telegram webhooks |
@@ -43,12 +43,12 @@ Back up both env files somewhere private. New ticket keys sign everyone out and 
 ```sh
 docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env up -d --build
 docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env logs -f auth-api remote-api
-curl https://api.bot.hole.fm/.well-known/jwks.json
+curl https://api.bot.holeacquisition.com/.well-known/jwks.json
 ```
 
 ## 5. Point the apps at it
 
-Packaged desktop builds already use `https://api.bot.hole.fm` and `wss://signal.bot.hole.fm/v1/signal`.
+Packaged desktop builds already use `https://api.bot.holeacquisition.com` and `wss://signal.bot.holeacquisition.com/v1/signal`.
 To try another backend, start the app with `OPENBOT_AUTH_API_URL` and `OPENBOT_REMOTE_SIGNAL_URL`.
 
 ## Backups

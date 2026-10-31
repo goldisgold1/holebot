@@ -1,8 +1,8 @@
 import { isOpenBotTeamApiHostname } from "./validation";
 
-export const OPENBOT_INVITE_ORIGIN = "https://bot.hole.fm";
+export const OPENBOT_INVITE_ORIGIN = "https://bot.holeacquisition.com";
 export const OPENBOT_INVITE_PATH = "/join";
-export const OPENBOT_CONTROL_PLANE_ORIGIN = "https://api.bot.hole.fm";
+export const OPENBOT_CONTROL_PLANE_ORIGIN = "https://api.bot.holeacquisition.com";
 
 /**
  * The finite deadline a permanent invitation carries. Invitation expiry travels the

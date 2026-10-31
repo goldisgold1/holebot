@@ -35,7 +35,7 @@ interface JoinServerDialogProps {
 
 type DialogPhase = "idle" | "previewing" | "joining";
 
-const INVITE_URL_PLACEHOLDER = "https://bot.hole.fm/join?…";
+const INVITE_URL_PLACEHOLDER = "https://bot.holeacquisition.com/join?…";
 
 export function JoinServerDialog(props: JoinServerDialogProps) {
   const { t, errorDetails } = useText();
