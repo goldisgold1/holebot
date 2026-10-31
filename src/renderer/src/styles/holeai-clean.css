@@ -69,9 +69,11 @@
  * The copy, react and reply buttons and the time sit beside the bubble, not under it, and show on hover, also
  * on a computer with a touch screen. A phone opens the same actions with a long press. Only the rows of the chat
  * itself: an agent message opened under its marker sits in a box that sizes to its content, where a grid column
- * of `minmax(0, auto)` shrinks to nothing and the text runs one letter per line.
+ * of `minmax(0, auto)` shrinks to nothing and the text runs one letter per line. Not the rows that draw the
+ * author's face (a channel): their content dissolves into the row's own grid, and as a grid it would land in
+ * the face's 28px column.
  */
-.virtual-chat-row > .message-entry > .ui-message-content {
+.virtual-chat-row > .message-entry:not(.message-entry-with-author) > .ui-message-content {
   display: grid;
   grid-auto-flow: row dense;
   grid-template-columns: minmax(0, auto) auto;
@@ -80,7 +82,7 @@
   gap: 4px 6px;
 }
 
-.virtual-chat-row > .message-entry > .ui-message-content > .message-author-name {
+.virtual-chat-row > .message-entry:not(.message-entry-with-author) > .ui-message-content > .message-author-name {
   grid-column: 1 / -1;
 }
 
