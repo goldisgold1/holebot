@@ -1,7 +1,7 @@
 import * as Application from "expo-application";
 import * as Device from "expo-device";
 import { File, Paths } from "expo-file-system";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import {
   formatSupportLogEntry,
   parseSupportLog,
@@ -154,7 +154,8 @@ function captureFetch(): void {
  * earlier launch come after the first screen, before the entries of this launch.
  */
 export function installSupportLog(): void {
-  if (installed) return;
+  // HoleA.I: the web build (/m) has no app file system to keep the log in.
+  if (installed || Platform.OS === "web") return;
   installed = true;
   restoreWhenIdle();
   supportLog.subscribe(schedulePersist);
