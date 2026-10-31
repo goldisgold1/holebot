@@ -132,6 +132,11 @@ services:
       - "${SITE_DOMAIN}:host-gateway"
       - "${API_DOMAIN}:host-gateway"
       - "${SIGNAL_DOMAIN}:host-gateway"
+    # The Signal URL also opens the renderer's content security policy to this Signal. Without it the WebRTC window
+    # may only reach wss://*.openbot.run, and every device connection times out ("Remote Signal connection timed out").
+    environment:
+      OPENBOT_AUTH_API_URL: "https://${API_DOMAIN}"
+      OPENBOT_REMOTE_SIGNAL_URL: "wss://${SIGNAL_DOMAIN}/v1/signal"
     volumes:
       - agents-data:/data
 

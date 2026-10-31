@@ -1,0 +1,5 @@
+#!/bin/sh
+# Restarts the agent server when it reports a Remote Signal error (it does not reconnect on its own).
+cd /opt/holeai-bot || exit 0
+s=$(docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env exec -T agents openbot status 2>/dev/null)
+case "$s" in *"Remote Signal"*) logger -t holeai-watchdog "agents: $(echo "$s" | tr "\n" " ")"; docker compose -f deploy/vps/compose.yaml --env-file deploy/vps/.env restart agents >/dev/null 2>&1 ;; esac
