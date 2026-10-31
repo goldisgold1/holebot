@@ -3,7 +3,13 @@
 // the team rules as skills, with a header that maps the Grok wording to OpenBot on Claude.
 //   bash deploy/team/pull-skills.sh            refresh source-skills/ from hole.fm (needs the VPS SSH key)
 //   bun deploy/team/build-team-import.ts       write the zip and check it with OpenBot's own manifest decoder
-import { readFileSync, writeFileSync } from "node:fs";
+//
+// Grok Bot exports: put each bot's self-export in deploy/team/grok-export/<name>.md (any name that matches the
+// role key, the role name or the Grok bot's name, e.g. cos-secretary.md, reels-producer.md). Sections:
+// DESCRIPTION, MEMORIES (one item per "-" or "1." line), ROUTINES, FILES. Memories become the agent's
+// memories; the rest becomes a "grok-bot-export" skill, so nothing is cut to the description limit.
+// Timed routines are not recreated on purpose: hole.fm wakes the agents.
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createOpenBotLogger } from "@openbot/logging";
 import { strToU8, zipSync } from "fflate";
@@ -126,6 +132,84 @@ const ROLES: Role[] = [
   },
 ];
 
+/** Names the Grok bots go by in Vincent's Grok Bot, beside the role key and name. */
+const GROK_NAMES: Record<string, string[]> = {
+  chief: ["cos-secretary", "cos", "chief-of-staff"],
+  producer: ["reels-producer"],
+  growth: ["warmup"],
+};
+const MEMORY_LIMIT = 64;
+const MEMORY_TEXT = 500;
+const BASE_MEMORIES = [
+  "Vincent is the CEO and makes every owner call; Elle is the COO (setup, readiness, content, posting, readings).",
+  "Generation: Kling only through the official Kling MCP; everything else through the hole.fm generation app. Reel first frames and videos on Vincent's Higgsfield.",
+];
+
+interface GrokExport {
+  file: string;
+  memories: string[];
+  /** DESCRIPTION, ROUTINES and FILES as written by the bot. */
+  rest: string;
+}
+
+const slug = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-|-$/gu, "");
+
+function readGrokExports(): Map<string, GrokExport> {
+  const dir = join(here, "grok-export");
+  const found = new Map<string, GrokExport>();
+  if (!existsSync(dir)) return found;
+  for (const file of readdirSync(dir).filter((name) => name.endsWith(".md"))) {
+    const name = slug(file.replace(/\.md$/u, ""));
+    const role = ROLES.find((r) => [r.key, slug(r.name), ...(GROK_NAMES[r.key] ?? [])].includes(name));
+    if (!role) throw new Error(`grok-export/${file}: no role matches this name. Rename it to a role key.`);
+    if (found.has(role.key)) throw new Error(`grok-export/${file}: a second export for ${role.key}.`);
+    const text = readFileSync(join(dir, file), "utf8").replace(/\r\n/gu, "\n");
+    // Split on the section headings the export prompt asks for ("## MEMORIES", "MEMORIES:", ...).
+    const sections = new Map<string, string>();
+    let current = "DESCRIPTION";
+    for (const line of text.split("\n")) {
+      const heading = /^\s*#*\s*\**(DESCRIPTION|MEMORIES|ROUTINES|FILES)\**\s*:?\s*$/iu.exec(line);
+      if (heading) current = heading[1].toUpperCase();
+      else sections.set(current, `${sections.get(current) ?? ""}${line}\n`);
+    }
+    const memories = (sections.get("MEMORIES") ?? "")
+      .split("\n")
+      .map((line) => /^\s*(?:[-*•]|\d+[.)])\s+(.+)$/u.exec(line)?.[1]?.trim() ?? "")
+      .filter(Boolean);
+    const long = memories.filter((m) => m.length > MEMORY_TEXT);
+    const rest = ["DESCRIPTION", "ROUTINES", "FILES"]
+      .map((section) => `## ${section}\n\n${(sections.get(section) ?? "").trim() || "(none)"}`)
+      .join("\n\n");
+    found.set(role.key, {
+      file,
+      // A memory over the limit would be dropped by the import; it goes to the export skill instead.
+      memories: memories.filter((m) => m.length <= MEMORY_TEXT),
+      rest: long.length ? `${rest}\n\n## LONGER MEMORIES\n\n${long.map((m) => `- ${m}`).join("\n")}` : rest,
+    });
+  }
+  return found;
+}
+
+function exportSkillFile(role: Role, exported: GrokExport): string {
+  return [
+    "---",
+    "name: grok-bot-export",
+    `description: "What the Grok Bot ${role.name} knew before the move: its own description, routines, files it used and memories too long for the memory list. Read when a task depends on how the Grok bot worked."`,
+    "---",
+    "",
+    `> Exported by the Grok Bot ${role.name} itself (${exported.file}). It was written for Grok Bot; you are the`,
+    `> **${role.name}** agent in OpenBot. Your role skills and the team rules win where they disagree.`,
+    "> Timed routines listed here are history: hole.fm wakes you when there is work.",
+    "",
+    exported.rest.trim(),
+    "",
+  ].join("\n");
+}
+
 function source(id: string): string {
   return readFileSync(join(here, "source-skills", `${id}.md`), "utf8").replace(/^---\n[\s\S]*?\n---\n/u, "");
 }
@@ -175,16 +259,33 @@ function instructions(role: Role): string {
 }
 
 const files: Record<string, Uint8Array> = {};
+const grokExports = readGrokExports();
+const addSkill = (path: string, id: string, text: string) => {
+  // The check the skill library runs when the import installs the skill.
+  const { problem } = readSkillFrontmatter(text, id);
+  if (problem) throw new Error(`${path}/SKILL.md: ${problem}`);
+  files[`${path}/SKILL.md`] = strToU8(text);
+  return path;
+};
 const agents = ROLES.map((role) => {
-  const skillPaths = [...role.skills, TEAM_RULES].map((id) => {
-    const path = `agents/${role.key}/skills/${id}`;
-    const text = skillFile(id, role);
-    // The check the skill library runs when the import installs the skill.
-    const { problem } = readSkillFrontmatter(text, id);
-    if (problem) throw new Error(`${path}/SKILL.md: ${problem}`);
-    files[`${path}/SKILL.md`] = strToU8(text);
-    return path;
-  });
+  const skillPaths = [...role.skills, TEAM_RULES].map((id) =>
+    addSkill(`agents/${role.key}/skills/${id}`, id, skillFile(id, role)),
+  );
+  const exported = grokExports.get(role.key);
+  const memories = [...BASE_MEMORIES, ...(exported?.memories ?? [])];
+  if (exported && memories.length > MEMORY_LIMIT) {
+    // Past the import's memory limit, the rest is kept in the export skill rather than dropped.
+    const overflow = memories.slice(MEMORY_LIMIT).map((m) => `- ${m}`);
+    exported.rest += `\n\n## MORE MEMORIES\n\n${overflow.join("\n")}`;
+    logger.warn(
+      `${role.name}: ${overflow.length} memories past the limit of ${MEMORY_LIMIT} went to its grok-bot-export skill.`,
+    );
+  }
+  if (exported) {
+    skillPaths.push(
+      addSkill(`agents/${role.key}/skills/grok-bot-export`, "grok-bot-export", exportSkillFile(role, exported)),
+    );
+  }
   return {
     key: role.key,
     name: role.name,
@@ -193,10 +294,7 @@ const agents = ROLES.map((role) => {
     avatar: null,
     skills: skillPaths,
     routines: [],
-    memories: [
-      "Vincent is the CEO and makes every owner call; Elle is the COO (setup, readiness, content, posting, readings).",
-      "Generation: Kling only through the official Kling MCP; everything else through the hole.fm generation app. Reel first frames and videos on Vincent's Higgsfield.",
-    ],
+    memories: memories.slice(0, MEMORY_LIMIT),
     files: null,
   };
 });
@@ -223,12 +321,14 @@ const manifest = {
 
 const json = JSON.stringify(manifest, null, 2);
 files["openbot-import.json"] = strToU8(json);
-// The same check the app runs when you choose the file. 64 is the import limit for memories per agent.
-const { manifest: decoded, warnings } = decodeImportManifest(files["openbot-import.json"], 64);
+// The same check the app runs when you choose the file, with the default memory limit per agent.
+const { manifest: decoded, warnings } = decodeImportManifest(files["openbot-import.json"], MEMORY_LIMIT);
 for (const warning of warnings) logger.warn(warning);
 if (decoded.agents.length !== agents.length) throw new Error("OpenBot dropped an agent from the manifest.");
 const out = join(here, "holeai-team-import.zip");
 writeFileSync(out, zipSync(files, { level: 9 }));
 logger.info(
-  `Wrote ${out}: ${agents.length} agents, ${Object.keys(files).length - 1} skill files. The manifest passes OpenBot's decoder.`,
+  `Wrote ${out}: ${agents.length} agents, ${Object.keys(files).length - 1} skill files, Grok exports for ${
+    [...grokExports.keys()].join(", ") || "none"
+  }. The manifest passes OpenBot's decoder.`,
 );

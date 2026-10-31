@@ -47,6 +47,11 @@ the same way, and pick the agent server in the server list.
   - Higgsfield: URL `https://mcp.higgsfield.ai/mcp`, sign in with your Higgsfield account.
   - Kling: the official Kling MCP (`https://kling.ai/app/mcp`), if the Producer runs Kling.
 - **Import:** choose `deploy/team/holeai-team-import.zip`. It makes 10 agents and the HoleA.I team channel.
+  To bring each Grok bot's own memory along, first ask each bot to export itself (DESCRIPTION, MEMORIES as
+  "-" items under 500 characters, ROUTINES, FILES; no secrets) and put the files in `deploy/team/grok-export/`
+  named after the role or the Grok bot (`cos-secretary.md`, `reels-producer.md`, `analyst.md`, ...). Then run
+  `bun deploy/team/build-team-import.ts`: memories become the agent's memories (the first 64), and the rest
+  becomes a `grok-bot-export` skill on that agent.
 
 **5. Models:** Producer and Analyst on Opus; the others on Sonnet. Backup model on every agent.
 
