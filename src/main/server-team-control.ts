@@ -1,8 +1,15 @@
-// HoleA.I: team setup from a server's terminal (`openbot team import|model|wake`), so a VPS server gets its
-// agents, their models and the hole.fm wake routines with no app. The same services as the app's dialogs.
+// HoleA.I: team setup from a server's terminal (`openbot team import|model|mcp|wake`), so a VPS server gets
+// its agents, their models, its MCP servers and the hole.fm wake routines with no app. The same services as
+// the app's dialogs. MCP sign-ins stay with the owner, in the app.
 import { isAgentProvider } from "@openbot/contracts/agent-providers";
-import type { AgentSummary, UpdateAgentInput } from "@openbot/contracts/ipc";
-import { isAgentModel } from "@openbot/contracts/ipc";
+import type {
+  AgentSummary,
+  McpServerConfig,
+  SaveMcpServerInput,
+  SaveMcpSignInAppInput,
+  UpdateAgentInput,
+} from "@openbot/contracts/ipc";
+import { createMcpServerId, isAgentModel } from "@openbot/contracts/ipc";
 import type { SaveEventRoutineInput, SaveEventRoutineResult } from "@openbot/contracts/ipc-events";
 import type { Effect } from "effect";
 import { runCauseEffect } from "../backend/effect-boundary";
@@ -13,6 +20,9 @@ export interface ServerTeamControlOptions {
   agentImport: Pick<AgentImportService, "stage" | "apply">;
   listAgents(): AgentSummary[];
   updateAgent(input: UpdateAgentInput): Effect.Effect<unknown, { readonly cause: unknown }>;
+  listMcpServers(): McpServerConfig[];
+  saveMcpServer(input: SaveMcpServerInput): Effect.Effect<unknown, { readonly cause: unknown }>;
+  saveMcpSignInApp(input: SaveMcpSignInAppInput): Effect.Effect<unknown, { readonly cause: unknown }>;
   saveRoutine(input: SaveEventRoutineInput): Effect.Effect<SaveEventRoutineResult, { readonly cause: unknown }>;
   timezone(): string;
 }
@@ -48,6 +58,30 @@ export function createServerTeamControl(options: ServerTeamControlOptions): Serv
       const agent = agentNamed(agentName);
       await runCauseEffect(options.updateAgent({ agentId: agent.id, provider, model }));
       return { agent: agent.name, provider, model };
+    },
+    async addMcpServer(name, url, clientId) {
+      const trimmed = name.trim();
+      if (!trimmed || !/^https:\/\//u.test(url.trim())) throw new Error("Give a name and an https:// URL.");
+      const existing = options.listMcpServers().find((server) => server.name.toLowerCase() === trimmed.toLowerCase());
+      const config: McpServerConfig = {
+        id: existing?.id ?? createMcpServerId(),
+        name: trimmed,
+        transport: "http",
+        enabled: true,
+        command: "",
+        args: [],
+        env: [],
+        envPassthrough: [],
+        workingDirectory: "",
+        url: url.trim(),
+        headers: [],
+      };
+      await runCauseEffect(options.saveMcpServer({ config }));
+      if (clientId.trim())
+        await runCauseEffect(
+          options.saveMcpSignInApp({ mcpServerId: config.id, clientId: clientId.trim(), clientSecret: "", scope: "" }),
+        );
+      return { mcp: config.name, id: config.id, url: config.url, client_id: clientId.trim() || null };
     },
     async wakeRoutine(agentName, routineName, instruction) {
       const agent = agentNamed(agentName);

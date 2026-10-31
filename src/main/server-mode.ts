@@ -86,6 +86,8 @@ export interface ServerTeamControl {
   /** Imports every agent and channel of an export on this server's disk. */
   importTeam(path: string): Promise<Answer["lines"]>;
   setModel(agentName: string, provider: string, model: string): Promise<Answer["lines"]>;
+  /** Adds a remote MCP server, or updates the one of that name, with its sign-in app when one is given. */
+  addMcpServer(name: string, url: string, clientId: string): Promise<Answer["lines"]>;
   /** Makes a webhook routine for the agent and answers its URL and its signing secret, shown only here. */
   wakeRoutine(agentName: string, routineName: string, instruction: string): Promise<Answer["lines"]>;
 }
@@ -231,6 +233,10 @@ export class ServerMode {
       case "POST /v1/team/model":
         return this.#team((team) =>
           team.setModel(body.get("agent") ?? "", body.get("provider") ?? "", body.get("model") ?? ""),
+        );
+      case "POST /v1/team/mcp":
+        return this.#team((team) =>
+          team.addMcpServer(body.get("name") ?? "", body.get("url") ?? "", body.get("client_id") ?? ""),
         );
       case "POST /v1/team/wake":
         return this.#team((team) =>

@@ -33,6 +33,8 @@ Usage: openbot <command>
   team import <file.zip>         Import every agent and group chat of an export (HoleA.I).
   team model <agent> <provider> <model>
                                  Set an agent's model, such as: team model Producer claude claude-opus-5-5
+  team mcp <name> <https URL> [<sign-in app client ID>]
+                                 Add a remote MCP server; the owner signs in to it in the app.
   team wake <agent> [<instruction>]
                                  Make a webhook routine for the agent; prints its URL and signing secret.
   logs [-f]                      Show the OpenBot log.
@@ -334,11 +336,15 @@ team_command() {
       [ "$#" -eq 3 ] || fail "Usage: openbot team model <agent> <provider> <model>"
       control POST /v1/team/model "agent=$1" "provider=$2" "model=$3"
       ;;
+    mcp)
+      [ "$#" -ge 2 ] || fail "Usage: openbot team mcp <name> <https URL> [<client ID>]"
+      control POST /v1/team/mcp "name=$1" "url=$2" "client_id=${3:-}"
+      ;;
     wake)
       [ "$#" -ge 1 ] || fail "Usage: openbot team wake <agent> [<instruction>]"
       control POST /v1/team/wake "agent=$1" "name=hole.fm wake" "instruction=${2:-}"
       ;;
-    *) fail "Usage: openbot team import|model|wake ..." ;;
+    *) fail "Usage: openbot team import|model|mcp|wake ..." ;;
   esac
   check_answer || exit 1
   grep -v "^status=" <<<"$response"
