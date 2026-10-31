@@ -98,6 +98,11 @@ function useReduceTransparency() {
       knownReduceTransparency = value;
       if (active) setEnabled(value);
     };
+    // A browser has no such setting, and react-native-web has no such call.
+    if (Platform.OS === "web") {
+      update(false);
+      return;
+    }
     void AccessibilityInfo.isReduceTransparencyEnabled().then(update, () => update(false));
     const subscription = AccessibilityInfo.addEventListener("reduceTransparencyChanged", update);
     return () => {

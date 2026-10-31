@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { AccessibilityInfo } from "react-native";
-import { isAndroid } from "./platform";
+import { isAndroid, isWeb } from "./platform";
 
 let reduced: boolean | null = null;
 let started = false;
@@ -15,8 +15,12 @@ function update(value: boolean): void {
 function subscribe(listener: () => void) {
   if (!started) {
     started = true;
-    void AccessibilityInfo.isReduceTransparencyEnabled().then(update, () => update(false));
-    AccessibilityInfo.addEventListener("reduceTransparencyChanged", update);
+    // A browser has no such setting, and react-native-web has no such call.
+    if (isWeb) update(false);
+    else {
+      void AccessibilityInfo.isReduceTransparencyEnabled().then(update, () => update(false));
+      AccessibilityInfo.addEventListener("reduceTransparencyChanged", update);
+    }
   }
   listeners.add(listener);
   return () => {
@@ -26,7 +30,7 @@ function subscribe(listener: () => void) {
 
 function snapshot(): boolean {
   // Android has no such setting and always answers false. Until iOS answers, controls draw solid.
-  return isAndroid ? false : (reduced ?? true);
+  return isAndroid || isWeb ? false : (reduced ?? true);
 }
 
 /**
