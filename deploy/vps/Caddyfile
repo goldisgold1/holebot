@@ -10,6 +10,10 @@
 	redir /m /m/
 	handle /m/* {
 		root * /srv
+		# Bundles under _expo are content-hashed; the page itself must never be cached, or a phone keeps
+		# an old page that points at bundles a rebuild deleted (a blank screen).
+		@page not path /m/_expo/*
+		header @page Cache-Control "no-cache"
 		try_files {path} {path}.html /m/index.html
 		file_server
 	}
