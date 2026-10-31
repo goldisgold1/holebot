@@ -17,6 +17,7 @@ services:
       SIGNAL_DOMAIN: ${SIGNAL_DOMAIN:?SIGNAL_DOMAIN is required}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./mobile-web:/srv/m:ro
       - caddy-data:/data
       - caddy-config:/config
 

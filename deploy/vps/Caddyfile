@@ -6,6 +6,13 @@
 {$SITE_DOMAIN}, {$API_DOMAIN} {
 	@internal path /__scheduled* /cdn-cgi/*
 	respond @internal 404
+	# The phone app built for the web (deploy/vps/build-mobile-web.sh), at /m on the site.
+	redir /m /m/
+	handle /m/* {
+		root * /srv
+		try_files {path} {path}.html /m/index.html
+		file_server
+	}
 	# hole.fm bot wakes, signed and passed to OpenBot webhook routines.
 	handle /hook/* {
 		reverse_proxy wake-bridge:8790
