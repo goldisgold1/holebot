@@ -60,6 +60,34 @@ function routesOf(hook: Hook): Route[] {
 /** The next route to try for each bot, so several agents take a bot's wakes in turn. */
 const turn = new Map<string, number>();
 
+/**
+ * OpenBot routines take `{ type, data, occurredAt? }` and refuse anything else with 400. hole.fm sends its own
+ * object (`{ v, event, ... }`), so it goes whole into `data`, under the type `holefm.<event>`. A body that is
+ * already an OpenBot event passes as it is.
+ */
+/** The two fields the bridge reads from a wake; the rest of the object goes into `data` untouched. */
+interface WakeFields {
+  type?: unknown;
+  event?: unknown;
+}
+
+function isWakeObject(value: unknown): value is WakeFields {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function asOpenBotEvent(raw: Buffer): Buffer | null {
+  let record: unknown;
+  try {
+    record = JSON.parse(raw.toString("utf8"));
+  } catch {
+    return null;
+  }
+  if (!isWakeObject(record)) return null;
+  if (typeof record.type === "string" && record.type) return raw;
+  const event = typeof record.event === "string" && /^[a-z0-9_.-]{1,64}$/iu.test(record.event) ? record.event : "wake";
+  return Buffer.from(JSON.stringify({ type: `holefm.${event}`, data: record }));
+}
+
 /** Signs the body for one routine and sends it; the HTTP status, or 0 when OpenBot is unreachable. */
 async function deliver(route: Route, body: Buffer, timestamp: string, deliveryId: string): Promise<number> {
   const signature = createHmac("sha256", route.secret).update(`${timestamp}.${deliveryId}.`).update(body).digest("hex");
@@ -93,8 +121,10 @@ Bun.serve({
     const given = bearer || request.headers.get("x-automation-key") || "";
     // 401 makes hole.fm mark the key invalid and stop waking that bot until the key is set again.
     if (!hook || !given || !sameKey(given, hook.key)) return answer(401, { success: false, error: "unauthorized" });
-    const body = Buffer.from(await request.arrayBuffer());
-    if (body.length > MAX_BODY) return answer(413, { success: false, error: "too_large" });
+    const raw = Buffer.from(await request.arrayBuffer());
+    if (raw.length > MAX_BODY) return answer(413, { success: false, error: "too_large" });
+    const body = asOpenBotEvent(raw);
+    if (!body) return answer(400, { success: false, error: "not_a_json_object" });
 
     const routes = routesOf(hook);
     if (!routes.length) return answer(502, { success: false, error: "no_route" });
