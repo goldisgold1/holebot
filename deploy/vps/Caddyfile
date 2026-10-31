@@ -10,6 +10,7 @@
 	redir /m /m/
 	handle /m/* {
 		root * /srv
+		encode zstd gzip
 		# Bundles under _expo are content-hashed; the page itself must never be cached, or a phone keeps
 		# an old page that points at bundles a rebuild deleted (a blank screen).
 		@page not path /m/_expo/*
