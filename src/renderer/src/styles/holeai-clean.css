@@ -1,0 +1,120 @@
+/*
+ * HoleA.I: the clean look. A quieter sidebar and a narrow, centred chat column: darker surfaces, rows that show
+ * only the avatar, the name and one line of preview, and messages that keep their actions and time until hover.
+ * Loaded after every other stylesheet, so each rule here wins over the upstream rule it replaces. Delete the
+ * two imports (tokens-holeai.css and this file) in styles.css to go back to the upstream look.
+ */
+
+/* Sidebar: avatar, name and one muted line. The role and the time stay in the row's label and tooltip. */
+.agent-role-badge,
+.sidebar .agent-row-time {
+  display: none;
+}
+
+.agent-row {
+  height: 58px;
+  min-height: 58px;
+  gap: 12px;
+  border-radius: var(--holeai-radius-row);
+}
+
+.agent-row + .agent-row {
+  margin-top: 0;
+}
+
+.agent-row-title strong,
+.person-row .agent-row-heading strong,
+.channel-row .agent-row-heading strong {
+  font-size: var(--holeai-text-row);
+  font-weight: 500;
+}
+
+.agent-row-preview {
+  color: var(--holeai-text-soft);
+  font-size: var(--holeai-text-preview);
+}
+
+.sidebar-section-name {
+  color: var(--holeai-text-soft);
+  font-weight: 400;
+}
+
+/* The phone app card: the team uses the web app on the phone (/m), so the card only adds noise. */
+.sidebar-mobile-app {
+  display: none;
+}
+
+/* Chat: a centred column, as in a messenger, instead of the full pane width. */
+.conversation-panel {
+  --conversation-column-width: 620px;
+}
+
+.ui-bubble {
+  max-width: 100%;
+}
+
+.ui-bubble-content {
+  border-radius: var(--holeai-radius-bubble);
+  padding: 8px 12px;
+  font-size: var(--holeai-text-bubble);
+  line-height: 1.47;
+}
+
+.ui-bubble-variant-secondary > .ui-bubble-content,
+.ui-bubble-variant-muted > .ui-bubble-content {
+  background: var(--holeai-bubble);
+}
+
+/*
+ * The copy, react and reply buttons and the time sit beside the bubble, not under it, and show on hover, also
+ * on a computer with a touch screen. A phone opens the same actions with a long press.
+ */
+.message-entry .ui-message-content {
+  display: grid;
+  grid-auto-flow: row dense;
+  grid-template-columns: minmax(0, auto) auto;
+  justify-content: start;
+  align-items: end;
+  gap: 4px 6px;
+}
+
+.message-entry .ui-message-content > .message-author-name {
+  grid-column: 1 / -1;
+}
+
+.message-entry-user .ui-message-content {
+  grid-template-columns: auto minmax(0, auto);
+  justify-content: end;
+}
+
+.message-entry-user .ui-message-content > .message-shell {
+  grid-column: 2;
+}
+
+.message-entry-user .ui-message-content > .message-action-row {
+  grid-column: 1;
+}
+
+.message-entry .message-actions,
+.message-entry .message-time {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.message-entry:hover .message-actions,
+.message-entry:focus-within .message-actions,
+.message-entry .message-actions-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.message-entry:hover .message-time,
+.message-entry:focus-within .message-time {
+  opacity: 1;
+}
+
+.composer {
+  border: 1px solid var(--holeai-composer-border);
+  border-radius: var(--holeai-radius-composer);
+  background: var(--holeai-composer);
+}

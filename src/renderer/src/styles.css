@@ -77,6 +77,9 @@
 @import "@openbot/ui/skill-preview.css";
 /* After the page styles: the transparent window replaces their backgrounds. */
 @import "./styles/window-glass.css";
+/* HoleA.I: the clean sidebar and chat. Last, so it wins over the rules it replaces. */
+@import "@openbot/brand/tokens-holeai.css";
+@import "./styles/holeai-clean.css";
 
 @source "../../../packages/ui/src";
 

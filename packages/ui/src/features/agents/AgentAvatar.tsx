@@ -27,6 +27,12 @@ import { createPointerGaze } from "./avatar-pointer-gaze";
 const AVATAR_FPS = 30;
 const SIDEBAR_MOTION_HOLD_FACTOR = 1.25;
 
+// HoleA.I: a resting avatar on screen comes alive for a short burst now and then, so a quiet sidebar does
+// not look frozen. One burst every 8-20 s per avatar keeps the cost close to the hover-only rule below.
+const AMBIENT_BURST_MS = 4_000;
+const AMBIENT_MIN_GAP_MS = 8_000;
+const AMBIENT_GAP_SPREAD_MS = 12_000;
+
 // Resting montage shown on hover: shape-safe blocks only, so the seeded silhouette stays
 // on screen while the face carries the personality (blink, wink, wide eyes).
 const DEFAULT_CYCLE: Block[] = [
@@ -282,6 +288,7 @@ function GeneratedAvatar(props: {
   let element: HTMLSpanElement | undefined;
   const gaze = createPointerGaze();
   const [interacting, setInteracting] = createSignal(false);
+  const [ambient, setAmbient] = createSignal(false);
   const [reducedMotion, setReducedMotion] = createSignal(prefersReducedMotion());
   const presentation = createMemo(() => avatarMoodPresentation(props.mood));
   const profile = createMemo(() => bloubAvatarProfile(props.seed, props.hue));
@@ -298,7 +305,11 @@ function GeneratedAvatar(props: {
   // follow the pointer; the resting moods keep the hover gating that the perf note above is about.
   const animated = () =>
     !reducedMotion() &&
-    (props.followPointer || avatarMoodIsBusy(props.mood) || !STATIC_MOTIONS.has(props.motion) || interacting());
+    (props.followPointer ||
+      avatarMoodIsBusy(props.mood) ||
+      !STATIC_MOTIONS.has(props.motion) ||
+      interacting() ||
+      ambient());
   const gazeScript = createMemo(() => (props.followPointer ? gaze.script : null));
   const motionCycle = () => {
     if (props.mood !== "idle") return [slowerBlock(presentation().state)];
@@ -334,7 +345,34 @@ function GeneratedAvatar(props: {
     interactionTarget?.addEventListener("focusin", startFocusInteraction);
     interactionTarget?.addEventListener("focusout", stopFocusInteraction);
 
+    // The ambient bursts run only while the avatar is on screen and the window is visible.
+    let onScreen = false;
+    const observer =
+      element && typeof IntersectionObserver === "function"
+        ? new IntersectionObserver(([entry]) => {
+            onScreen = entry?.isIntersecting ?? false;
+          })
+        : undefined;
+    if (element) observer?.observe(element);
+    let ambientTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleAmbient = () => {
+      ambientTimer = setTimeout(
+        () => {
+          if (!onScreen || document.visibilityState !== "visible") return scheduleAmbient();
+          setAmbient(true);
+          ambientTimer = setTimeout(() => {
+            setAmbient(false);
+            scheduleAmbient();
+          }, AMBIENT_BURST_MS);
+        },
+        AMBIENT_MIN_GAP_MS + Math.random() * AMBIENT_GAP_SPREAD_MS,
+      );
+    };
+    scheduleAmbient();
+
     return () => {
+      clearTimeout(ambientTimer);
+      observer?.disconnect();
       media?.removeEventListener?.("change", syncReducedMotion);
       interactionTarget?.removeEventListener("pointerenter", startInteraction);
       interactionTarget?.removeEventListener("pointerleave", stopInteraction);

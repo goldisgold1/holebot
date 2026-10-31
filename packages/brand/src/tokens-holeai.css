@@ -1,0 +1,36 @@
+/*
+ * HoleA.I: the values of the clean look (src/renderer/src/styles/holeai-clean.css). The dark palette moves to
+ * darker surfaces; the light palette keeps the upstream values. The --holeai-* tokens are used only by that
+ * stylesheet.
+ */
+:root:not([data-theme="light"]) {
+  --openbot-bg-frame: #0e0e0e;
+  --openbot-bg-sidebar: #0e0e0e;
+  --openbot-bg-native-sidebar: #0e0e0e;
+  --openbot-bg-canvas: #121212;
+  --openbot-bg-native-canvas: #121212;
+  --openbot-bg-surface: #1f1f1f;
+  --openbot-bg-surface-raised: #202020;
+  --openbot-hover: rgba(255, 255, 255, 0.05);
+
+  --holeai-text-soft: #9a9a9a;
+  --holeai-bubble: #202020;
+  --holeai-composer: #181818;
+  --holeai-composer-border: rgba(255, 255, 255, 0.08);
+}
+
+:root {
+  --holeai-text-row: 15px;
+  --holeai-text-preview: 13.5px;
+  --holeai-text-bubble: 15px;
+  --holeai-radius-row: 10px;
+  --holeai-radius-bubble: 14px;
+  --holeai-radius-composer: 24px;
+}
+
+:root[data-theme="light"] {
+  --holeai-text-soft: var(--openbot-text-muted);
+  --holeai-bubble: var(--openbot-bg-surface-raised);
+  --holeai-composer: var(--openbot-bg-surface);
+  --holeai-composer-border: var(--openbot-border);
+}
