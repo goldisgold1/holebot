@@ -100,3 +100,18 @@ Make a second Producer agent (duplicate the first, same skills and model), give 
 `bun deploy/vps/add-wake-hook.ts --add producer <its webhook URL> <its secret>` (add `--local` before the VPS). The
 bridge then wakes the Producers in turn; if one is down, the wake goes to the next. hole.fm needs no change, but raise
 the Producer wake cap and jobs per day (Vincent's call) or the extra Producer sits idle.
+
+## The VPS team with no app (2026-10-31)
+
+The agent server can be set up from its terminal: `openbot team import <zip>`, `openbot team model <agent> <provider>
+<model>` and `openbot team wake <agent>` (control socket routes in `src/main/server-mode.ts`, services in
+`src/main/server-team-control.ts`).
+
+1. Sign the server in without an email code: make a claim with `SERVER_CLAIMS_ADMIN_TOKEN` (header file
+   `/root/server-claims.header`) and pipe it to `openbot login --claim --name "HoleA.I VPS"`.
+2. `bash deploy/vps/setup-team.sh` on the VPS: imports the team, sets the models, makes one wake routine per hole.fm
+   bot, wires each through the wake bridge, and keeps hole.fm's two lines per bot in `/root/holefm-wake-lines/`.
+3. Sign in to Claude and the MCP servers (hole.fm, Higgsfield, Kling) from the app or the phone web app. These need
+   the owner's own approval.
+4. From the PC: `bash deploy/vps/switch-holefm-wakes.sh producer` (then the other bots) points hole.fm's wakes at the
+   VPS agents and sends one probe.
