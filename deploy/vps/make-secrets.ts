@@ -56,6 +56,7 @@ writeFileSync(
     `REMOTE_TICKET_PUBLIC_JWKS=${tickets.publicJwks}`,
     `REMOTE_AUTH_WEBHOOK_SECRET=${webhookSecret}`,
     `SKILLS_ADMIN_TOKEN=${secret()}`,
+    `SERVER_CLAIMS_ADMIN_TOKEN=${secret()}`,
     `SITE_REPORT_HASH_SECRET=${secret()}`,
     "# Who can sign in. Add people with: bun deploy/vps/add-user.ts <email>",
     "AUTH_ACCESS_CODE_HASHES={}",
