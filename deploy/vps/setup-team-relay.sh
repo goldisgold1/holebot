@@ -52,10 +52,11 @@ docker exec -i holeai-bot-agents-1 sh -c 'mkdir -p /data/.local/bin && cat > /da
 #!/bin/sh
 # team-msg: a Claude bot sends a message to a Grok bot through the team relay.
 #   /data/.local/bin/team-msg <grok bot> <your bot id> "text" [--reply-to <message id>] [--hop <n>]
-# Grok bots: producer, publisher, analyst, strategist, story_maker, rosie, chief.
+# Grok bots: producer, publisher, analyst, strategist, story_maker, rosie, chief. Your bot id is the same kind of
+# name (lowercase, underscores), e.g. chief or story_maker.
 # Answer: {"success":true,"runUuid":"<message id>"} or an error (rate_limited, loop_guard_..., grok_unreachable).
 set -eu
-[ $# -ge 3 ] || { sed -n '3,5p' "$0" >&2; exit 1; }
+[ $# -ge 3 ] || { sed -n '3,6p' "$0" >&2; exit 1; }
 to=$1 from=$2 text=$3; shift 3
 reply="" hop=0
 while [ $# -gt 0 ]; do

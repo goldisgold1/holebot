@@ -47,11 +47,11 @@ const RELAY_PATH = process.env.TEAM_RELAY_PATH ?? "/run/team-relay.json";
 const SIGNAL = process.env.SIGNAL_INTERNAL_URL ?? "http://remote-api:8443";
 const MAX_BODY = 256 * 1024;
 const MAX_TEXT = 4_000;
-// A reply to a reply to a reply is the last one: two bots cannot keep each other awake.
-const MAX_HOPS = 3;
+// A conversation ends after 10 replies: room to work something out, but two bots cannot keep each other awake.
+const MAX_HOPS = 10;
 // Per sending bot and receiving bot, and for the whole relay, in one hour.
-const PAIR_LIMIT = 20;
-const RELAY_LIMIT = 150;
+const PAIR_LIMIT = 30;
+const RELAY_LIMIT = 200;
 const HOUR_MS = 3_600_000;
 
 function hooks(): Record<string, Hook> {
