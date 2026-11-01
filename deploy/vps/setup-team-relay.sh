@@ -33,6 +33,8 @@ for team in ("claude", "grok"):
     if new_keys or not senders.get(team):
         senders[team] = f"rly_{team}_" + secrets.token_urlsafe(24)
 config = {"senders": senders, "grok": {b: {"url": e["url"], "key": e["key"]} for b, e in grok.items()}}
+if old.get("daily_caps"):
+    config["daily_caps"] = old["daily_caps"]
 fd = os.open(path + ".tmp", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
 with os.fdopen(fd, "w") as f:
     json.dump(config, f, indent=1)

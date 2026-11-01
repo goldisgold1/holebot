@@ -38,6 +38,8 @@ interface GrokEndpoint {
 interface RelayConfig {
   senders?: { claude?: string; grok?: string };
   grok?: Record<string, GrokEndpoint>;
+  /** Messages one bot may send in 24 hours, by "<team>:<bot>" (e.g. "grok:chief"); others get DAY_LIMIT. */
+  daily_caps?: Record<string, number>;
 }
 
 type Team = "claude" | "grok";
@@ -53,6 +55,9 @@ const MAX_HOPS = 10;
 const PAIR_LIMIT = 30;
 const RELAY_LIMIT = 200;
 const HOUR_MS = 3_600_000;
+// Usage guard: what one sending bot may send in 24 hours, so a chatty bot cannot burn the day's model usage.
+const DAY_LIMIT = 60;
+const DAY_MS = 24 * HOUR_MS;
 
 function hooks(): Record<string, Hook> {
   try {
@@ -222,11 +227,11 @@ function isRelayMessage(value: unknown): value is RelayMessage {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-/** Send times per rate key, pruned to the last hour. */
+/** Send times per rate key, pruned to the key's window. */
 const sent = new Map<string, number[]>();
 
-function underLimit(key: string, limit: number, now: number): boolean {
-  const recent = (sent.get(key) ?? []).filter((at) => now - at < HOUR_MS);
+function underLimit(key: string, limit: number, now: number, windowMs = HOUR_MS): boolean {
+  const recent = (sent.get(key) ?? []).filter((at) => now - at < windowMs);
   sent.set(key, recent);
   return recent.length < limit;
 }
@@ -262,6 +267,11 @@ async function relay(request: Request, to: Team, bot: string): Promise<Response>
   if (!underLimit("relay", RELAY_LIMIT, now) || !underLimit(`${from}:${sender}>${to}:${bot}`, PAIR_LIMIT, now)) {
     return answer(429, { success: false, error: "rate_limited" });
   }
+  const dayKey = `day:${from}:${sender}`;
+  if (!underLimit(dayKey, config.daily_caps?.[`${from}:${sender}`] ?? DAY_LIMIT, now, DAY_MS)) {
+    console.log(`relay capped ${from}:${sender} (24 h limit)`);
+    return answer(429, { success: false, error: "daily_cap_reached" });
+  }
 
   const id = randomUUID();
   const data = { id, from_team: from, from: sender, to_team: to, to: bot, text, reply_to: replyTo, hop };
@@ -279,6 +289,7 @@ async function relay(request: Request, to: Team, bot: string): Promise<Response>
   }
   sent.get("relay")?.push(now);
   sent.get(`${from}:${sender}>${to}:${bot}`)?.push(now);
+  sent.get(dayKey)?.push(now);
   const ok = status >= 200 && status < 300;
   console.log(`relay ${id} ${from}:${sender} -> ${to}:${bot} hop=${hop} chars=${text.length} status=${status}`);
   return ok
