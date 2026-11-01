@@ -227,6 +227,32 @@ function isRelayMessage(value: unknown): value is RelayMessage {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+// The Team room: every delivered relay message is also written into one read-only OpenBot channel, through the
+// server's control socket (POST /v1/channel/note), so Vincent can watch both teams talk. It wakes no agent.
+const TEAM_ROOM_SOCKET = process.env.TEAM_ROOM_SOCKET ?? "";
+const TEAM_ROOM_CHANNEL = process.env.TEAM_ROOM_CHANNEL ?? "Team room";
+const TEAM_NAMES: Record<Team, string> = { claude: "Claude", grok: "Grok" };
+
+async function mirrorToTeamRoom(from: Team, sender: string, to: Team, bot: string, text: string, id: string) {
+  if (!TEAM_ROOM_SOCKET) return;
+  const body = new URLSearchParams({
+    channel: TEAM_ROOM_CHANNEL,
+    author: `${TEAM_NAMES[from]} ${sender}`,
+    text: `To ${TEAM_NAMES[to]} ${bot}:\n\n${text}`,
+  });
+  try {
+    const response = await fetch("http://localhost/v1/channel/note", {
+      method: "POST",
+      body,
+      unix: TEAM_ROOM_SOCKET,
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) console.log(`team room ${id}: ${response.status}`);
+  } catch (error) {
+    console.log(`team room ${id}: ${error instanceof Error ? error.message : "failed"}`);
+  }
+}
+
 /** Send times per rate key, pruned to the key's window. */
 const sent = new Map<string, number[]>();
 
@@ -292,6 +318,7 @@ async function relay(request: Request, to: Team, bot: string): Promise<Response>
   sent.get(dayKey)?.push(now);
   const ok = status >= 200 && status < 300;
   console.log(`relay ${id} ${from}:${sender} -> ${to}:${bot} hop=${hop} chars=${text.length} status=${status}`);
+  if (ok) void mirrorToTeamRoom(from, sender, to, bot, text, id);
   return ok
     ? answer(200, { success: true, runUuid: id })
     : answer(502, {

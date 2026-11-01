@@ -44,10 +44,14 @@ services:
     environment:
       WAKE_HOOKS_PATH: /run/wake-hooks.json
       SIGNAL_INTERNAL_URL: http://remote-api:8443
+      # The Team room: relay messages are mirrored into this OpenBot channel through the agents' control socket.
+      TEAM_ROOM_SOCKET: /run/openbot-control/control.sock
+      TEAM_ROOM_CHANNEL: Team room
     volumes:
       - ./wake-bridge/server.ts:/app/server.ts:ro
       - ./wake-hooks.json:/run/wake-hooks.json:ro
       - ./team-relay.json:/run/team-relay.json:ro
+      - agents-run:/run/openbot-control
 
   # Cloudflare runs the Worker's cron every 5 minutes. On the VPS this calls the same handler.
   scheduler:
@@ -141,9 +145,12 @@ services:
       OPENBOT_REMOTE_SIGNAL_URL: "wss://${SIGNAL_DOMAIN}/v1/signal"
     volumes:
       - agents-data:/data
+      # The runtime directory (XDG_RUNTIME_DIR) holds the control socket; the wake bridge shares it for the Team room.
+      - agents-run:/run/openbot
 
 volumes:
   caddy-data:
   caddy-config:
   auth-data:
   agents-data:
+  agents-run:

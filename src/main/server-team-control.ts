@@ -24,6 +24,8 @@ export interface ServerTeamControlOptions {
   saveMcpServer(input: SaveMcpServerInput): Effect.Effect<McpServerConfig[], { readonly cause: unknown }>;
   saveMcpSignInApp(input: SaveMcpSignInAppInput): Effect.Effect<unknown, { readonly cause: unknown }>;
   saveRoutine(input: SaveEventRoutineInput): Effect.Effect<SaveEventRoutineResult, { readonly cause: unknown }>;
+  /** Writes a note into a channel without waking anyone (ChannelService.postNote). */
+  postChannelNote(channel: string, author: string, text: string): string;
   timezone(): string;
 }
 
@@ -103,6 +105,11 @@ export function createServerTeamControl(options: ServerTeamControlOptions): Serv
         url: routine.trigger.kind === "webhook" ? routine.trigger.url : null,
         secret: secret ?? null,
       };
+    },
+    async channelNote(channel, author, text) {
+      const trimmed = text.trim();
+      if (!channel.trim() || !trimmed) throw new Error("Give a channel and a text.");
+      return { channel: options.postChannelNote(channel, author, trimmed.slice(0, 8_000)) };
     },
   };
 }

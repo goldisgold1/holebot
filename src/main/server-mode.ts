@@ -90,6 +90,8 @@ export interface ServerTeamControl {
   addMcpServer(name: string, url: string, clientId: string): Promise<Answer["lines"]>;
   /** Makes a webhook routine for the agent and answers its URL and its signing secret, shown only here. */
   wakeRoutine(agentName: string, routineName: string, instruction: string): Promise<Answer["lines"]>;
+  /** HoleA.I Team room: a read-only note in a channel; it wakes no agent. */
+  channelNote(channel: string, author: string, text: string): Promise<Answer["lines"]>;
 }
 
 interface Answer {
@@ -241,6 +243,10 @@ export class ServerMode {
       case "POST /v1/team/wake":
         return this.#team((team) =>
           team.wakeRoutine(body.get("agent") ?? "", body.get("name") ?? "", body.get("instruction") ?? ""),
+        );
+      case "POST /v1/channel/note":
+        return this.#team((team) =>
+          team.channelNote(body.get("channel") ?? "", body.get("author") ?? "", body.get("text") ?? ""),
         );
       case "POST /v1/logout":
         await runCauseEffect(

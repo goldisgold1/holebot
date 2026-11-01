@@ -1478,6 +1478,35 @@ export class ChannelService {
     }
   }
 
+  /**
+   * HoleA.I: a read-only note from outside the server (the team relay's Team room). It has no task, so no agent is
+   * woken for it and a reply to it reaches nobody. The channel is found by its name or title, and made the first time,
+   * with no members and no lead, so no agent ever works in it. Answers its id.
+   */
+  postNote(channelName: string, authorName: string, text: string): string {
+    const wanted = channelName.trim().toLowerCase();
+    const found = this.store
+      .ids()
+      .find((id) =>
+        [this.store.get(id).name, this.store.get(id).title].some((name) => name.trim().toLowerCase() === wanted),
+      );
+    // A new channel is stored by its first update, as a save does.
+    const channel = found
+      ? this.store.get(found)
+      : this.store.create(randomUUID(), {
+          name: channelName.trim(),
+          title: "Read-only: every message between the Grok and Claude bots",
+          instructions: "",
+          members: [],
+          leadAgentId: null,
+        });
+    const author = { kind: "coordinator" as const, id: "team-relay", name: authorName.trim() || "Team relay" };
+    const message = this.message(channel.id, null, author, text);
+    this.store.update(channel, { messages: [{ ...message, message: { ...message.message, source: "system" } }] });
+    this.publish(channel.id);
+    return channel.id;
+  }
+
   /** The first task of each channel that `ownsWaitingWork` counts. */
   #waitingWork(agentId: string): ChannelTask[] {
     const archived = this.store.archivedIds();
@@ -2546,7 +2575,7 @@ export class ChannelService {
 
   private message(
     channelId: string,
-    taskId: string,
+    taskId: string | null,
     author: ChannelMessage["author"],
     text: string,
     id: string = randomUUID(),

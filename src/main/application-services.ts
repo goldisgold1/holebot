@@ -3025,6 +3025,7 @@ export async function createApplicationServices({
           saveMcpServer: (input) => service.saveMcpServer(input),
           saveMcpSignInApp: (input) => service.saveMcpSignInApp(input),
           saveRoutine: (input) => events.saveRoutine(input),
+          postChannelNote: (channel, author, text) => service.channels.postNote(channel, author, text),
           timezone: () => serverTimezone.effective(),
         }),
       })
