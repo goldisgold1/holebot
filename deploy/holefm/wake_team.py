@@ -26,6 +26,8 @@ APP = Path("/home/admin/reels-expert")
 LIVE = APP / "secrets" / "wake_endpoints.json"
 TEAMS = Path("/root/wake-teams")
 LOG = Path("/root/fm_coord/log.txt")
+# Who owns each bot, for hole.fm's Wakes panel and ops_summary view=wakes (core/wake_dispatch.py v250 reads it).
+OWNERS = APP / "state" / "wake_teams.json"
 BOTS = ("producer", "publisher", "analyst", "strategist", "story_maker", "rosie", "chief", "carousel_maker")
 NAMES = {"grok": "Grok", "claude": "Claude"}
 
@@ -61,12 +63,26 @@ def status() -> int:
     return 0
 
 
+def record_owners(owners: dict[str, str]) -> None:
+    """Write each bot's team to OWNERS (readable by hole.fm), keeping the date it last changed."""
+    data = load(OWNERS)
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    for bot, team in owners.items():
+        if (data.get(bot) or {}).get("team") != team:
+            data[bot] = {"team": team, "since": stamp}
+    tmp = OWNERS.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    tmp.chmod(0o644)
+    tmp.replace(OWNERS)
+
+
 def switch(team: str, bots: list[str], probe: bool) -> int:
     endpoints = load(TEAMS / f"{team}.json")
     if not endpoints:
         print(f"No {NAMES[team]} addresses in {TEAMS / (team + '.json')}.", file=sys.stderr)
         return 1
     failed = 0
+    owners: dict[str, str] = {}
     for bot in bots:
         entry = endpoints.get(bot)
         if not entry:
@@ -87,10 +103,13 @@ def switch(team: str, bots: list[str], probe: bool) -> int:
                 failed += code != 200
             else:
                 note = "set"
+            if done.returncode == 0:
+                owners[bot] = team
         print(f"  {bot:<15} -> {NAMES[team]}: {note}")
         stamp = time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 7 * 3600))
         with LOG.open("a", encoding="utf-8") as log:
             log.write(f"{stamp} ICT wake-team: {bot} -> {NAMES[team]} ({note})\n")
+    record_owners(owners)
     return 1 if failed else 0
 
 
