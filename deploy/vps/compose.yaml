@@ -47,6 +47,7 @@ services:
     volumes:
       - ./wake-bridge/server.ts:/app/server.ts:ro
       - ./wake-hooks.json:/run/wake-hooks.json:ro
+      - ./team-relay.json:/run/team-relay.json:ro
 
   # Cloudflare runs the Worker's cron every 5 minutes. On the VPS this calls the same handler.
   scheduler:

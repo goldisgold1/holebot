@@ -4,10 +4,17 @@
 
 # The site, sign-in pages and invite links, and the API. One Worker serves both hosts.
 {$SITE_DOMAIN}, {$API_DOMAIN} {
+	log {
+		output file /data/bot-access.log
+	}
 	@internal path /__scheduled* /cdn-cgi/*
 	respond @internal 404
 	# The phone app built for the web (deploy/vps/build-mobile-web.sh), at /m on the site.
 	redir /m /m/
+	# Temporary: the /m page reports its console here while the phone build is debugged.
+	handle /m/__log {
+		respond 204
+	}
 	handle /m/* {
 		root * /srv
 		encode zstd gzip
@@ -22,6 +29,10 @@
 	}
 	# hole.fm bot wakes, signed and passed to OpenBot webhook routines.
 	handle /hook/* {
+		reverse_proxy wake-bridge:8790
+	}
+	# The team relay: Claude and Grok bots message each other through the same bridge.
+	handle /relay/* {
 		reverse_proxy wake-bridge:8790
 	}
 	reverse_proxy auth-api:3100

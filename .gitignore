@@ -71,3 +71,4 @@ deploy/vps/.env
 deploy/vps/auth-api.env
 .claude/launch.json
 deploy/vps/wake-hooks.json
+deploy/vps/team-relay.json
