@@ -1716,6 +1716,14 @@ html.ui-textarea-resizing {
   --border-radius: var(--holeai-radius-toast);
 }
 
+/* HoleA.I: on a phone Sonner pins both edges and also sets a full width, which pushes the stack past
+   the right edge by the left offset. The two edges alone size it. */
+@media (max-width: 600px) {
+  .ui-toaster[data-sonner-toaster][data-sonner-theme] {
+    width: auto;
+  }
+}
+
 /* Grok Bot's compact toast: 9/12 padding, 9px corners, the small type step and a 13px mark.
    Three columns and two rows: the mark, the words, and an action row under them. Sonner lays the
    toast out as one flex line, which works until an action is present — the button then sits between
