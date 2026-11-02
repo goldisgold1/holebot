@@ -54,11 +54,11 @@ export interface AvatarMoodPresentation {
  */
 const MOOD_PRESENTATIONS: Readonly<Record<AvatarMood, AvatarMoodPresentation>> = {
   idle: { state: "idle", expression: null, rings: false, breathe: 0 },
-  working: { state: "idle", expression: "attentif", rings: true, breathe: 0.03 },
+  working: { state: "idle", expression: "attentif", rings: false, breathe: 0 },
   waiting: { state: "idle", expression: "curieux", rings: false, breathe: 0 },
   failed: { state: "idle", expression: "triste", rings: false, breathe: 0 },
   responded: { state: "idle", expression: "heureux", rings: false, breathe: 0 },
-  connecting: { state: "swirl", expression: "attentif", rings: true, breathe: 0 },
+  connecting: { state: "swirl", expression: "attentif", rings: false, breathe: 0 },
   asleep: { state: "idle", expression: "somnolent", rings: false, breathe: 0 },
 };
 
@@ -74,6 +74,8 @@ export function avatarMoodPresentation(mood: AvatarMood): AvatarMoodPresentation
  * distinction decides whether a surface starts a loop, so it lives here with the table it reads.
  */
 export function avatarMoodIsBusy(mood: AvatarMood): boolean {
+  // HoleA.I: a thinking face wanders around instead of flying orbit rings, so it is busy without them.
+  if (mood === "working" || mood === "connecting") return true;
   const presentation = MOOD_PRESENTATIONS[mood];
   return presentation.rings || presentation.breathe > 0;
 }

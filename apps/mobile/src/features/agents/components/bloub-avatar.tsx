@@ -1,6 +1,8 @@
+import { bloubAvatarProfile } from "@openbot/brand/bloub-avatar";
 import { type AvatarMood, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
+import { CUTE_FACE_EYE, CUTE_FACE_EYES, cuteFaceBody, cuteFaceClosedEyes } from "@openbot/brand/cute-face";
 import type { AvatarHue } from "@openbot/contracts/ipc";
-import { memo, useMemo } from "react";
+import { memo, useEffect } from "react";
 import Animated, {
   convertToRGBA,
   type DerivedValue,
@@ -8,17 +10,16 @@ import Animated, {
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
-import Svg, { Circle, Path } from "react-native-svg";
+import Svg, { Ellipse, Path } from "react-native-svg";
 import { useAgentColorTransition } from "@/features/agents/components/agent-color-glow";
 import { AgentOrbitRings } from "@/features/agents/components/agent-orbit-rings";
-import { useBloubActivityFrame } from "@/features/agents/components/use-bloub-activity-frame";
-import {
-  type BloubActivityFrame,
-  bloubActivityGeometry,
-  bloubRestEngineFrame,
-  getBloubAvatarColor,
-} from "@/features/agents/model/bloub-activity";
+import { getBloubAvatarColor } from "@/features/agents/model/bloub-activity";
 import { useAgentActivity } from "@/features/workspace/components/use-agent-activity";
 import {
   DISCONNECTED_APPEARANCE,
@@ -39,30 +40,10 @@ interface BloubAvatarProps extends AgentPhotoProps {
   rings?: boolean;
 }
 
-const AVATAR_PAPER = "#f9f9f9";
+// HoleA.I: the Grok Bot style face (see @openbot/brand/cute-face), the same drawing as the desktop.
+const FACE_EYE = "#f9f9f9";
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-function AvatarEye({ frame, index }: { frame: DerivedValue<BloubActivityFrame>; index: number }) {
-  const props = useAnimatedProps(() => frame.get().eyes[index] ?? { d: "", opacity: 0, matrix: [1, 0, 0, 1, 0, 0] });
-  return <AnimatedPath fill={AVATAR_PAPER} animatedProps={props} />;
-}
-
-function AvatarDot({
-  frame,
-  index,
-  color,
-}: {
-  frame: DerivedValue<BloubActivityFrame>;
-  index: number;
-  color: DerivedValue<string>;
-}) {
-  const props = useAnimatedProps(() => ({
-    ...(frame.get().dots[index] ?? { cx: 0, cy: 0, r: 0, opacity: 0 }),
-    fill: color.get(),
-  }));
-  return <AnimatedCircle animatedProps={props} />;
-}
+const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 
 export function BloubAvatar({
   agentId,
@@ -131,42 +112,102 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
 }: Omit<BloubAvatarProps, "agentId"> & AvatarPreviewOptions) {
   const appearance = useConnectionAppearance(disconnected);
   const appearanceStyle = useAnimatedStyle(() => ({ opacity: appearance.get().opacity }));
-  const frame = useBloubActivityFrame(seed, mood, animateIdle && !disconnected);
   const color = getBloubAvatarColor(seed, hue);
   const bodyColor = useDerivedValue(() =>
     saturateColor(animatedColor ? animatedColor.get() : color, appearance.get().saturation),
   );
-  const dotColor = useDerivedValue(() => saturateColor(color, appearance.get().saturation));
+  const thinking = !disconnected && (mood === "working" || mood === "connecting");
+  const animate = (animateIdle || thinking) && !disconnected;
+  const blink = useSharedValue(1);
+  const bob = useSharedValue(0);
+  const wander = useSharedValue(0);
+  useEffect(() => {
+    if (!animate) {
+      blink.set(1);
+      bob.set(0);
+      return;
+    }
+    blink.set(
+      withRepeat(
+        withSequence(withDelay(2800, withTiming(0.1, { duration: 90 })), withTiming(1, { duration: 120 })),
+        -1,
+      ),
+    );
+    bob.set(withRepeat(withSequence(withTiming(1, { duration: 800 }), withTiming(0, { duration: 800 })), -1));
+  }, [animate, blink, bob]);
+  // Thinking: the face wanders around its spot, in place of orbit rings.
+  useEffect(() => {
+    wander.set(thinking ? withRepeat(withTiming(Math.PI * 2, { duration: 2400 }), -1) : withTiming(0));
+  }, [thinking, wander]);
+  const bobStyle = useAnimatedStyle(() => {
+    const turn = wander.get();
+    return {
+      transform: [
+        { translateX: Math.sin(turn) * size * 0.06 },
+        { translateY: -bob.get() * size * 0.03 - Math.abs(Math.sin(turn)) * size * 0.05 },
+        { rotate: `${Math.sin(turn) * 6}deg` },
+      ],
+    };
+  });
 
   // The opacity stays on the native view: react-native-svg on Android crashes with
   // "Underflow in restore" when a filtered <G> has an opacity other than 1.
   return (
-    <Animated.View pointerEvents="none" style={[{ width: size, height: size }, appearanceStyle]}>
-      <Svg
-        accessibilityElementsHidden
-        accessible={false}
-        height={size}
-        pointerEvents="none"
-        viewBox="-158 -158 316 316"
-        width={size}
-      >
-        {/* Mobile-only feedback: keep the synced avatar profile and color untouched. */}
-        {/* The body and eyes are opaque in every pose the phone plays, so paper eyes on the coloured
-            body draw what a body mask with cut-out eyes drew, without a mask layer on each redraw. */}
-        <AvatarBody frame={frame} color={bodyColor} />
-        <AvatarEye frame={frame} index={0} />
-        <AvatarEye frame={frame} index={1} />
-        <AvatarDot frame={frame} index={0} color={dotColor} />
-        <AvatarDot frame={frame} index={1} color={dotColor} />
-        <AvatarDot frame={frame} index={2} color={dotColor} />
-      </Svg>
+    <Animated.View pointerEvents="none" style={[{ width: size, height: size }, appearanceStyle, bobStyle]}>
+      <CuteFaceSvg seed={seed} mood={mood} size={size} color={bodyColor} blink={blink} />
     </Animated.View>
   );
 });
 
-function AvatarBody({ frame, color }: { frame: DerivedValue<BloubActivityFrame>; color: DerivedValue<string> }) {
-  const props = useAnimatedProps(() => ({ ...frame.get().body, fill: color.get() }));
-  return <AnimatedPath animatedProps={props} />;
+function CuteFaceSvg({
+  seed,
+  mood,
+  size,
+  color,
+  blink,
+  opacity = 1,
+}: {
+  seed: string;
+  mood: AvatarMood;
+  size: number;
+  color: DerivedValue<string> | string;
+  blink?: SharedValue<number>;
+  opacity?: number;
+}) {
+  const body = cuteFaceBody(bloubAvatarProfile(seed, null).shape);
+  const closedEyes = cuteFaceClosedEyes(mood);
+  return (
+    <Svg
+      accessibilityElementsHidden
+      accessible={false}
+      height={size}
+      opacity={opacity}
+      pointerEvents="none"
+      viewBox="-70 -70 140 140"
+      width={size}
+    >
+      <FaceBody d={body} color={color} />
+      {closedEyes ? (
+        <Path d={closedEyes} fill="none" stroke={FACE_EYE} strokeWidth={4.5} strokeLinecap="round" />
+      ) : (
+        CUTE_FACE_EYES.map((x) => <FaceEye key={x} x={x} up={mood === "waiting"} blink={blink} />)
+      )}
+      {mood === "asleep" ? (
+        <Path d="M 30 -36 h 9 l -9 10 h 9" fill="none" stroke={FACE_EYE} strokeWidth={2.6} opacity={0.7} />
+      ) : null}
+    </Svg>
+  );
+}
+
+function FaceBody({ d, color }: { d: string; color: DerivedValue<string> | string }) {
+  const props = useAnimatedProps(() => ({ fill: typeof color === "string" ? color : color.get() }));
+  return <AnimatedPath d={d} animatedProps={props} />;
+}
+
+function FaceEye({ x, up, blink }: { x: number; up: boolean; blink?: SharedValue<number> | undefined }) {
+  const cy = CUTE_FACE_EYE.cy - (up ? 3 : 0);
+  const eyeProps = useAnimatedProps(() => ({ ry: CUTE_FACE_EYE.ry * (blink ? blink.get() : 1) }));
+  return <AnimatedEllipse cx={x} cy={cy} rx={CUTE_FACE_EYE.rx} fill={FACE_EYE} animatedProps={eyeProps} />;
 }
 
 // Choices show the same idle pose without mounting animation clocks, worklets,
@@ -193,44 +234,18 @@ export const AvatarThumbnail = memo(function AvatarThumbnail({
   /** Eases the body to a new colour, for a picker where the colour changes in place. */
   animateColor?: boolean;
 }) {
-  const frame = useMemo(() => bloubRestEngineFrame(bloubActivityGeometry(seed)), [seed]);
-  return (
-    <Svg
-      accessibilityElementsHidden
-      accessible={false}
-      opacity={disconnected ? DISCONNECTED_APPEARANCE.opacity : 1}
-      height={size}
-      pointerEvents="none"
-      viewBox="-158 -158 316 316"
-      width={size}
-    >
-      {animateColor ? (
-        <AnimatedThumbnailBody
-          d={frame.bodyPath}
-          color={thumbnailColor(getBloubAvatarColor(seed, hue), disconnected)}
-          opacity={frame.bodyAlpha}
-        />
-      ) : (
-        <Path
-          d={frame.bodyPath}
-          fill={thumbnailColor(getBloubAvatarColor(seed, hue), disconnected)}
-          opacity={frame.bodyAlpha}
-        />
-      )}
-      {(["left", "right"] as const).map((side) => {
-        const eye = frame.eyes[side === "left" ? 0 : 1];
-        return eye ? (
-          <Path key={side} d={eye.d} fill={AVATAR_PAPER} opacity={eye.alpha} transform={eye.matrix} />
-        ) : null;
-      })}
-    </Svg>
+  const color = thumbnailColor(getBloubAvatarColor(seed, hue), disconnected);
+  const opacity = disconnected ? DISCONNECTED_APPEARANCE.opacity : 1;
+  return animateColor ? (
+    <AnimatedThumbnailFace seed={seed} size={size} color={color} opacity={opacity} />
+  ) : (
+    <CuteFaceSvg seed={seed} mood="idle" size={size} color={color} opacity={opacity} />
   );
 });
 
-function AnimatedThumbnailBody({ d, color, opacity }: { d: string; color: string; opacity: number }) {
-  const animated = useAgentColorTransition(color);
-  const props = useAnimatedProps(() => ({ fill: animated.get() }));
-  return <AnimatedPath d={d} opacity={opacity} animatedProps={props} />;
+function AnimatedThumbnailFace(props: { seed: string; size: number; color: string; opacity: number }) {
+  const animated = useAgentColorTransition(props.color);
+  return <CuteFaceSvg seed={props.seed} mood="idle" size={props.size} color={animated} opacity={props.opacity} />;
 }
 
 function saturateColor(color: string, saturation: number) {
