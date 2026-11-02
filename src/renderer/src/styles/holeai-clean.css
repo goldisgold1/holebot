@@ -214,15 +214,22 @@
  * Header: the agent's face and name in a centred pill, as in a messenger. The model picker and the panel button
  * stay on the right, quieter until hovered.
  */
+/* The name sits in the middle while it fits; in a narrow pane the actions keep their width and push it left
+   instead of sliding under it. */
 .conversation-header {
-  position: relative;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(max-content, 1fr);
+  align-items: center;
 }
 
 .conversation-heading-group {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  grid-column: 2;
+  min-width: 0;
+}
+
+.conversation-header > .conversation-header-actions {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .conversation-header .conversation-title {
