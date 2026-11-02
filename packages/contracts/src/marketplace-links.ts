@@ -59,7 +59,7 @@ function isListingId(kind: MarketplaceListingKind, id: string): boolean {
 }
 
 function assertListing(link: MarketplaceListingLink): void {
-  if (!isListingId(link.kind, link.id)) throw new Error("The OpenBot Marketplace link is invalid.");
+  if (!isListingId(link.kind, link.id)) throw new Error("The HoleBot Marketplace link is invalid.");
 }
 
 /** The path of a listing page on the site, such as `/marketplace/agents/<id>`. */
@@ -76,7 +76,7 @@ export function createMarketplaceShareUrl(
   link: MarketplaceListingLink,
   origin: string = OPENBOT_MARKETPLACE_ORIGIN,
 ): string {
-  if (!isMarketplaceShareOrigin(origin)) throw new Error("The OpenBot Marketplace link origin is invalid.");
+  if (!isMarketplaceShareOrigin(origin)) throw new Error("The HoleBot Marketplace link origin is invalid.");
   return `${origin}${marketplaceListingPath(link)}`;
 }
 
@@ -128,7 +128,7 @@ export function parseMarketplaceUrl(value: string): MarketplaceListingLink {
   try {
     url = new URL(value);
   } catch {
-    throw new Error("The OpenBot Marketplace link is invalid.");
+    throw new Error("The HoleBot Marketplace link is invalid.");
   }
 
   /* The origin is compared as one string. An `endsWith` or a host expression here is what lets
@@ -145,7 +145,7 @@ export function parseMarketplaceUrl(value: string): MarketplaceListingLink {
     url.search !== "" ||
     url.hash !== ""
   ) {
-    throw new Error("The OpenBot Marketplace link is invalid.");
+    throw new Error("The HoleBot Marketplace link is invalid.");
   }
 
   /* Two segments, the kind and the id, and no empty one. `..` and a trailing slash fail here. */
@@ -153,7 +153,7 @@ export function parseMarketplaceUrl(value: string): MarketplaceListingLink {
   const [segment, id, ...extra] = rest.split("/");
   const kind = LISTING_KINDS.find((candidate) => LISTING_SEGMENTS[candidate] === segment);
   if (kind === undefined || id === undefined || extra.length > 0) {
-    throw new Error("The OpenBot Marketplace link is invalid.");
+    throw new Error("The HoleBot Marketplace link is invalid.");
   }
   const link = { kind, id };
   assertListing(link);

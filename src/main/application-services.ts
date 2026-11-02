@@ -709,7 +709,7 @@ async function createMessagingServices({
   const messagingCredentialLoadError = await Effect.runPromise(messagingCredentials.load());
   if (messagingCredentialLoadError)
     logger.warn(
-      `OpenBot could not read the messaging token file (${messagingCredentialLoadError.name}). It was left unchanged.`,
+      `HoleBot could not read the messaging token file (${messagingCredentialLoadError.name}). It was left unchanged.`,
     );
   // The Signal socket that brings the events of the Slack workspaces, Discord guilds and Telegram chats
   // linked to this host, and makes its Discord and Telegram calls.
@@ -1376,7 +1376,7 @@ export async function createApplicationServices({
   const mcpOAuthStore = new McpOAuthStore(join(app.getPath("userData"), MCP_OAUTH_FILE), secretCipher);
   const mcpOAuthLoadError = await Effect.runPromise(mcpOAuthStore.load());
   if (mcpOAuthLoadError) {
-    logger.warn(`OpenBot could not read the MCP sign-in file (${mcpOAuthLoadError.name}). It was left unchanged.`);
+    logger.warn(`HoleBot could not read the MCP sign-in file (${mcpOAuthLoadError.name}). It was left unchanged.`);
   }
   // The OAuth proxy port, so a Codex session resumed after a restart reaches the same address.
   const mcpOAuthProxySettings = new McpOAuthProxySettingsFile(
@@ -1386,7 +1386,7 @@ export async function createApplicationServices({
   const mcpOAuthProxyLoadError = await Effect.runPromise(mcpOAuthProxySettings.load());
   if (mcpOAuthProxyLoadError) {
     logger.warn(
-      `OpenBot could not read the MCP sign-in proxy file (${mcpOAuthProxyLoadError.name}). A new port is used.`,
+      `HoleBot could not read the MCP sign-in proxy file (${mcpOAuthProxyLoadError.name}). A new port is used.`,
     );
   }
   /*
@@ -1431,7 +1431,7 @@ export async function createApplicationServices({
     },
   }).catch((error: unknown) => {
     logger.warn(
-      "OpenBot could not listen for MCP sign-ins on this machine, so the openbot:// link is used instead. Servers that refuse it cannot be signed in to:",
+      "HoleBot could not listen for MCP sign-ins on this machine, so the openbot:// link is used instead. Servers that refuse it cannot be signed in to:",
       toLogValue(error),
     );
     return null;

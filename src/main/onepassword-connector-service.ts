@@ -193,7 +193,7 @@ const runOnePasswordCli: OnePasswordCliRunner = async (executable, args, signal)
 
 async function createSdkClient(token: string, appVersion: string): Promise<OnePasswordClient> {
   const sdk = await import("@1password/sdk");
-  const client = await sdk.createClient({ auth: token, integrationName: "OpenBot", integrationVersion: appVersion });
+  const client = await sdk.createClient({ auth: token, integrationName: "HoleBot", integrationVersion: appVersion });
   return {
     vaults: { list: () => client.vaults.list() },
     items: {
@@ -629,7 +629,7 @@ export class OnePasswordConnectorService implements PasswordVault {
           "create",
           ONEPASSWORD_SHARED_VAULT,
           "--description",
-          "Logins that OpenBot agents may use to sign in to sites.",
+          "Logins that HoleBot agents may use to sign in to sites.",
           ...scope,
           "--format",
           "json",

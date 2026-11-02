@@ -99,6 +99,12 @@ if (git("status", "--porcelain", "--", "apps/auth-api/src/routeTree.gen.ts") !==
   );
 }
 
+// Upstream writes new text as OpenBot. Rename it before the guard looks.
+spawnSync("bun", ["scripts/holeai-rebrand.ts"], { cwd: root, stdio: "inherit" });
+if (git("diff", "--name-only") !== "") {
+  git("commit", "-q", "-a", "-m", "Rename new upstream text to HoleBot");
+}
+
 const checks = [
   // Upstream commits can add packages (bun.lock); the type check needs them installed.
   run("Install", "bun", ["install", "--frozen-lockfile"]),

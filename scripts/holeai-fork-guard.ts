@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createOpenBotLogger } from "@openbot/logging";
+import { leftoverNames } from "./holeai-rebrand";
 
 const logger = createOpenBotLogger("holeai-fork-guard");
 
@@ -68,6 +69,23 @@ if (fileContains("packages/telemetry/src/transport.ts", "analytics.openbot.run")
   problems.push("packages/telemetry/src/transport.ts: sends to the previous owner's analytics");
 if (!fileContains("apps/auth-api/src/server/auth-service.ts", "accessCodeHashes"))
   problems.push("apps/auth-api/src/server/auth-service.ts: access-code sign-in is gone");
+// The HoleBot name: the text files are renamed by holeai-rebrand.ts, the rest by hand.
+for (const file of leftoverNames()) problems.push(`${file}: says OpenBot (run bun scripts/holeai-rebrand.ts)`);
+for (const [path, text] of [
+  ["package.json", '"productName": "HoleBot"'],
+  ["electron-builder.yml", "productName: HoleBot"],
+  ["src/main/index.ts", 'app.setName("HoleBot")'],
+  ["src/renderer/index.html", "<title>HoleBot</title>"],
+  ["apps/mobile/app.json", '"name": "HoleBot"'],
+  ["apps/auth-api/public/site.webmanifest", '"short_name": "HoleBot"'],
+  ["apps/auth-api/src/routes/app.tsx", '"HoleBot web"'],
+] as const) {
+  if (!fileContains(path, text)) problems.push(`${path}: lost the HoleBot name (${text})`);
+}
+// Electron names the data folder after the product; it must stay %APPDATA%\OpenBot.
+if (!fileContains("src/main/index.ts", 'app.setPath("userData", join(app.getPath("appData"), "OpenBot"))'))
+  problems.push("src/main/index.ts: the data folder is no longer pinned to %APPDATA%\\OpenBot");
+
 for (const route of [
   "pricing.tsx",
   "terms.tsx",

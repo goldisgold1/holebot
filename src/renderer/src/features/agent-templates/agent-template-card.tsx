@@ -13,7 +13,7 @@ import { loadImage, loadSvg, withAlpha } from "../../avatar-canvas";
  *
  * Layout, on the app's dark canvas: a hero square on the left in the avatar's own colour with the
  * avatar in it, and on the right the OpenBot mark, the name, the role, the instructions, and the
- * "Add to OpenBot" pill the page carries.
+ * "Add to HoleBot" pill the page carries.
  */
 
 const { width: WIDTH, height: HEIGHT } = AGENT_TEMPLATE_CARD;
@@ -128,7 +128,7 @@ async function drawColumn(
   await drawLogo(context, x, 92, 44, colors);
   context.fillStyle = colors.primary;
   context.font = `600 28px ${FONT}`;
-  context.fillText("OpenBot", x + 58, 124);
+  context.fillText("HoleBot", x + 58, 124);
 
   // `y` is always the baseline of the last line drawn.
   let y = 154;
@@ -157,7 +157,7 @@ async function drawColumn(
     y += lineHeight;
   }
 
-  const label = "Add to OpenBot";
+  const label = "Add to HoleBot";
   context.font = `600 24px ${FONT}`;
   const pillWidth = context.measureText(label).width + 64;
   context.fillStyle = colors.primary;

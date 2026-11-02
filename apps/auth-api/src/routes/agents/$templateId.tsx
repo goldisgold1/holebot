@@ -21,13 +21,13 @@ async function agentTemplateHead(template: AgentTemplateDetail, siteUrl: string)
   const { AGENT_TEMPLATE_CARD } = await import("@openbot/contracts/ipc");
   const { markdownPreviewText } = await import("@openbot/contracts/markdown-preview-text");
   const url = new URL(agentTemplatePath(template.id), siteUrl).toString();
-  const title = `${template.name} — OpenBot agent`;
+  const title = `${template.name} — HoleBot agent`;
   const description = template.title || markdownPreviewText(template.description).slice(0, 200);
   // The agent's own share card when the publish sent one, so a post on X shows this agent.
   const card = template.cardUrl
     ? {
         url: new URL(template.cardUrl, siteUrl).toString(),
-        alt: `${template.name}, an OpenBot agent by ${template.creatorName}`,
+        alt: `${template.name}, a HoleBot agent by ${template.creatorName}`,
       }
     : { url: OPENBOT_SOCIAL_IMAGE_URL, alt: OPENBOT_SOCIAL_IMAGE_ALT };
   return {
@@ -36,7 +36,7 @@ async function agentTemplateHead(template: AgentTemplateDetail, siteUrl: string)
       { name: "description", content: description },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "OpenBot" },
+      { property: "og:site_name", content: "HoleBot" },
       { property: "og:url", content: url },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
@@ -60,7 +60,7 @@ async function agentTemplateHead(template: AgentTemplateDetail, siteUrl: string)
 }
 
 const NOT_SHARED_HEAD = {
-  meta: [{ title: "Agent no longer shared — OpenBot" }, { name: "robots", content: "noindex, nofollow" }],
+  meta: [{ title: "Agent no longer shared — HoleBot" }, { name: "robots", content: "noindex, nofollow" }],
 };
 
 export const Route = createFileRoute("/agents/$templateId")({

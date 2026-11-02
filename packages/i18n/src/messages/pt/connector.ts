@@ -16,11 +16,11 @@ export const messages = {
   "connector.github.connectedAs": "Conectado como @{login}",
   "connector.github.repositoriesTitle": "Repositórios",
   "connector.github.repositoriesDescription":
-    "Os agentes só podem usar os repositórios em que o aplicativo OpenBot para GitHub está instalado.",
+    "Os agentes só podem usar os repositórios em que o aplicativo HoleBot para GitHub está instalado.",
   "connector.github.chooseRepositories": "Escolher repositórios",
   "connector.github.repositoriesLoading": "Lendo os repositórios do GitHub",
-  "connector.github.repositoriesFailed": "O OpenBot não conseguiu ler os repositórios do GitHub.",
-  "connector.github.noRepositories": "O aplicativo OpenBot para GitHub ainda não está instalado em nenhum repositório.",
+  "connector.github.repositoriesFailed": "O HoleBot não conseguiu ler os repositórios do GitHub.",
+  "connector.github.noRepositories": "O aplicativo HoleBot para GitHub ainda não está instalado em nenhum repositório.",
   "connector.github.moreRepositories": { one: "E mais {count} repositório", other: "E mais {count} repositórios" },
   "connector.github.private": "Privado",
   "connector.github.disconnect": "Desconectar",
@@ -31,7 +31,7 @@ export const messages = {
   "connector.github.expiredDescription":
     "Conecte novamente como @{login} para devolver o acesso ao GitHub aos agentes.",
   "connector.github.reconnect": "Reconectar",
-  "connector.github.actionFailed": "O OpenBot não conseguiu alterar a conexão com o GitHub.",
+  "connector.github.actionFailed": "O HoleBot não conseguiu alterar a conexão com o GitHub.",
   "connector.github.statusConnected": "Conectado",
   "connector.github.statusConnecting": "Conectando",
   "connector.github.statusExpired": "Expirado",
@@ -41,7 +41,7 @@ export const messages = {
   "connector.github.noMatch": "Nenhum repositório corresponde a “{query}”.",
   "connector.github.stepSignIn": "Entrar",
   "connector.github.stepConnected": "Conectado",
-  "connector.github.requestingCode": "O OpenBot solicita um código ao GitHub.",
+  "connector.github.requestingCode": "O HoleBot solicita um código ao GitHub.",
   "connector.github.codeLabel": "Código {code}",
   "connector.github.failedTitle": "O GitHub não conectou",
   "connector.github.cancelConnecting": "Cancelar conexão com o GitHub",
@@ -54,7 +54,7 @@ export const messages = {
   "connector.github.disconnectConfirmTitle": "Desconectar GitHub?",
   "connector.github.disconnectConfirmDescription": "Desconectar remove o login de @{login} deste computador.",
   "connector.github.disconnectEffectTools": "Todos os agentes perdem as ferramentas do GitHub, gh e git.",
-  "connector.github.disconnectEffectRevoke": "Em seguida, o GitHub abre para você revogar o OpenBot.",
+  "connector.github.disconnectEffectRevoke": "Em seguida, o GitHub abre para você revogar o HoleBot.",
   "connector.github.disconnectEffectKept": "Os chats, arquivos e a memória dos agentes continuam neste computador.",
   // The same text for the connection of a joined server. {host} is the server name, such as Studio.
   "connector.github.descriptionHost":
@@ -69,7 +69,7 @@ export const messages = {
   "connector.github.close": "Fechar",
   "connector.dangerZone": "Zona de perigo",
   "connector.statusUnknown": "Desconhecido",
-  "connector.readFailed": "O OpenBot não conseguiu ler o estado desta conexão.",
+  "connector.readFailed": "O HoleBot não conseguiu ler o estado desta conexão.",
   "connector.slack.title": "Slack",
   "connector.slack.description":
     "As pessoas mencionam @OpenBot no Slack ou enviam uma mensagem direta para ele. O Orquestrador do Slack consulta o agente certo e responde.",
@@ -92,10 +92,10 @@ export const messages = {
   "connector.slack.disconnectAllSummary":
     "Todos os workspaces são desconectados. Ninguém poderá falar com seus agentes pelo @OpenBot.",
   "connector.slack.disconnectAllSummaryOrchestrator":
-    "Todos os workspaces são desconectados. O Orquestrador do Slack e as conversas dele são excluídos do OpenBot.",
+    "Todos os workspaces são desconectados. O Orquestrador do Slack e as conversas dele são excluídos do HoleBot.",
   "connector.slack.missingScopes":
-    "O OpenBot não tem estas permissões no Slack: {scopes}. Desconecte o espaço de trabalho e conecte-o novamente.",
-  "connector.slack.retryAt": "O Slack pediu para o OpenBot aguardar. Ele tentará novamente às {time}.",
+    "O HoleBot não tem estas permissões no Slack: {scopes}. Desconecte o espaço de trabalho e conecte-o novamente.",
+  "connector.slack.retryAt": "O Slack pediu para o HoleBot aguardar. Ele tentará novamente às {time}.",
   "connector.slack.reconnect": "Reconectar",
   "connector.slack.pause": "Pausar",
   "connector.slack.resume": "Retomar",
@@ -106,12 +106,12 @@ export const messages = {
   "connector.slack.orchestratorNone": "Nenhum agente responde ainda",
   "connector.slack.orchestratorNoneDescription": "Adicione o Orquestrador do Slack para que o Slack receba respostas.",
   "connector.slack.inviteNote":
-    "O OpenBot entra automaticamente em todos os canais públicos, inclusive nos novos. Para um canal privado, convide-o: /invite @OpenBot.",
+    "O HoleBot entra automaticamente em todos os canais públicos, inclusive nos novos. Para um canal privado, convide-o: /invite @OpenBot.",
   "connector.slack.stepWorkspace": "Espaço de trabalho",
   "connector.slack.stepAgent": "Agente",
   "connector.slack.connectTitle": "Conectar um espaço de trabalho do Slack",
   "connector.slack.connectDescription":
-    "O OpenBot instala um aplicativo chamado OpenBot no espaço de trabalho e entra em todos os canais públicos.",
+    "O HoleBot instala um aplicativo chamado HoleBot no espaço de trabalho e entra em todos os canais públicos.",
   "connector.slack.connectStepBrowser": "O Slack abre no seu navegador",
   "connector.slack.connectStepAllow": "Selecione o espaço de trabalho no canto superior direito e depois Permitir",
   "connector.slack.connectStepReturn": "Esta janela continua quando o Slack terminar",
@@ -126,19 +126,19 @@ export const messages = {
   "connector.slack.orchestratorDoesDelegate": "Atribui cada tarefa ao agente mais adequado",
   "connector.slack.orchestratorDoesAnswer": "Publica a resposta na conversa do Slack",
   "connector.slack.orchestratorModel": "Modelo",
-  "connector.slack.doneTitle": "O OpenBot está em {workspace}",
+  "connector.slack.doneTitle": "O HoleBot está em {workspace}",
   "connector.slack.doneDescription":
     "Mencione @OpenBot em qualquer canal público ou envie uma mensagem direta para ele.",
   "connector.slack.done": "Concluir",
   "connector.slack.disconnectTitle": "Desconectar {workspace}?",
   "connector.slack.disconnectDescription":
-    "O OpenBot para de responder em {workspace} e remove o token do Slack deste computador.",
+    "O HoleBot para de responder em {workspace} e remove o token do Slack deste computador.",
   "connector.slack.disconnectDescriptionHost":
-    "O OpenBot para de responder em {workspace} e remove o token do Slack de {host}.",
+    "O HoleBot para de responder em {workspace} e remove o token do Slack de {host}.",
   "connector.slack.disconnectEffect":
     "As pessoas em {workspace} não poderão mais acessar seus agentes por meio de @OpenBot.",
-  "connector.slack.removeEffectKept": "As conversas e o Orquestrador do Slack continuam no OpenBot.",
-  "connector.slack.removeEffectDeleted": "O Orquestrador do Slack e as conversas dele são excluídos do OpenBot.",
+  "connector.slack.removeEffectKept": "As conversas e o Orquestrador do Slack continuam no HoleBot.",
+  "connector.slack.removeEffectDeleted": "O Orquestrador do Slack e as conversas dele são excluídos do HoleBot.",
   "connector.slack.keep": "Manter conectado",
   "connector.slack.close": "Fechar",
   "connector.slack.addWorkspace": "Adicionar espaço de trabalho",
@@ -166,16 +166,16 @@ export const messages = {
   "connector.discord.addAgent": "Adicionar agente",
   "connector.discord.actionFailed": "O Discord não aceitou a alteração",
   "connector.discord.workspaceTitle": "Servidores do Discord",
-  "connector.discord.workspaceDescription": "Mencione @OpenBot em um canal. Responda ao OpenBot para continuar.",
+  "connector.discord.workspaceDescription": "Mencione @OpenBot em um canal. Responda ao HoleBot para continuar.",
   "connector.discord.disconnectWorkspace": "Desconectar",
   "connector.discord.disconnectAllTitle": "Desconectar Discord",
   "connector.discord.disconnectAllSummary":
     "Todos os servidores são desconectados. Ninguém poderá falar com seus agentes pelo @OpenBot.",
   "connector.discord.disconnectAllSummaryOrchestrator":
-    "Todos os servidores são desconectados. O Orquestrador do Discord e as conversas dele são excluídos do OpenBot.",
+    "Todos os servidores são desconectados. O Orquestrador do Discord e as conversas dele são excluídos do HoleBot.",
   "connector.discord.missingScopes":
-    "O OpenBot não tem estas permissões no Discord: {scopes}. Desconecte o servidor do Discord e conecte-o novamente.",
-  "connector.discord.retryAt": "O Discord pediu para o OpenBot aguardar. Ele tentará novamente às {time}.",
+    "O HoleBot não tem estas permissões no Discord: {scopes}. Desconecte o servidor do Discord e conecte-o novamente.",
+  "connector.discord.retryAt": "O Discord pediu para o HoleBot aguardar. Ele tentará novamente às {time}.",
   "connector.discord.reconnect": "Reconectar",
   "connector.discord.pause": "Pausar",
   "connector.discord.resume": "Retomar",
@@ -186,11 +186,11 @@ export const messages = {
   "connector.discord.orchestratorNone": "Nenhum agente responde ainda",
   "connector.discord.orchestratorNoneDescription":
     "Adicione o Orquestrador do Discord para que o Discord receba respostas.",
-  "connector.discord.channelsNote": "O OpenBot vê os canais que a função dele pode visualizar.",
+  "connector.discord.channelsNote": "O HoleBot vê os canais que a função dele pode visualizar.",
   "connector.discord.stepWorkspace": "Servidor do Discord",
   "connector.discord.stepAgent": "Agente",
   "connector.discord.connectTitle": "Conectar um servidor do Discord",
-  "connector.discord.connectDescription": "O OpenBot adiciona um bot chamado OpenBot ao servidor do Discord.",
+  "connector.discord.connectDescription": "O HoleBot adiciona um bot chamado HoleBot ao servidor do Discord.",
   "connector.discord.connectStepBrowser": "O Discord abre no seu navegador",
   "connector.discord.connectStepAllow": "Selecione o servidor e depois Autorizar",
   "connector.discord.connectStepReturn": "Esta janela continua quando o Discord terminar",
@@ -205,18 +205,18 @@ export const messages = {
   "connector.discord.orchestratorDoesDelegate": "Atribui cada tarefa ao agente mais adequado",
   "connector.discord.orchestratorDoesAnswer": "Responde no canal do Discord",
   "connector.discord.orchestratorModel": "Modelo",
-  "connector.discord.doneTitle": "O OpenBot está em {workspace}",
-  "connector.discord.doneDescription": "Mencione @OpenBot em um canal. Responda ao OpenBot para continuar.",
+  "connector.discord.doneTitle": "O HoleBot está em {workspace}",
+  "connector.discord.doneDescription": "Mencione @OpenBot em um canal. Responda ao HoleBot para continuar.",
   "connector.discord.done": "Concluir",
   "connector.discord.disconnectTitle": "Desconectar {workspace}?",
   "connector.discord.disconnectDescription":
-    "O OpenBot para de responder em {workspace} e remove a conexão do Discord deste computador.",
+    "O HoleBot para de responder em {workspace} e remove a conexão do Discord deste computador.",
   "connector.discord.disconnectDescriptionHost":
-    "O OpenBot para de responder em {workspace} e remove a conexão do Discord de {host}.",
+    "O HoleBot para de responder em {workspace} e remove a conexão do Discord de {host}.",
   "connector.discord.disconnectEffect":
     "As pessoas em {workspace} não poderão mais acessar seus agentes por meio de @OpenBot.",
-  "connector.discord.removeEffectKept": "As conversas e o Orquestrador do Discord continuam no OpenBot.",
-  "connector.discord.removeEffectDeleted": "O Orquestrador do Discord e as conversas dele são excluídos do OpenBot.",
+  "connector.discord.removeEffectKept": "As conversas e o Orquestrador do Discord continuam no HoleBot.",
+  "connector.discord.removeEffectDeleted": "O Orquestrador do Discord e as conversas dele são excluídos do HoleBot.",
   "connector.discord.keep": "Manter conectado",
   "connector.discord.close": "Fechar",
   "connector.discord.addWorkspace": "Adicionar servidor do Discord",
@@ -228,24 +228,24 @@ export const messages = {
     one: "{count} servidor do Discord · O Orquestrador do Discord responde",
     other: "{count} servidores do Discord · O Orquestrador do Discord responde",
   },
-  "connector.discord.accessTitle": "Quem pode usar o OpenBot",
-  "connector.discord.accessDescription": "O OpenBot responde só a essas pessoas. Ele ignora menções de outras pessoas.",
+  "connector.discord.accessTitle": "Quem pode usar o HoleBot",
+  "connector.discord.accessDescription": "O HoleBot responde só a essas pessoas. Ele ignora menções de outras pessoas.",
   "connector.discord.accessEveryone": "Todos no servidor",
   "connector.discord.accessEveryoneDescription":
-    "Qualquer pessoa que pode postar em um canal que o OpenBot vê pode mencioná-lo.",
+    "Qualquer pessoa que pode postar em um canal que o HoleBot vê pode mencioná-lo.",
   "connector.discord.accessRoles": "Membros com {roles}",
   "connector.discord.accessChoose": "Escolher funções",
-  "connector.discord.accessDialogTitle": "Quem pode usar o OpenBot em {workspace}?",
-  "connector.discord.accessDialogDescription": "Sem nenhuma função selecionada, todos podem mencionar o OpenBot.",
+  "connector.discord.accessDialogTitle": "Quem pode usar o HoleBot em {workspace}?",
+  "connector.discord.accessDialogDescription": "Sem nenhuma função selecionada, todos podem mencionar o HoleBot.",
   "connector.discord.accessLoading": "Carregando funções…",
   "connector.discord.accessLoadFailed": "As funções do Discord não carregaram",
   "connector.discord.accessNoRoles": "Este servidor não tem funções para escolher.",
   "connector.discord.accessRoleDeleted": "{role} (excluída)",
   "connector.discord.accessSave": "Salvar",
-  "connector.discord.accessHostUpdate": "Atualize o OpenBot em {host} para escolher funções.",
+  "connector.discord.accessHostUpdate": "Atualize o HoleBot em {host} para escolher funções.",
   "connector.telegram.title": "Telegram",
   "connector.telegram.description":
-    "Adicione o bot do OpenBot a um grupo do Telegram ou abra um chat direto com ele. O Orquestrador do Telegram consulta o agente certo e responde.",
+    "Adicione o bot do HoleBot a um grupo do Telegram ou abra um chat direto com ele. O Orquestrador do Telegram consulta o agente certo e responde.",
   "connector.telegram.statusConnected": "Conectado",
   "connector.telegram.statusAttention": "Precisa de atenção",
   "connector.telegram.summaryConnected": {
@@ -268,29 +268,29 @@ export const messages = {
   "connector.telegram.groupDescription": "As pessoas mencionam o bot ou respondem às mensagens dele.",
   "connector.telegram.directDescription": "Todas as mensagens deste chat vão para o Orquestrador do Telegram.",
   "connector.telegram.helpRemoved":
-    "O bot do OpenBot não está mais neste chat. Desconecte o chat e adicione o bot novamente.",
+    "O bot do HoleBot não está mais neste chat. Desconecte o chat e adicione o bot novamente.",
   "connector.telegram.helpRelayUnavailable":
-    "O OpenBot não consegue receber mensagens do Telegram neste computador. Entre na sua conta, dê um nome a este computador nas Configurações do servidor e mantenha o OpenBot aberto.",
+    "O HoleBot não consegue receber mensagens do Telegram neste computador. Entre na sua conta, dê um nome a este computador nas Configurações do servidor e mantenha o HoleBot aberto.",
   "connector.telegram.helpRelayUnavailableHost":
-    "O OpenBot em {host} não consegue receber mensagens do Telegram. Em {host}, entre na sua conta, dê um nome ao servidor nas Configurações do servidor e mantenha o OpenBot aberto.",
-  "connector.telegram.helpError": "O OpenBot não consegue acessar este chat. Reconecte ou desconecte o chat.",
-  "connector.telegram.retryAt": "O Telegram pediu para o OpenBot aguardar. Ele tentará novamente às {time}.",
+    "O HoleBot em {host} não consegue receber mensagens do Telegram. Em {host}, entre na sua conta, dê um nome ao servidor nas Configurações do servidor e mantenha o HoleBot aberto.",
+  "connector.telegram.helpError": "O HoleBot não consegue acessar este chat. Reconecte ou desconecte o chat.",
+  "connector.telegram.retryAt": "O Telegram pediu para o HoleBot aguardar. Ele tentará novamente às {time}.",
   "connector.telegram.pause": "Pausar",
   "connector.telegram.resume": "Retomar",
   "connector.telegram.reconnect": "Reconectar",
   "connector.telegram.disconnectChat": "Desconectar",
   "connector.telegram.disconnectAllTitle": "Desconectar Telegram",
   "connector.telegram.disconnectAllSummary":
-    "Todos os chats são desconectados. Ninguém poderá falar com seus agentes pelo bot do OpenBot.",
+    "Todos os chats são desconectados. Ninguém poderá falar com seus agentes pelo bot do HoleBot.",
   "connector.telegram.disconnectAllSummaryOrchestrator":
-    "Todos os chats são desconectados. O Orquestrador do Telegram e as conversas dele são excluídos do OpenBot.",
+    "Todos os chats são desconectados. O Orquestrador do Telegram e as conversas dele são excluídos do HoleBot.",
   "connector.telegram.rowAction": "{action}: {name}",
   "connector.telegram.linkChat": "Vincular um chat",
   "connector.telegram.addToGroup": "Adicionar a um grupo",
   "connector.telegram.openDirectChat": "Abrir um chat direto",
   "connector.telegram.orchestratorTitle": "Orquestrador do Telegram",
   "connector.telegram.orchestratorDescription":
-    "Este agente recebe as mensagens para o OpenBot de todos os seus chats do Telegram. Ele mesmo responde às curtas, encaminha o restante do trabalho ao agente certo e publica a resposta no chat.",
+    "Este agente recebe as mensagens para o HoleBot de todos os seus chats do Telegram. Ele mesmo responde às curtas, encaminha o restante do trabalho ao agente certo e publica a resposta no chat.",
   "connector.telegram.orchestratorNone": "Nenhum agente responde ainda",
   "connector.telegram.orchestratorNoneDescription":
     "Adicione o Orquestrador do Telegram para que o Telegram receba respostas.",
@@ -300,36 +300,36 @@ export const messages = {
   "connector.telegram.stepAgent": "Agente",
   "connector.telegram.connectTitle": "Vincular um chat do Telegram",
   "connector.telegram.connectDescription":
-    "Adicione o bot do OpenBot a um grupo ou abra um chat direto com ele. Um único bot atende todos os seus chats.",
+    "Adicione o bot do HoleBot a um grupo ou abra um chat direto com ele. Um único bot atende todos os seus chats.",
   "connector.telegram.connectStepBrowser": "O Telegram abre no seu navegador",
   "connector.telegram.connectStepPick": "Selecione o grupo ou clique em Iniciar no chat direto",
   "connector.telegram.connectStepReturn": "Esta janela continua quando o chat estiver vinculado",
   "connector.telegram.connectWaiting": "Aguardando o Telegram. Selecione o chat no Telegram.",
   "connector.telegram.agentStepTitle": "Adicionar o Orquestrador do Telegram",
   "connector.telegram.agentStepDescription":
-    "Este novo agente responde às mensagens para o OpenBot em {chat} e em cada chat que você vincular depois.",
+    "Este novo agente responde às mensagens para o HoleBot em {chat} e em cada chat que você vincular depois.",
   "connector.telegram.orchestratorName": "Orquestrador do Telegram",
   "connector.telegram.orchestratorRole": "Responde no Telegram e consulta a equipe",
-  "connector.telegram.orchestratorDoesReceive": "Recebe primeiro todas as mensagens do Telegram para o OpenBot",
+  "connector.telegram.orchestratorDoesReceive": "Recebe primeiro todas as mensagens do Telegram para o HoleBot",
   "connector.telegram.orchestratorDoesDelegate": "Atribui cada tarefa ao agente mais adequado",
   "connector.telegram.orchestratorDoesAnswer": "Publica a resposta no chat do Telegram",
   "connector.telegram.orchestratorModel": "Modelo",
-  "connector.telegram.doneTitle": "O OpenBot está em {chat}",
+  "connector.telegram.doneTitle": "O HoleBot está em {chat}",
   "connector.telegram.done": "Concluir",
   "connector.telegram.disconnectTitle": "Desconectar {chat}?",
-  "connector.telegram.leaveDescription": "O bot do OpenBot sai de {chat} e o OpenBot para de responder lá.",
+  "connector.telegram.leaveDescription": "O bot do HoleBot sai de {chat} e o HoleBot para de responder lá.",
   "connector.telegram.disconnectEffect":
-    "As pessoas em {chat} não poderão mais acessar seus agentes por meio do bot do OpenBot.",
-  "connector.telegram.removeEffectKept": "As conversas e o Orquestrador do Telegram continuam no OpenBot.",
+    "As pessoas em {chat} não poderão mais acessar seus agentes por meio do bot do HoleBot.",
+  "connector.telegram.removeEffectKept": "As conversas e o Orquestrador do Telegram continuam no HoleBot.",
   "connector.telegram.removeEffectDeleted":
-    "Este é o último chat, então o Orquestrador do Telegram e as conversas dele são excluídos do OpenBot.",
+    "Este é o último chat, então o Orquestrador do Telegram e as conversas dele são excluídos do HoleBot.",
   "connector.telegram.keep": "Manter conectado",
   "connector.telegram.close": "Fechar",
   "connector.onePassword.title": "1Password",
   "connector.onePassword.description":
-    "Compartilhe um cofre dedicado do 1Password com o OpenBot por meio de uma conta de serviço, para que os agentes possam entrar em sites no navegador do OpenBot.",
+    "Compartilhe um cofre dedicado do 1Password com o HoleBot por meio de uma conta de serviço, para que os agentes possam entrar em sites no navegador do HoleBot.",
   "connector.onePassword.howItWorks":
-    "A conexão cria um cofre “Shared with OpenBot” na sua conta do 1Password e uma conta de serviço que só consegue ler esse cofre. O OpenBot preenche os logins salvos no navegador deste computador, então só os itens que você mover para esse cofre são compartilhados. Os agentes nunca veem uma senha.",
+    "A conexão cria um cofre “Shared with OpenBot” na sua conta do 1Password e uma conta de serviço que só consegue ler esse cofre. O HoleBot preenche os logins salvos no navegador deste computador, então só os itens que você mover para esse cofre são compartilhados. Os agentes nunca veem uma senha.",
   "connector.onePassword.connect": "Conectar o 1Password",
   "connector.onePassword.setupTitle": "Configuração",
   "connector.onePassword.stepCliTitle": "Instalar a CLI do 1Password",
@@ -337,20 +337,20 @@ export const messages = {
   "connector.onePassword.stepCliInstalling": "Baixando a CLI do 1Password do 1Password",
   "connector.onePassword.stepCliReady": "A versão {version} está instalada.",
   "connector.onePassword.stepCliMissing":
-    "O OpenBot baixa a CLI do 1Password para uma pasta própria. Não é preciso senha de administrador.",
+    "O HoleBot baixa a CLI do 1Password para uma pasta própria. Não é preciso senha de administrador.",
   "connector.onePassword.stepCliManual":
-    "O OpenBot não consegue instalá-la neste computador. Instale-a pelo 1Password e volte a esta página.",
+    "O HoleBot não consegue instalá-la neste computador. Instale-a pelo 1Password e volte a esta página.",
   "connector.onePassword.installCli": "Instalar",
   "connector.onePassword.stepAppTitle": "Ativar a integração com a CLI",
   "connector.onePassword.stepAppDescription":
     "No app do 1Password, abra Ajustes > Desenvolvedor e ative “Integrar com a CLI do 1Password”.",
   "connector.onePassword.stepAppReady": "O app do 1Password permite que a CLI crie o cofre compartilhado.",
   "connector.onePassword.openApp": "Abrir o 1Password",
-  "connector.onePassword.openAppFailed": "O OpenBot não conseguiu abrir o 1Password.",
+  "connector.onePassword.openAppFailed": "O HoleBot não conseguiu abrir o 1Password.",
   "connector.onePassword.checkAgain": "Verificar de novo",
   "connector.onePassword.stepVaultTitle": "Criar o cofre compartilhado",
   "connector.onePassword.stepVaultDescription":
-    "O OpenBot cria o cofre “Shared with OpenBot” e uma conta de serviço que só consegue lê-lo. O 1Password pede sua aprovação.",
+    "O HoleBot cria o cofre “Shared with OpenBot” e uma conta de serviço que só consegue lê-lo. O 1Password pede sua aprovação.",
   "connector.onePassword.useTokenDescription":
     "Em vez destes passos, cole um token de conta de serviço do 1Password.com.",
   "connector.onePassword.useTokenAction": "Usar token",
@@ -360,7 +360,7 @@ export const messages = {
   "connector.onePassword.approveInApp": "Aprove o pedido no app do 1Password",
   "connector.onePassword.cancel": "Cancelar",
   "connector.onePassword.chooseAccountTitle": "Escolha uma conta",
-  "connector.onePassword.chooseAccountDescription": "O OpenBot cria o cofre compartilhado na conta que você escolher.",
+  "connector.onePassword.chooseAccountDescription": "O HoleBot cria o cofre compartilhado na conta que você escolher.",
   "connector.onePassword.useAccount": "Usar esta conta",
   "connector.onePassword.vaultTitle": "Cofre compartilhado",
   "connector.onePassword.vaultDescription":
@@ -370,14 +370,14 @@ export const messages = {
   "connector.onePassword.disconnect": "Desconectar",
   "connector.onePassword.disconnectTitle": "Desconectar o 1Password",
   "connector.onePassword.disconnectSummary":
-    "O OpenBot esquece o token. O cofre e a conta de serviço continuam no 1Password; remova-os lá se não precisar mais deles.",
-  "connector.onePassword.actionFailed": "O OpenBot não conseguiu alterar a conexão com o 1Password.",
+    "O HoleBot esquece o token. O cofre e a conta de serviço continuam no 1Password; remova-os lá se não precisar mais deles.",
+  "connector.onePassword.actionFailed": "O HoleBot não conseguiu alterar a conexão com o 1Password.",
   "connector.onePassword.statusConnected": "Conectado",
   "connector.onePassword.statusConnecting": "Conectando",
   "connector.onePassword.descriptionHost":
-    "Compartilhe um cofre dedicado do 1Password com o OpenBot em {host} por meio de uma conta de serviço, para que os agentes em {host} possam entrar em sites no navegador dele.",
+    "Compartilhe um cofre dedicado do 1Password com o HoleBot em {host} por meio de uma conta de serviço, para que os agentes em {host} possam entrar em sites no navegador dele.",
   "connector.onePassword.howItWorksHost":
-    "{host} se conecta com um token de conta de serviço. No 1Password.com, crie uma conta de serviço que possa ler apenas o cofre que você compartilha com o OpenBot e cole o token dela aqui. {host} verifica o token e o guarda; este computador não. Os agentes nunca veem uma senha.",
+    "{host} se conecta com um token de conta de serviço. No 1Password.com, crie uma conta de serviço que possa ler apenas o cofre que você compartilha com o HoleBot e cole o token dela aqui. {host} verifica o token e o guarda; este computador não. Os agentes nunca veem uma senha.",
   "connector.onePassword.disconnectSummaryHost":
     "{host} esquece o token. O cofre e a conta de serviço continuam no 1Password; remova-os lá se não precisar mais deles.",
   "connector.bitwarden.title": "Bitwarden",
@@ -385,25 +385,25 @@ export const messages = {
   "connector.bitwarden.setup":
     "Instale a CLI do Bitwarden e entre com bw login. Crie uma pasta chamada Shared with OpenBot e coloque nela apenas os logins que os agentes podem usar. Execute bw unlock --raw e cole a chave de sessão abaixo. Não cole sua senha mestra.",
   "connector.bitwarden.scope":
-    "Todos os agentes deste computador podem usar logins correspondentes em Shared with OpenBot. O OpenBot usa origens HTTPS exatas. Ele não usa itens que exigem senha mestra ou regra personalizada de URI.",
+    "Todos os agentes deste computador podem usar logins correspondentes em Shared with OpenBot. O HoleBot usa origens HTTPS exatas. Ele não usa itens que exigem senha mestra ou regra personalizada de URI.",
   "connector.bitwarden.session":
-    "A chave de sessão fica na memória. Conecte de novo após 8 horas sem uso do cofre ou após o OpenBot fechar. Desconectar interrompe o acesso do OpenBot; não bloqueia outros clientes Bitwarden.",
+    "A chave de sessão fica na memória. Conecte de novo após 8 horas sem uso do cofre ou após o HoleBot fechar. Desconectar interrompe o acesso do HoleBot; não bloqueia outros clientes Bitwarden.",
   "connector.bitwarden.sessionKey": "Chave de sessão do Bitwarden",
   "connector.bitwarden.connect": "Conectar Bitwarden",
   "connector.bitwarden.disconnect": "Desconectar Bitwarden",
   "connector.bitwarden.disconnectAction": "Desconectar",
   "connector.bitwarden.disconnectSummary":
-    "O OpenBot esquece a chave de sessão. Os agentes não podem mais preencher logins do Bitwarden. Os outros clientes do Bitwarden continuam desbloqueados.",
+    "O HoleBot esquece a chave de sessão. Os agentes não podem mais preencher logins do Bitwarden. Os outros clientes do Bitwarden continuam desbloqueados.",
   "connector.bitwarden.disconnectSummaryHost":
     "{host} remove a chave de API e a senha mestra. Os agentes em {host} não podem mais preencher logins do Bitwarden.",
   "connector.bitwarden.connected": "Conectado",
-  "connector.bitwarden.actionFailed": "O OpenBot não conseguiu alterar a conexão com o Bitwarden.",
+  "connector.bitwarden.actionFailed": "O HoleBot não conseguiu alterar a conexão com o Bitwarden.",
   "connector.bitwarden.descriptionHost":
     "Preencha logins do navegador em {host} a partir do Bitwarden ou do Vaultwarden.",
   "connector.bitwarden.setupHost":
     "{host} entra com a própria CLI do Bitwarden. No seu cofre, crie uma pasta chamada Shared with OpenBot e coloque nela apenas os logins que os agentes podem usar. No cofre web, abra Configurações › Segurança › Chaves e veja sua chave de API. Informe abaixo o endereço do servidor, client_id, client_secret e sua senha mestra.",
   "connector.bitwarden.scopeHost":
-    "Todos os agentes em {host} podem usar os logins correspondentes em Shared with OpenBot. O OpenBot usa origens HTTPS exatas. Ele não usa itens que pedem a senha mestra nem itens com uma regra personalizada de correspondência de URI.",
+    "Todos os agentes em {host} podem usar os logins correspondentes em Shared with OpenBot. O HoleBot usa origens HTTPS exatas. Ele não usa itens que pedem a senha mestra nem itens com uma regra personalizada de correspondência de URI.",
   "connector.bitwarden.sessionHost":
     "{host} guarda a chave de API e a senha mestra criptografadas, para desbloquear de novo depois de reiniciar. Este computador não as guarda. Desconectar as remove de {host}. {host} precisa acessar o endereço do servidor por HTTPS.",
   "connector.bitwarden.serverUrl": "Endereço do servidor",

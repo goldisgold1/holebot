@@ -1,8 +1,8 @@
 appId: app.openbot.desktop
-productName: OpenBot
+productName: HoleBot
 copyright: Copyright © 2026 HoleA.I
 protocols:
-  - name: OpenBot invitations
+  - name: HoleBot invitations
     schemes:
       - openbot
 asar: true
@@ -124,12 +124,12 @@ mac:
   extendInfo:
     CFBundleIconName: Icon
     ElectronTeamID: ZTRDTUL87R
-    NSMicrophoneUsageDescription: OpenBot uses the microphone to transcribe voice prompts locally on this Mac.
+    NSMicrophoneUsageDescription: HoleBot uses the microphone to transcribe voice prompts locally on this Mac.
     # Computer Use runs the driver as a child process, so macOS asks for both grants in OpenBot's
     # name and shows these sentences. Under the hardened runtime, macOS shows the Automation prompt
     # only when the app has `com.apple.security.automation.apple-events` in its entitlements.
-    NSScreenCaptureUsageDescription: OpenBot captures the screen so an agent can see the app windows you ask it to control.
-    NSAppleEventsUsageDescription: OpenBot sends Automation events so an agent can control the apps you ask it to control.
+    NSScreenCaptureUsageDescription: HoleBot captures the screen so an agent can see the app windows you ask it to control.
+    NSAppleEventsUsageDescription: HoleBot sends Automation events so an agent can control the apps you ask it to control.
     NSUserActivityTypes:
       - NSUserActivityTypeBrowsingWeb
   # No `arch` here: a target's own `arch` list replaces the one given on the command line, so

@@ -71,9 +71,9 @@ export function parseHostedServerName(value: string): string | null {
   return slugifyTeamServerName(name).length >= INPUT_LIMITS.serverNameMin ? name : null;
 }
 
-const HOSTED_SERVER_CONTACT_SUBJECT = "Custom OpenBot setup";
+const HOSTED_SERVER_CONTACT_SUBJECT = "Custom HoleBot setup";
 const HOSTED_SERVER_CONTACT_BODY = [
-  "I’d like to discuss a custom OpenBot setup for my needs. Please get in touch so we can explore the available options.",
+  "I’d like to discuss a custom HoleBot setup for my needs. Please get in touch so we can explore the available options.",
   "",
   "Here’s some additional context:",
   "",

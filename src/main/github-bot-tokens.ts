@@ -125,7 +125,7 @@ export class GitHubBotTokens {
       }
       if (!response.ok)
         return yield* new GitHubOperationError({
-          cause: new Error(`The OpenBot API refused the GitHub token request (HTTP ${response.status}).`),
+          cause: new Error(`The HoleBot API refused the GitHub token request (HTTP ${response.status}).`),
         });
       const json = yield* githubCall(() => response.json());
       const answer = yield* githubDecode(() => answerSchema.parse(json));

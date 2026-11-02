@@ -501,7 +501,7 @@ export const messages = {
   "chat.suggestion.dismissNamed": "Odrzuć {name}",
   "chat.suggestion.dismissed": "Odrzucono propozycję: {name}.",
   "chat.suggestion.undo": "Cofnij",
-  "chat.suggestion.localOnly": "Połącz {name} w OpenBot na swoim komputerze.",
+  "chat.suggestion.localOnly": "Połącz {name} w HoleBot na swoim komputerze.",
   "chat.suggestion.unavailable": "Ten serwer nie może połączyć {name}.",
   "chat.compaction.running": "Kompaktowanie kontekstu",
   "chat.compaction.completed": "Skompaktowano kontekst",

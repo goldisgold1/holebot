@@ -96,7 +96,7 @@ export class CodexLoginFlow {
         this.#track(client, cli, login.loginId);
         const opened = yield* Effect.result(loginIo(() => openExternal(login.authUrl)));
         if (Result.isFailure(opened)) {
-          yield* this.cancel("OpenBot could not open the ChatGPT connection page.");
+          yield* this.cancel("HoleBot could not open the ChatGPT connection page.");
           return yield* new CodexLoginFailed({ cause: new Error(sourceText("error.provider.chatgptPageFailed")) });
         }
       }),

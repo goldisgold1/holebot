@@ -16,10 +16,10 @@ export const messages = {
   "notification.channelMessage": "Nowa wiadomość.",
   "notification.usageLimit.title": "Konto {provider} osiągnęło limit",
   "notification.usageLimit.body": {
-    one: "{count} agent czeka. OpenBot spróbuje ponownie później.",
-    few: "{count} agentów czeka. OpenBot spróbuje ponownie później.",
-    many: "{count} agentów czeka. OpenBot spróbuje ponownie później.",
-    other: "{count} agenta czeka. OpenBot spróbuje ponownie później.",
+    one: "{count} agent czeka. HoleBot spróbuje ponownie później.",
+    few: "{count} agentów czeka. HoleBot spróbuje ponownie później.",
+    many: "{count} agentów czeka. HoleBot spróbuje ponownie później.",
+    other: "{count} agenta czeka. HoleBot spróbuje ponownie później.",
   },
   "notification.usageLimit.bodyResets": {
     one: "{count} agent czeka. Reset: {reset}.",
@@ -32,7 +32,7 @@ export const messages = {
   "notification.machineAlert.cpu": "{server}: CPU obciążony w {percent}",
   "notification.machineAlert.body": "Przekroczono poziom alertu {level}. Zobacz Ustawienia serwera > Pamięć dyskowa.",
   "notification.test": "Powiadomienia działają.",
-  "notification.welcome": "OpenBot powiadomi cię tutaj, gdy agent będzie cię potrzebować.",
+  "notification.welcome": "HoleBot powiadomi cię tutaj, gdy agent będzie cię potrzebować.",
   "notification.toast.region": "Powiadomienia",
   "notification.toast.close": "Zamknij powiadomienie",
 } as const satisfies PartialTranslation<typeof source>;

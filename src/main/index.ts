@@ -239,8 +239,12 @@ if (commandLineUserDataDirectory) {
       ),
     ),
   );
+} else {
+  // HoleA.I: the product is called HoleBot, but its data stays in %APPDATA%\OpenBot, where
+  // Electron put it under the old product name (HOLEAI-FORK.md, "HoleBot name").
+  app.setPath("userData", join(app.getPath("appData"), "OpenBot"));
 }
-app.setName("OpenBot");
+app.setName("HoleBot");
 app.enableSandbox();
 if (process.platform === "win32") app.setAppUserModelId("app.openbot.desktop");
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -861,7 +865,7 @@ function requestDesktopNotificationPermission(
       preference,
       showWelcome: () => {
         if (!Notification.isSupported()) return;
-        showRetainedNotification(new Notification({ title: "OpenBot", body: translate("notification.welcome") }));
+        showRetainedNotification(new Notification({ title: "HoleBot", body: translate("notification.welcome") }));
       },
     }),
   );
