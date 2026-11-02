@@ -17,8 +17,8 @@
   --holeai-bubble: #202020;
   --holeai-composer: #181818;
   --holeai-composer-border: rgba(255, 255, 255, 0.08);
-  --holeai-user-bubble: #2b6cf0;
-  --holeai-user-bubble-text: #ffffff;
+  --holeai-user-bubble: #303030;
+  --holeai-user-bubble-text: var(--openbot-text-primary);
 }
 
 :root {
@@ -29,10 +29,8 @@
   --holeai-radius-bubble: 14px;
   --holeai-radius-composer: 24px;
   --holeai-radius-pill: 999px;
-  --holeai-radius-chip: 6px;
   --holeai-text-time: 12px;
   --holeai-shadow-composer: 0 6px 24px rgba(0, 0, 0, 0.18);
-  --holeai-chip-tint: rgba(255, 255, 255, 0.18);
 }
 
 :root[data-openbot-color-scheme="light"] {
@@ -46,6 +44,6 @@
   --holeai-bubble: #f0f0f2;
   --holeai-composer: #f4f4f5;
   --holeai-composer-border: rgba(20, 20, 20, 0.06);
-  --holeai-user-bubble: #2b6cf0;
-  --holeai-user-bubble-text: #ffffff;
+  --holeai-user-bubble: #e6e6e9;
+  --holeai-user-bubble-text: var(--openbot-text-primary);
 }

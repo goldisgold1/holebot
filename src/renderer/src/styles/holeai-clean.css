@@ -55,7 +55,7 @@
 
 /* Chat: a centred column, as in a messenger, instead of the full pane width. */
 .conversation-panel {
-  --conversation-column-width: 620px;
+  --conversation-column-width: 680px;
 }
 
 .ui-bubble-content {
@@ -80,7 +80,7 @@
   box-shadow: var(--holeai-shadow-composer);
 }
 
-/* User bubbles in the accent colour, agent bubbles quiet: who said what reads at a glance. */
+/* The reader's own bubbles a shade lighter than the agent's, both neutral, as in a messenger. */
 .message-entry-user .ui-bubble-content {
   background: var(--holeai-user-bubble);
   color: var(--holeai-user-bubble-text);
@@ -139,18 +139,6 @@
   opacity: 0.6;
 }
 
-/* Chips and links inside the accent bubble take its text colour, on a light tint, so they stay readable. */
-.message-entry-user .ui-bubble-content :is(.reference-chip, .message-file-reference, a) {
-  border-radius: var(--holeai-radius-chip);
-  padding-inline: 4px;
-  background: var(--holeai-chip-tint);
-  color: inherit;
-}
-
-.message-entry-user .ui-bubble-content :is(.reference-chip, .message-file-reference) * {
-  color: inherit;
-}
-
 /* The live line under a working agent: its moving face beside what it is doing, at reading size. */
 .agent-activity-avatar {
   width: 36px;
@@ -161,4 +149,42 @@
 .agent-activity-elapsed {
   font-size: var(--holeai-text-bubble);
   line-height: 22px;
+}
+
+/*
+ * With a mouse, the copy/reply buttons and the time float on the bubble's lower corner while hovered instead
+ * of taking a row under every message. Touch keeps upstream's row, since there is no hover there.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .message-entry .ui-message-content {
+    position: relative;
+  }
+
+  .message-entry .message-action-row {
+    position: absolute;
+    z-index: 5;
+    bottom: -14px;
+    border-radius: var(--holeai-radius-pill);
+    padding: 1px 4px;
+    background: var(--openbot-bg-surface-raised);
+    box-shadow: var(--holeai-shadow-composer);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--openbot-duration-hover) ease;
+  }
+
+  .message-entry-agent .message-action-row {
+    left: 12px;
+  }
+
+  .message-entry-user .message-action-row {
+    right: 12px;
+  }
+
+  .message-entry:hover .message-action-row,
+  .message-entry:focus-within .message-action-row,
+  .message-entry:has(.message-actions-open) .message-action-row {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
