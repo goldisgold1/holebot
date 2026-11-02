@@ -1,5 +1,5 @@
 /**
- * The server name, Back and Forward, its update, the marketplace or expand toggle, and new agent - plus
+ * Back and Forward, the server update, the marketplace or expand toggle, and new agent - plus
  * the window drag region.
  */
 
@@ -17,7 +17,6 @@ import {
 } from "@openbot/ui";
 import { Show } from "solid-js";
 import { useText } from "../../text";
-import { ServerMenu } from "../servers/ServerMenu";
 import { PlusIcon, SidebarToggleIcon } from "./SidebarIcons";
 import { useSidebarScope } from "./sidebar-scope";
 
@@ -26,32 +25,7 @@ export function SidebarTopbar() {
   const { t } = useText();
   return (
     <div class="window-drag sidebar-topbar">
-      {/* HoleA.I: with one server there is nothing to pick, so the name hides, as in a messenger. */}
-      <Show
-        when={props.serverMenu}
-        fallback={
-          <Button
-            variant="ghost"
-            size="sm"
-            type="button"
-            class="sidebar-server-name no-drag"
-            aria-label={t("sidebar.topbar.openSettings", { name: props.serverName })}
-            aria-hidden={props.compact ? "true" : undefined}
-            tabindex={props.compact ? -1 : 0}
-            disabled={!props.onOpenServerSettings}
-            title={props.serverName}
-            onClick={(event) => props.onOpenServerSettings?.(event.currentTarget)}
-          >
-            <span class="sidebar-server-name-label">{props.serverName}</span>
-          </Button>
-        }
-      >
-        {(serverMenu) => (
-          <Show when={serverMenu().servers.length > 1}>
-            <ServerMenu {...serverMenu()} serverName={props.serverName} compact={props.compact} />
-          </Show>
-        )}
-      </Show>
+      {/* HoleA.I: no server name or picker up here, as in a messenger; Settings › Servers switches servers. */}
       <div class="sidebar-topbar-actions">
         <Show when={!props.compact && props.chatHistory}>
           {(history) => {
