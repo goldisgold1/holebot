@@ -191,6 +191,7 @@ export function SettingsModal(props: SettingsModalProps) {
         value === "profile" ||
         value === "billing" ||
         value === "mobile-connect" ||
+        value === "servers" ||
         value === "updates"
       ) {
         setActiveTab(value);
