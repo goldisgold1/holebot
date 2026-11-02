@@ -400,13 +400,10 @@ export function MessageBody(props: {
       };
     },
   );
-  const standaloneImageAttachments = createMemo(() =>
-    props.message.author === "agent" ? standaloneAttachments().filter(isLightboxImage) : [],
-  );
+  // HoleA.I: photos show as photos on both sides of the chat, not as file rows on the user's side.
+  const standaloneImageAttachments = createMemo(() => standaloneAttachments().filter(isLightboxImage));
   const standaloneFileAttachments = createMemo(() =>
-    props.message.author === "agent"
-      ? standaloneAttachments().filter((attachment) => !isLightboxImage(attachment))
-      : standaloneAttachments(),
+    standaloneAttachments().filter((attachment) => !isLightboxImage(attachment)),
   );
   const contentBlocks = createMemo<MessageContentBlock[]>((previous) =>
     reuseUnchangedBlocks(

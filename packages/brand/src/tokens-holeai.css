@@ -24,14 +24,28 @@
 :root {
   /* The agent face's eyes. */
   --holeai-face-eye: #f9f9f9;
-  --holeai-text-row: 15px;
-  --holeai-text-preview: 13.5px;
+  /* Grok Bot's type: the system face (Segoe UI on Windows, SF on macOS), 14px rows, 13px secondary lines. */
+  --openbot-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --holeai-text-row: 14px;
+  --holeai-text-preview: 13px;
   --holeai-text-bubble: 15px;
   --holeai-radius-row: 10px;
-  --holeai-radius-bubble: 14px;
-  --holeai-radius-composer: 24px;
+  /* Half the one-line height, so a one-line bubble is a pill; the joined corner inside a run is small. */
+  --holeai-radius-bubble: 18px;
+  --holeai-radius-bubble-joined: 6px;
+  /* Half the 44px one-line height; the grown box is a little squarer. */
+  --holeai-radius-composer: 22px;
+  --holeai-radius-composer-open: 18px;
+  --holeai-radius-file-card: 22px;
+  --holeai-shadow-file-card:
+    0 0 0 0.5px rgba(127, 127, 127, 0.16), 0 1px 4px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.035);
   --holeai-radius-pill: 999px;
   --holeai-shadow-composer: 0 6px 24px rgba(0, 0, 0, 0.18);
+  /* Motion: a calm standard curve for things that appear in place, and a longer rise for new messages. */
+  --holeai-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --holeai-duration-tray: 300ms;
+  --holeai-duration-enter: 240ms;
+  --holeai-duration-shimmer: 1400ms;
 }
 
 :root[data-openbot-color-scheme="light"] {

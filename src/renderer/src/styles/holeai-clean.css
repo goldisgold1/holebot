@@ -13,22 +13,23 @@
   display: none;
 }
 
+/* Grok Bot's agent list: 49px rows, 2px apart, the face 8px from the name. */
 .agent-row {
-  height: 58px;
-  min-height: 58px;
-  gap: 12px;
+  height: 49px;
+  min-height: 49px;
+  gap: 8px;
   border-radius: var(--holeai-radius-row);
 }
 
 .agent-row + .agent-row {
-  margin-top: 0;
+  margin-top: 2px;
 }
 
 .agent-row-title strong,
 .person-row .agent-row-heading strong,
 .channel-row .agent-row-heading strong {
   font-size: var(--holeai-text-row);
-  font-weight: 600;
+  font-weight: var(--openbot-weight-medium);
 }
 
 .agent-row-preview {
@@ -49,16 +50,75 @@
   display: none;
 }
 
-/* Chat: a centred column, as in a messenger, instead of the full pane width. */
+/* Grok Bot's transcript: up to 960px wide with 16px sides; the bubbles keep their own narrower cap. */
 .conversation-panel {
-  --conversation-column-width: 680px;
+  --conversation-column-width: 960px;
 }
 
 .ui-bubble-content {
   border-radius: var(--holeai-radius-bubble);
-  padding: 8px 12px;
+  padding: 7px 12px;
   font-size: var(--holeai-text-bubble);
-  line-height: 1.47;
+  line-height: 22px;
+}
+
+/*
+ * A run of bubbles by one speaker reads as one block: the corners where two of them meet, on the speaker's
+ * side, are small. The rows are siblings, so the bubble below is found with `+`.
+ */
+.virtual-chat-row[data-grouped="sender"] .message-entry-user .ui-bubble-content {
+  border-start-end-radius: var(--holeai-radius-bubble-joined);
+}
+
+.virtual-chat-row:has(+ .virtual-chat-row[data-grouped="sender"]) .message-entry-user .ui-bubble-content {
+  border-end-end-radius: var(--holeai-radius-bubble-joined);
+}
+
+.virtual-chat-row[data-grouped="sender"] .message-entry-agent .ui-bubble-content {
+  border-start-start-radius: var(--holeai-radius-bubble-joined);
+}
+
+.virtual-chat-row:has(+ .virtual-chat-row[data-grouped="sender"]) .message-entry-agent .ui-bubble-content {
+  border-end-start-radius: var(--holeai-radius-bubble-joined);
+}
+
+/* A new message rises a little further and settles, instead of a 4px nudge. */
+.message-entry-animated {
+  animation: holeai-message-in var(--holeai-duration-enter) var(--openbot-ease-out) both;
+}
+
+@keyframes holeai-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-entry-animated {
+    animation-name: holeai-fade-in;
+  }
+}
+
+@keyframes holeai-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The time between exchanges: a quiet centred line with a little air. */
+.time-marker {
+  height: 28px;
+  padding: 6px 0;
 }
 
 .ui-bubble-variant-secondary > .ui-bubble-content,
@@ -66,14 +126,76 @@
   background: var(--holeai-bubble);
 }
 
+/*
+ * The composer, as Grok Bot draws it: a 44px pill while it holds one line, a rounder box once it grows, a
+ * hairline border that only darkens on focus (no ring), and a soft shadow. The text scrolls after 120px.
+ */
 .composer {
-  border: 1px solid var(--holeai-composer-border);
-  border-radius: var(--holeai-radius-composer);
+  min-height: 0;
+  border: 0.5px solid var(--holeai-composer-border);
+  border-radius: var(--holeai-radius-composer-open);
   background: var(--holeai-composer);
+  padding: 10px 12px;
+  box-shadow: var(--holeai-shadow-composer);
+  transition:
+    border-color var(--openbot-duration-fast) ease,
+    border-radius var(--holeai-duration-tray) var(--holeai-ease-standard);
 }
 
-.composer {
+.composer[data-compact] {
+  min-height: 44px;
+  border-radius: var(--holeai-radius-composer);
+  padding: 8px;
+}
+
+.composer:focus-within {
+  border-color: var(--openbot-text-dim);
   box-shadow: var(--holeai-shadow-composer);
+}
+
+.composer-input-label,
+.composer-editor-root {
+  --composer-editor-max-height: 120px;
+}
+
+.composer-input-label {
+  scrollbar-width: thin;
+}
+
+.composer-button {
+  box-shadow: inset 0 0 0 0.5px var(--openbot-border);
+  color: var(--openbot-text-muted);
+}
+
+.composer-button:hover {
+  background: var(--openbot-hover);
+  color: var(--openbot-text-primary);
+}
+
+/* Staged files: one row that scrolls sideways, photos as 56px tiles with the remove button inside. */
+.composer-attachments {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.composer-attachment[data-kind="image"] {
+  width: 56px;
+  height: 56px;
+  border-width: 0.5px;
+  border-radius: var(--openbot-radius-md);
+}
+
+.composer-attachment[data-kind="file"] {
+  flex: 0 0 auto;
+  border-width: 0.5px;
+  border-radius: var(--openbot-radius-lg);
+}
+
+.composer-attachment .ui-image-remove-button {
+  top: 2px;
+  right: 2px;
 }
 
 /* The reader's own bubbles a shade lighter than the agent's, both neutral, as in a messenger. */
@@ -326,12 +448,45 @@
 }
 
 /*
- * The copy/reply buttons and the time float on the bubble's lower corner while hovered instead of taking a
- * row under every message. On a touch screen a tap on the message shows them (it hovers and focuses it).
- * The team's phones use the phone app, which has its own layout.
+ * The copy/reply buttons and the time sit beside the bubble while it is hovered - right of an agent's bubble,
+ * left of the user's - never over it, and with no box of their own. The row and the bubble share one line:
+ * the bubble column shrinks to the bubble, the buttons take the column next to it. Rows with an author face
+ * (channels) keep their own grid and are left alone.
  */
-.message-entry .ui-message-content {
-  position: relative;
+.message-entry:not(.message-entry-with-author) > .ui-message-content {
+  display: grid;
+  grid-template-areas:
+    "head head"
+    "shell actions";
+  grid-template-columns: minmax(0, max-content) auto;
+  align-items: center;
+  column-gap: 2px;
+  row-gap: 0;
+}
+
+.message-entry-user:not(.message-entry-with-author) > .ui-message-content {
+  grid-template-areas:
+    "head head"
+    "actions shell";
+  grid-template-columns: auto minmax(0, max-content);
+  justify-content: end;
+}
+
+.message-entry:not(.message-entry-with-author) > .ui-message-content > * {
+  grid-column: 1 / -1;
+}
+
+.message-entry:not(.message-entry-with-author) > .ui-message-content > .ui-message-header {
+  grid-area: head;
+  margin-bottom: var(--openbot-space-1);
+}
+
+.message-entry:not(.message-entry-with-author) > .ui-message-content > .message-shell {
+  grid-area: shell;
+}
+
+.message-entry:not(.message-entry-with-author) > .ui-message-content > .message-action-row {
+  grid-area: actions;
 }
 
 /* The row as a whole shows and hides; its buttons and time stay visible inside it. */
@@ -342,27 +497,34 @@
 }
 
 .message-entry .message-action-row {
-  position: absolute;
-  z-index: 5;
-  bottom: -14px;
-  border-radius: var(--holeai-radius-pill);
-  padding: 1px 4px;
-  background: var(--openbot-bg-surface-raised);
-  box-shadow: var(--holeai-shadow-composer);
+  position: relative;
   opacity: 0;
   /* Hidden, not only see-through: its buttons stay clickable otherwise. */
   visibility: hidden;
   transition:
-    opacity var(--openbot-duration-hover) ease,
-    visibility var(--openbot-duration-hover);
+    opacity var(--holeai-duration-tray) var(--holeai-ease-standard),
+    visibility var(--holeai-duration-tray);
 }
 
-.message-entry-agent .message-action-row {
-  left: 12px;
+/* The bubble's hover reaches across the gap to the buttons, so moving to them never drops it. */
+.message-entry:not(.message-entry-with-author) .message-shell {
+  position: relative;
 }
 
-.message-entry-user .message-action-row {
-  right: 12px;
+.message-entry:not(.message-entry-with-author) .message-shell::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  content: "";
+}
+
+.message-entry-agent:not(.message-entry-with-author) .message-shell::after {
+  left: 100%;
+}
+
+.message-entry-user:not(.message-entry-with-author) .message-shell::after {
+  right: 100%;
 }
 
 .message-entry:hover .message-action-row,
@@ -370,6 +532,156 @@
 .message-entry:has(.message-actions-open) .message-action-row {
   opacity: 1;
   visibility: visible;
+}
+
+/*
+ * Photos stand on their own, with no bubble around them, on both sides. Text sent with them keeps a bubble
+ * of its own above the photos; a photo sent alone shows only the photo.
+ */
+.message-entry-user .ui-bubble:has(.message-image-attachments, .image-gallery) {
+  width: min(420px, 100%);
+  max-width: min(420px, 100%);
+}
+
+.message-entry-user .ui-bubble-content:has(.message-image-attachments, .image-gallery) {
+  display: grid;
+  justify-items: end;
+  gap: var(--openbot-space-1);
+  background: transparent;
+  padding: 0;
+}
+
+.message-entry-user
+  .ui-bubble-content:has(.message-image-attachments, .image-gallery)
+  > .message-content-resize:has(.message-copy:not(:empty)) {
+  width: fit-content;
+  border-radius: var(--holeai-radius-bubble);
+  background: var(--holeai-user-bubble);
+  padding: 7px 12px;
+}
+
+.message-entry-user
+  .ui-bubble-content:has(.message-image-attachments, .image-gallery)
+  > .message-content-resize:not(:has(.message-copy:not(:empty))) {
+  display: none;
+}
+
+.message-entry-user :is(.message-image-attachments, .image-gallery) {
+  width: 100%;
+  justify-items: end;
+}
+
+/* A photo still loading shimmers in its place, then fades in, instead of a late spinner. */
+.image-gallery-tile,
+.image-generation-stage {
+  border-radius: var(--openbot-radius-lg);
+}
+
+.image-gallery-tile:has(.image-gallery-tile-loading) {
+  background:
+    linear-gradient(
+      100deg,
+      var(--openbot-bg-control) 30%,
+      var(--openbot-bg-control-hover) 50%,
+      var(--openbot-bg-control) 70%
+    )
+    0 0 / 200% 100%;
+  animation: holeai-shimmer var(--holeai-duration-shimmer) ease-in-out infinite;
+}
+
+.image-gallery-tile-loading {
+  visibility: hidden;
+}
+
+.image-gallery-tile img {
+  transition:
+    opacity var(--openbot-duration-slow) ease,
+    transform var(--openbot-duration-normal) var(--openbot-ease-out),
+    filter var(--openbot-duration-normal) ease;
+}
+
+.image-gallery-tile:has(.image-gallery-tile-loading) img {
+  opacity: 0;
+}
+
+/* Hovering a photo brightens it a touch instead of zooming it. */
+.image-gallery-tile:not(:disabled):hover img {
+  filter: brightness(1.04);
+  transform: none;
+}
+
+@keyframes holeai-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-gallery-tile:has(.image-gallery-tile-loading) {
+    animation: none;
+  }
+}
+
+/*
+ * A file reads as a card: soft and round with a layered shadow instead of a frame, the name and size, and
+ * its buttons only while it is hovered or focused. A click on the card still opens the preview.
+ */
+.message-attachments,
+.message-attachments-group {
+  width: min(100%, 354px);
+}
+
+.message-attachment {
+  grid-template-columns: minmax(0, 1fr) 32px 32px;
+  min-height: 64px;
+  gap: var(--openbot-space-1);
+  border-color: transparent;
+  border-radius: var(--holeai-radius-file-card);
+  box-shadow: var(--holeai-shadow-file-card);
+  padding: 12px 14px;
+}
+
+[data-slot="bubble"]:not([data-variant="ghost"])
+  > [data-slot="bubble-content"]
+  > .message-attachments:last-child
+  .message-attachment {
+  border-radius: var(--holeai-radius-file-card);
+}
+
+.message-attachment strong {
+  font-size: var(--openbot-text-lg);
+  font-weight: var(--openbot-weight-medium);
+}
+
+.attachment-open-button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--holeai-radius-pill);
+  opacity: 0;
+  transition:
+    opacity var(--openbot-duration-fast) ease,
+    background-color var(--openbot-duration-fast) ease,
+    color var(--openbot-duration-fast) ease;
+}
+
+.message-attachment:is(:hover, :focus-within) .attachment-open-button {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .attachment-open-button {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .message-attachment:hover {
+    border-color: transparent;
+  }
 }
 
 /* The foot of the sidebar: the person using the app, then a menu of the other pages and Settings. */

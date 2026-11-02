@@ -18,6 +18,9 @@ export interface DayMarkerOptions {
   format?: AppFormat;
 }
 
+/** HoleA.I: a pause this long inside one day also gets a separator, so the time of a new exchange shows. */
+const PAUSE_MARKER_MS = 15 * 60_000;
+
 function startOfDay(value: Date): number {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
 }
@@ -37,7 +40,8 @@ function dateOf(value: Date, options: DayMarkerOptions): string {
 }
 
 /**
- * The label for the separator above a message, or `null` when the message needs none.
+ * The label for the separator above a message, or `null` when the message needs none: a message that
+ * opens a new day, or follows a pause of 15 minutes or more, gets one.
  *
  * `previousIso` is the time of the message above it, and is absent for the first message of the
  * transcript, which always gets a separator. An unreadable timestamp gives no separator, because a
@@ -52,7 +56,13 @@ export function dayMarkerLabel(
   if (Number.isNaN(current.getTime())) return null;
   if (previousIso !== undefined) {
     const previous = new Date(previousIso);
-    if (!Number.isNaN(previous.getTime()) && dayDifference(previous, current) === 0) return null;
+    if (
+      !Number.isNaN(previous.getTime()) &&
+      dayDifference(previous, current) === 0 &&
+      current.getTime() - previous.getTime() < PAUSE_MARKER_MS
+    ) {
+      return null;
+    }
   }
   const now = options.now ?? new Date();
   const age = dayDifference(current, now);
