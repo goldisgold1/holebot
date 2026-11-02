@@ -1,4 +1,5 @@
 import type { AvatarFaceMood } from "./bloub-avatar-motion";
+import softShapes from "./bot-shapes.json";
 
 /**
  * HoleA.I: the agent face, shared by the desktop (`CuteFace.tsx`) and the phone. Each agent is a little
@@ -25,7 +26,7 @@ function shape(id: string, name: string, path: string, x: number, y: number, spa
   return { version: 1, id, name, body: { path }, eyes: { x, y, spacing, scale } };
 }
 
-/** Our own objects. Every outline fills most of the box, so they read as one size in a list. */
+/** Our own objects, then the soft bodies. Every outline fills most of the box, so they read as one size in a list. */
 export const BOT_SHAPES: readonly [BotShape, ...BotShape[]] = [
   shape(
     "controller",
@@ -142,6 +143,8 @@ export const BOT_SHAPES: readonly [BotShape, ...BotShape[]] = [
     0.9,
   ),
   shape("pebble", "Pebble", "M50 17C74 15 89 30 89 52C89 72 73 85 50 85C27 85 11 72 11 52C11 30 26 19 50 17Z", 50, 45),
+  // Soft bodies (round, puff, clover, capsule...), kept as BotShape JSON like the avatar maker exports.
+  ...softShapes.map(({ id, name, body, eyes }) => shape(id, name, body.path, eyes.x, eyes.y, eyes.spacing, eyes.scale)),
 ];
 
 /**
