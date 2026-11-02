@@ -275,7 +275,7 @@ export const messages = defineMessages("server", {
   "server.routineFeed.create": "Make feed URL",
   "server.routineFeed.urlLabel": "Feed URL",
   "server.routineFeed.agentLabel": "Agent filter",
-  "server.routineFeed.allAgents": "All agents and channels",
+  "server.routineFeed.allAgents": "All agents and group chats",
   "server.routineFeed.copy": "Copy URL",
   "server.routineFeed.privacy":
     "Anyone with this URL can read routine names and run times. The URL works only on this computer, so Google Calendar and iCloud cannot read it.",
@@ -614,7 +614,7 @@ export const messages = defineMessages("server", {
   "server.update.reason.queuedDelivery": "a queued message",
   "server.update.reason.drainTask": "background agent work",
   "server.update.reason.routineRun": "a routine run",
-  "server.update.reason.channelWork": "channel work",
+  "server.update.reason.channelWork": "group chat work",
   "server.update.reason.providerProcess": "a provider process",
   "server.update.reason.remoteDesktop": "a remote desktop session",
   "server.update.reason.browserView": "a browser view",

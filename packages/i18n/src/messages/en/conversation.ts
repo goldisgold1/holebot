@@ -6,7 +6,7 @@ export const messages = defineMessages("conversation", {
   "conversation.globalSearch.tab.all": "All",
   "conversation.globalSearch.tab.messages": "Messages",
   "conversation.globalSearch.tab.agents": "Agents",
-  "conversation.globalSearch.tab.channels": "Channels",
+  "conversation.globalSearch.tab.channels": "Group chats",
   "conversation.globalSearch.tab.files": "Files",
   "conversation.globalSearch.tab.routines": "Routines",
   "conversation.globalSearch.section.actions": "Actions",

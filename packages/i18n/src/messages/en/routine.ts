@@ -11,7 +11,7 @@ export const messages = defineMessages("routine", {
 
   "routine.feed.calendarName": "HoleBot routines",
   "routine.feed.eventAgent": "Agent: {name}",
-  "routine.feed.eventChannel": "Channel: {name}",
+  "routine.feed.eventChannel": "Group chat: {name}",
   "routine.feed.eventTimezone": "Time zone: {timezone}",
   "routine.clock.am": "AM",
   "routine.clock.pm": "PM",
@@ -329,7 +329,7 @@ export const messages = defineMessages("routine", {
 
   "routine.settings.instruction": "Instruction",
   "routine.settings.instructionPlaceholderAgent": "Describe what this agent should do.",
-  "routine.settings.instructionPlaceholderChannel": "Describe what this channel should do.",
+  "routine.settings.instructionPlaceholderChannel": "Describe what this group chat should do.",
   "routine.settings.instructionNoUpdateHint":
     "To stay silent when there is nothing to report, ask the agent to answer [[no-update]].",
   "routine.settings.limitPolicy": "If the account is at its limit",

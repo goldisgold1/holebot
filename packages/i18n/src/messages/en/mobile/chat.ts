@@ -454,6 +454,6 @@ export const messages = defineMessages("mobile.chat", {
   "mobile.chat.threads.error.delete": "Could not delete the thread.",
   "mobile.chat.channelWork.working": "Working in {channel}",
   "mobile.chat.channelWork.waiting": "Waiting for you in {channel}",
-  "mobile.chat.channelWork.open": "{label}. Opens the channel.",
+  "mobile.chat.channelWork.open": "{label}. Opens the group chat.",
   "mobile.chat.viewOnly": "You can only view this agent.",
 });

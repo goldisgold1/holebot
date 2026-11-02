@@ -17,7 +17,7 @@ export const messages = defineMessages("memory", {
   "memory.limitAgent":
     "This agent has reached the limit of {limit} memories. Edit, merge, or delete a memory before you add another one.",
   "memory.limitChannel":
-    "This channel has reached the limit of {limit} memories. Edit, merge, or delete a memory before you add another one.",
+    "This group chat has reached the limit of {limit} memories. Edit, merge, or delete a memory before you add another one.",
   "memory.loading": "Loading memories…",
   "memory.search": "Search memories",
   "memory.noMatches": "No memories match this search.",
