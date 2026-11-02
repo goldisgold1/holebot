@@ -1039,3 +1039,8 @@
 :is(.agent-usage-header, .routine-planner-title, .tasks-page-header) {
   padding-inline-end: calc(var(--openbot-space-3) + var(--holeai-window-controls-inset));
 }
+
+/* Toasts at the top start below the window buttons' row, so they never cover the buttons. */
+[data-sonner-toaster][data-y-position="top"] {
+  top: calc(var(--offset-top) + env(titlebar-area-height, 0px)) !important;
+}
