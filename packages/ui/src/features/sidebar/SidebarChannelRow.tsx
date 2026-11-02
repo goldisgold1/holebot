@@ -8,7 +8,7 @@
  */
 
 import type { ChannelSummary } from "@openbot/contracts/ipc";
-import { Badge, buttonVariants, ContextMenu } from "@openbot/ui";
+import { Badge, BellOff, buttonVariants, ContextMenu } from "@openbot/ui";
 import type { JSX } from "@solidjs/web";
 import { createSignal, Show } from "solid-js";
 import { useText } from "../../text";
@@ -113,6 +113,9 @@ export function SidebarChannelRow(rowProps: {
           <span class="agent-row-heading">
             <span class="agent-row-title">
               <strong>{rowProps.channel.name}</strong>
+              <Show when={props.mutedChannelIds?.includes(rowProps.channel.id)}>
+                <BellOff class="channel-muted-icon size-3" aria-label={t("sidebar.channel.muted")} />
+              </Show>
               <Show when={title()}>
                 {(label) => (
                   <Badge class="agent-role-badge" title={label()}>

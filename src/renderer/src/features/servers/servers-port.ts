@@ -69,6 +69,8 @@ export interface ServersPort {
     | "select"
     | "setMuted"
     | "setNotificationLevel"
+    | "channelMutes"
+    | "setChannelMuted"
   >;
 }
 

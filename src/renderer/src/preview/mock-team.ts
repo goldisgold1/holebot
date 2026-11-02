@@ -130,6 +130,8 @@ export function createMockTeam(
   }
 
   const serversApi: OpenBotDesktopApi["servers"] = {
+    channelMutes: async () => [],
+    setChannelMuted: async () => [],
     setMuted: async ({ serverId, muted, durationMs }) => {
       if (!servers.some((server) => server.id === serverId)) throw new Error("Remote server not found.");
       const notificationsMutedUntil = muted && durationMs !== undefined ? Date.now() + durationMs : null;

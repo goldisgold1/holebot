@@ -15,6 +15,7 @@ export const messages = defineMessages("notification", {
   "notification.failed": "Stopped with an error.",
   // The title of a notification about an agent in a channel: the agent and the channel name.
   "notification.channelTitle": "{agent} in {channel}",
+  "notification.channelMention": "{person} mentioned you in {channel}",
   // The body of a channel reply notification when the preview of agent words is off.
   "notification.channelMessage": "Sent a message.",
   "notification.usageLimit.title": "{provider} account reached its limit",

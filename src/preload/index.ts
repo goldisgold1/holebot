@@ -1,3 +1,4 @@
+import type { ChannelMute } from "@openbot/contracts/ipc";
 import {
   type AgentIpcRequest,
   type AttachmentImportEvent,
@@ -499,6 +500,19 @@ window.addEventListener("change", (event) => {
   void importFiles([...(input.files ?? [])]);
 });
 
+/** HoleA.I: the group chat mutes main keeps. */
+function decodeChannelMutes(value: unknown): ChannelMute[] {
+  if (!Array.isArray(value)) throw new Error("Invalid channel mutes.");
+  return value.filter(
+    (entry): entry is ChannelMute =>
+      typeof entry === "object" &&
+      entry !== null &&
+      typeof entry.serverId === "string" &&
+      typeof entry.channelId === "string" &&
+      (entry.until === null || typeof entry.until === "number"),
+  );
+}
+
 // Bridged apart from the API object, because `onEvent` narrows its `onScopedEvent`.
 const agentGroup = bridgeGroup(IPC_ENDPOINTS.agent, {
   getStatus: decodeAgentStatusFromMain,
@@ -592,6 +606,8 @@ const serversGroup = bridgeGroup(IPC_ENDPOINTS.servers, {
   select: decodeServers,
   reorder: decodeServers,
   setMuted: decodeServers,
+  channelMutes: decodeChannelMutes,
+  setChannelMuted: decodeChannelMutes,
   setNotificationLevel: decodeServers,
   join: decodeServer,
   previewInvite: decodeInvitePreview,

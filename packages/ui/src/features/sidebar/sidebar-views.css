@@ -99,3 +99,10 @@
     animation: none;
   }
 }
+
+/* HoleA.I: a muted group chat shows a small bell-off beside its name. */
+.channel-muted-icon {
+  flex: none;
+  margin-inline-start: 4px;
+  color: var(--openbot-text-muted);
+}

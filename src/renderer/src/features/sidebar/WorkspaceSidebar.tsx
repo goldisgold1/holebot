@@ -1,4 +1,4 @@
-import { type ChatWindowTarget, canAdministerServer } from "@openbot/contracts/ipc";
+import { type ChannelMute, type ChatWindowTarget, canAdministerServer } from "@openbot/contracts/ipc";
 import { AGENT_HIDDEN_CAPABILITY } from "@openbot/contracts/team-protocol/current";
 import { computeAgentAvatarMoods } from "@openbot/ui/features/agents/agent-avatar-mood";
 import { Sidebar } from "@openbot/ui/features/sidebar/Sidebar";
@@ -32,6 +32,7 @@ import { useServerScope } from "../servers/server-scope";
 import { useServerSettings } from "../servers/server-settings";
 import { serverUpdateBadge, showServerUpdate } from "../servers/server-update-flow";
 import { useServers } from "../servers/servers-context";
+import { serversPort } from "../servers/servers-port";
 import { useSettings } from "../settings/settings-context";
 import { usePresence } from "../team/team-context";
 import { SidebarUpdateIsland } from "../updates/SidebarUpdateIsland";
@@ -69,6 +70,11 @@ function readHiddenChannels(): string[] {
 
 export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
   const [hiddenChannelIds, setHiddenChannelIds] = createSignal(readHiddenChannels());
+  const [channelMutes, setChannelMutes] = createSignal<ChannelMute[]>([]);
+  void serversPort()
+    .servers.channelMutes()
+    .then(setChannelMutes)
+    .catch(() => undefined);
   const setChannelHidden = (channelId: string, hidden: boolean) => {
     const next = hidden
       ? [...new Set([...hiddenChannelIds(), channelId])]
@@ -367,6 +373,15 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       onDeleteAgent={deleteAgent}
       userHiddenAgents={userHiddenAgents()}
       hiddenChannelIds={hiddenChannelIds()}
+      mutedChannelIds={channelMutes()
+        .filter((mute) => mute.serverId === activeServerId())
+        .map((mute) => mute.channelId)}
+      onSetChannelMuted={(channelId, muted, durationMs) =>
+        void serversPort()
+          .servers.setChannelMuted({ serverId: activeServerId(), channelId, muted, durationMs })
+          .then(setChannelMutes)
+          .catch(() => undefined)
+      }
       onSetChannelHidden={setChannelHidden}
       onHideAgent={hideAllowed() ? (agentId) => void setAgentHiddenByUser(agentId, true) : undefined}
       onRestoreAgent={hideAllowed() ? (agentId) => void setAgentHiddenByUser(agentId, false) : undefined}

@@ -10,6 +10,7 @@ import type {
   ResetAgentSessionSettingInput,
   SetAgentSessionSettingInput,
 } from "./ipc-agent-session-settings";
+import type { ChannelMute, SetChannelMutedInput } from "./ipc-chat-channels";
 // The one channel list. Each endpoint holds its wire value, the group it belongs to, and whether it
 // is a request the renderer invokes or an event the main process sends. That is what lets a
 // registrar bind its handlers as an object keyed by endpoint, so a channel with no handler, and a
@@ -1642,6 +1643,9 @@ export const IPC_ENDPOINTS = {
     select: request<string, ServerSummary[]>()("servers:select"),
     reorder: request<ReorderServersInput, ServerSummary[]>()("servers:reorder"),
     setMuted: request<SetServerMutedInput, ServerSummary[]>()("servers:set-muted"),
+    /** HoleA.I: the group chats this computer muted, and a change to them. */
+    channelMutes: request<undefined, ChannelMute[]>()("servers:channel-mutes"),
+    setChannelMuted: request<SetChannelMutedInput, ChannelMute[]>()("servers:set-channel-muted"),
     setNotificationLevel: request<SetServerNotificationLevelInput, ServerSummary[]>()("servers:set-notification-level"),
     join: request<JoinServerInput, ServerSummary>()("servers:join"),
     previewInvite: request<JoinServerInput, InvitePreview>()("servers:preview-invite"),

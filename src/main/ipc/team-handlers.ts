@@ -1,5 +1,6 @@
-import { type HostStatus, LOCAL_SERVER_ID, type ServerSummary } from "@openbot/contracts/ipc";
+import { type HostStatus, LOCAL_SERVER_ID, parseSetChannelMuted, type ServerSummary } from "@openbot/contracts/ipc";
 import { runCauseEffect } from "../../backend/effect-boundary";
+import { channelMutes, setChannelMuted } from "../channel-mutes";
 import type { HostService } from "../host-service";
 import type { RemoteDesktopManager } from "../remote-desktop-manager";
 import type { RemoteServerManager } from "../remote-server-manager";
@@ -43,6 +44,10 @@ export function teamIpcHandlers({
 }: TeamIpcDependencies): Pick<IpcGroupHandlers, "servers" | "host" | "remoteDesktop"> {
   return {
     servers: {
+      channelMutes: handler(() => channelMutes()),
+      setChannelMuted: payloadHandler(parseSetChannelMuted, ({ serverId, channelId, muted, durationMs }) =>
+        setChannelMuted(serverId, channelId, muted, durationMs),
+      ),
       setMuted: payloadHandler(parseSetServerMuted, ({ serverId, muted, durationMs }) =>
         runCauseEffect(remoteServers.setMuted(serverId, muted, durationMs)).then((servers) =>
           withLocalHostSummary(servers, host.getStatus()),

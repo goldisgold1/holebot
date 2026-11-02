@@ -86,6 +86,36 @@ export function channelReplyNotifications(
   });
 }
 
+/**
+ * HoleA.I: the new messages of people in the group chats, after Signal's group notifications. A
+ * channel the reader muted notifies only an unread message that mentions them. The first list of a
+ * server is the baseline, as for the replies.
+ */
+export function channelPeopleNotifications(
+  previous: readonly ChannelSummary[] | null,
+  next: readonly ChannelSummary[],
+  options: Pick<ChannelNotificationOptions, "translate" | "level" | "redact"> & {
+    muted: (channelId: string) => boolean;
+  },
+): (Omit<ChannelNotificationContent, "agentId"> & { mention: boolean })[] {
+  if (previous === null || options.level !== "all") return [];
+  const before = new Map(previous.map((channel) => [channel.id, channel] as const));
+  return next.flatMap((channel) => {
+    const earlier = before.get(channel.id);
+    const last = channel.lastMessage;
+    if (!earlier || channel.archived || last?.author?.kind !== "member") return [];
+    if (channel.unreadCount <= earlier.unreadCount || last.at === earlier.lastMessage?.at) return [];
+    const mention = (channel.unreadMentions ?? 0) > (earlier.unreadMentions ?? 0);
+    if (options.muted(channel.id) && !mention) return [];
+    const title = mention
+      ? options.translate("notification.channelMention", { person: last.authorName, channel: channel.name })
+      : options.translate("notification.channelTitle", { agent: last.authorName, channel: channel.name });
+    const body =
+      (options.redact && plainPreview(options.redact(last.text))) || options.translate("notification.channelMessage");
+    return [{ title, body, channelId: channel.id, mention }];
+  });
+}
+
 /** The channel that owns `threadId` in a channel list, from the threads of channel-attention-v1. */
 export function channelForThread(
   channels: readonly ChannelSummary[],

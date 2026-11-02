@@ -117,6 +117,33 @@ export interface ChannelPage {
   typing?: ChannelTypingMember[];
 }
 
+/** HoleA.I: a group chat this computer muted. `until` is in ms; null mutes it until undone. */
+export interface ChannelMute {
+  serverId: string;
+  channelId: string;
+  until: number | null;
+}
+
+export interface SetChannelMutedInput {
+  serverId: string;
+  channelId: string;
+  muted: boolean;
+  /** How long; null until the user undoes it. */
+  durationMs: number | null;
+}
+
+export function parseSetChannelMuted(value: unknown): SetChannelMutedInput {
+  if (
+    !isDynamicRecord(value) ||
+    !isString(value.serverId) ||
+    !isIdentifier(value.channelId) ||
+    typeof value.muted !== "boolean" ||
+    !(value.durationMs === null || (typeof value.durationMs === "number" && value.durationMs > 0))
+  )
+    throw new Error("Provide a valid channel mute.");
+  return { serverId: value.serverId, channelId: value.channelId, muted: value.muted, durationMs: value.durationMs };
+}
+
 /** One person typing in a group chat. */
 export interface ChannelTypingMember {
   memberId: string;

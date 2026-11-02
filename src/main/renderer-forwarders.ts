@@ -47,7 +47,9 @@ import {
   notificationRequestKey,
 } from "@openbot/team-client/agent-notifications";
 import {
+  type ChannelNotificationContent,
   channelForThread,
+  channelPeopleNotifications,
   channelReplyNotifications,
   newChannelReplies,
 } from "@openbot/team-client/channel-notifications";
@@ -57,6 +59,7 @@ import type { AgentService } from "../backend/agent-service";
 import { runCauseEffect } from "../backend/effect-boundary";
 import type { WorkflowNotice } from "../backend/workflows/workflows";
 import type { HostAnalytics } from "./analytics";
+import { channelIsMuted } from "./channel-mutes";
 import {
   closeRetainedNotification,
   desktopAgentEventLevel,
@@ -219,6 +222,14 @@ export function createRendererForwarders({
       if (!window || window.isDestroyed() || appFocused(window)) return null;
       return replyLevel(serverId);
     };
+    // HoleA.I: a teammate's message notifies too, and a muted chat only for a mention (Signal).
+    const people = channelPeopleNotifications(previous, next, {
+      translate: getTranslate(),
+      level: level() ?? "nothing",
+      redact: notificationPreviewEnabled() ? redactText : null,
+      muted: (channelId) => channelIsMuted(serverId, channelId),
+    });
+    for (const message of people) showChannelNotification(serverId, { ...message, agentId: "" });
     // Only "all" notifies a reply. The agent lookup is skipped at the other levels, and while a
     // reply streams, when no reply is new.
     if (level() !== "all" || newChannelReplies(previous, next).length === 0) return;
@@ -233,31 +244,36 @@ export function createRendererForwarders({
       level: current,
       redact: notificationPreviewEnabled() ? redactText : null,
     });
-    for (const reply of replies) {
-      const key = `${serverId}\n${reply.channelId}`;
-      const notification = new Notification({ title: reply.title, body: reply.body });
-      const shown = channelNotifications.get(key);
-      if (shown) closeRetainedNotification(shown);
-      channelNotifications.set(key, notification);
-      const release = () => {
-        if (channelNotifications.get(key) === notification) channelNotifications.delete(key);
-      };
-      notification.on("close", release);
-      notification.on("failed", release);
-      notification.on("click", () => {
-        release();
-        const window = getMainWindow();
-        if (!window || window.isDestroyed()) return;
-        showMainWindow(window);
-        sendToRenderer(window, IPC_ENDPOINTS.notifications.opened, {
-          serverId,
-          agentId: reply.agentId,
-          threadId: null,
-          channelId: reply.channelId,
-        });
+    // HoleA.I: a muted chat shows no agent reply either.
+    for (const reply of replies)
+      if (!channelIsMuted(serverId, reply.channelId)) showChannelNotification(serverId, reply);
+  }
+
+  /** One group chat notification; a newer one of the same chat replaces it. */
+  function showChannelNotification(serverId: string, reply: ChannelNotificationContent): void {
+    const key = `${serverId}\n${reply.channelId}`;
+    const notification = new Notification({ title: reply.title, body: reply.body });
+    const shown = channelNotifications.get(key);
+    if (shown) closeRetainedNotification(shown);
+    channelNotifications.set(key, notification);
+    const release = () => {
+      if (channelNotifications.get(key) === notification) channelNotifications.delete(key);
+    };
+    notification.on("close", release);
+    notification.on("failed", release);
+    notification.on("click", () => {
+      release();
+      const window = getMainWindow();
+      if (!window || window.isDestroyed()) return;
+      showMainWindow(window);
+      sendToRenderer(window, IPC_ENDPOINTS.notifications.opened, {
+        serverId,
+        agentId: reply.agentId,
+        threadId: null,
+        channelId: reply.channelId,
       });
-      showRetainedNotification(notification);
-    }
+    });
+    showRetainedNotification(notification);
   }
 
   /**

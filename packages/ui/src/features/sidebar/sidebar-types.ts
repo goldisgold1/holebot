@@ -113,6 +113,10 @@ export interface SidebarProps {
   userHiddenAgents?: HiddenAgent[] | undefined;
   /** HoleA.I: the group chats this device hides. A pin still shows one. */
   hiddenChannelIds?: string[] | undefined;
+  /** HoleA.I: the group chats this computer muted. A muted chat notifies only a mention (Signal). */
+  mutedChannelIds?: string[] | undefined;
+  /** Mutes a group chat for `durationMs` (null: until undone), or unmutes it. Without it, no mute item. */
+  onSetChannelMuted?: ((channelId: string, muted: boolean, durationMs: number | null) => void) | undefined;
   /** Hides or shows a group chat. Without it, the channel menu shows no hide item. */
   onSetChannelHidden?: ((channelId: string, hidden: boolean) => void) | undefined;
   /** Hides an agent. Without it, the agent menu shows no hide item. */
