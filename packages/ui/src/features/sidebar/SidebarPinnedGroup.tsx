@@ -15,6 +15,7 @@ import { ChannelAvatar } from "../channels/ChannelAvatar";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarPinnedAvatar } from "./SidebarAgentIndicator";
 import { SidebarChannelContextMenu } from "./SidebarChannelContextMenu";
+import { SidebarChannelRow } from "./SidebarChannelRow";
 import { sidebarAgentStateLabel } from "./sidebar-filtering";
 import { sidebarPinnedItemKey } from "./sidebar-pins";
 import { useSidebarScope } from "./sidebar-scope";
@@ -57,7 +58,8 @@ export function SidebarPinnedGroup() {
           <Show when={emptyPinnedDropVisible()}>
             <li class="sidebar-pinned-empty-drop">{t("sidebar.pinned.dropHint")}</li>
           </Show>
-          <For each={resolvedPinnedItems()}>
+          {/* HoleA.I: the strip holds the pinned agents; the pinned group chats are rows under it. */}
+          <For each={resolvedPinnedItems().filter((item) => item.chat.kind === "agent")}>
             {(item) => {
               const key = () => sidebarPinnedItemKey(item.ref);
               const name = () => chatName(item.chat);
@@ -196,6 +198,9 @@ export function SidebarPinnedGroup() {
             }}
           </For>
         </ul>
+        <For each={resolvedPinnedItems().filter((item) => item.chat.kind === "channel")}>
+          {(item) => (item.chat.kind === "channel" ? <SidebarChannelRow channel={item.chat.channel} pinned /> : null)}
+        </For>
       </section>
     </Show>
   );

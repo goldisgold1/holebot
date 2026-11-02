@@ -19,7 +19,12 @@ import { sidebarAgentStateLabel, sidebarMessageTime } from "./sidebar-filtering"
 import { useSidebarScope } from "./sidebar-scope";
 
 /** `waiting` is set by the "Needs you" group and `userHidden` by "Hidden", as on `SidebarAgentRow`. */
-export function SidebarChannelRow(rowProps: { channel: ChannelSummary; waiting?: boolean; userHidden?: boolean }) {
+export function SidebarChannelRow(rowProps: {
+  channel: ChannelSummary;
+  waiting?: boolean;
+  userHidden?: boolean;
+  pinned?: boolean;
+}) {
   const {
     dragOffset,
     draggedChatId,
@@ -38,7 +43,12 @@ export function SidebarChannelRow(rowProps: { channel: ChannelSummary; waiting?:
     return current ? `. ${sidebarAgentStateLabel(current, t, format)}` : "";
   };
   const draggable = () =>
-    !rowProps.channel.archived && layoutMutable() && !props.compact && !rowProps.waiting && !rowProps.userHidden;
+    !rowProps.channel.archived &&
+    layoutMutable() &&
+    !props.compact &&
+    !rowProps.waiting &&
+    !rowProps.userHidden &&
+    !rowProps.pinned;
   const [menuOpen, setMenuOpen] = createSignal(false);
   const title = () => rowProps.channel.title.trim();
   // A row from a saved frame has no last message yet: it shows no preview and no time until the list loads.
@@ -123,7 +133,11 @@ export function SidebarChannelRow(rowProps: { channel: ChannelSummary; waiting?:
           </Show>
         }
       >
-        <SidebarChannelContextMenu channel={rowProps.channel} pinned={false} userHidden={rowProps.userHidden} />
+        <SidebarChannelContextMenu
+          channel={rowProps.channel}
+          pinned={rowProps.pinned === true}
+          userHidden={rowProps.userHidden}
+        />
       </Show>
     </ContextMenu.Root>
   );
