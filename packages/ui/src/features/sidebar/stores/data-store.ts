@@ -206,7 +206,9 @@ export function createSidebarDataStore(deps: {
     props.layout.order.filter((sectionId) => {
       if (sectionId === SIDEBAR_PEOPLE_SECTION_ID)
         return props.showPeople !== false && props.view !== "agents" && orderedPeople().length > 0;
-      if (customSectionById().has(sectionId)) return true;
+      // HoleA.I: the Team view leaves out the folders that hold only agents.
+      if (customSectionById().has(sectionId))
+        return props.view !== "team" || (filteredChatsBySection().get(sectionId)?.length ?? 0) > 0;
       if (sectionId !== SIDEBAR_UNASSIGNED_SECTION_ID) return false;
       return (filteredChatsBySection().get(sectionId)?.length ?? 0) > 0;
     }),
