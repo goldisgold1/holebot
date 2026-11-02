@@ -6,15 +6,11 @@
  * two imports (tokens-holeai.css and this file) in styles.css to go back to the upstream look.
  */
 
-/* Sidebar: avatar, name, a small time and one muted line. The role stays in the row's label and tooltip. */
+/* Sidebar: face, bold name and one muted line, as in a messenger. The role and time stay in the tooltip. */
 .agent-role-badge,
-.sidebar-history-button {
-  display: none;
-}
-
+.sidebar-history-button,
 .sidebar .agent-row-time {
-  color: var(--holeai-text-soft);
-  font-size: var(--holeai-text-time);
+  display: none;
 }
 
 .agent-row {
@@ -32,7 +28,7 @@
 .person-row .agent-row-heading strong,
 .channel-row .agent-row-heading strong {
   font-size: var(--holeai-text-row);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .agent-row-preview {
@@ -196,4 +192,63 @@
 .message-entry:has(.message-actions-open) .message-action-row {
   opacity: 1;
   visibility: visible;
+}
+
+/* The foot of the sidebar: the person using the app, then a menu of the other pages and Settings. */
+.sidebar-account-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 4px;
+}
+
+.sidebar-account-person {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--holeai-radius-row);
+  padding: 4px 6px;
+  background: transparent;
+  color: var(--openbot-text-primary);
+  cursor: pointer;
+  text-align: start;
+}
+
+.sidebar-account-person:hover {
+  background: var(--openbot-hover);
+}
+
+.sidebar-account-initial {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--holeai-radius-pill);
+  background: var(--openbot-bg-surface-raised);
+  font-size: var(--holeai-text-preview);
+  font-weight: 600;
+}
+
+.sidebar-account-name {
+  overflow: hidden;
+  font-size: var(--holeai-text-row);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* With the server name hidden, the new button keeps its place at the right of the top row. */
+.sidebar-topbar-actions {
+  margin-left: auto;
+}
+
+/* The search box sits quietly at the top of the list: no frame, a faint fill. */
+.sidebar-search-trigger {
+  border-color: transparent;
+  border-radius: var(--holeai-radius-pill);
+  background: var(--openbot-hover);
 }

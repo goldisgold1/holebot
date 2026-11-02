@@ -17,10 +17,6 @@ export interface BloubAvatarProfile {
 }
 
 const AUTOMATIC_COLORS = ["rouge", "orange", "ambre", "vert", "turquoise", "bleu", "violet", "rose"] as const;
-const UNSUPPORTED_AVATAR_SILHOUETTE = "goutte" as const satisfies ShapeId;
-const SUPPORTED_AVATAR_SILHOUETTES = SHAPES.map((option) => option.id).filter(
-  (silhouette): silhouette is SupportedAvatarSilhouetteId => silhouette !== UNSUPPORTED_AVATAR_SILHOUETTE,
-);
 
 const HUE_COLORS: Readonly<Record<AvatarHue, ColorId>> = {
   0: "rouge",
@@ -54,15 +50,22 @@ export const AVATAR_HUE_OPTIONS: ReadonlyArray<{
 // Hues 100 and 280 stay valid for stored agents, but draw the same color as 150 and 245.
 export const AVATAR_HUE_CHOICES = AVATAR_HUE_OPTIONS.filter((option) => option.hue !== 100 && option.hue !== 280);
 
+/**
+ * HoleA.I: the clean look draws every generated face as a soft round body, as in a messenger: the
+ * pointed and lumpy silhouettes are left out. The seed still picks one of these, so a face is stable.
+ */
+const ROUND_AVATAR_SILHOUETTES = [
+  "squircle",
+  "galet",
+  "cercle",
+  "capsule",
+] as const satisfies readonly SupportedAvatarSilhouetteId[];
+
 export function bloubAvatarProfile(seed: string, hue: AvatarHue | null): BloubAvatarProfile {
   const storedSilhouette = requiredItem(SHAPES, stableIndex(`${seed}:shape`, SHAPES.length)).id;
-  const silhouette =
-    storedSilhouette === UNSUPPORTED_AVATAR_SILHOUETTE
-      ? requiredItem(
-          SUPPORTED_AVATAR_SILHOUETTES,
-          stableIndex(`${seed}:shape:replacement`, SUPPORTED_AVATAR_SILHOUETTES.length),
-        )
-      : storedSilhouette;
+  const silhouette: SupportedAvatarSilhouetteId = isRoundSilhouette(storedSilhouette)
+    ? storedSilhouette
+    : requiredItem(ROUND_AVATAR_SILHOUETTES, stableIndex(`${seed}:shape:round`, ROUND_AVATAR_SILHOUETTES.length));
   const expression = requiredItem(EXPRESSIONS, stableIndex(`${seed}:expression`, EXPRESSIONS.length)).id;
 
   return {
@@ -86,7 +89,7 @@ export function avatarHeadColor(seed: string, hue: AvatarHue | null): string {
 export function avatarCandidateSeeds(agentId: string, currentSeed: string, batch: number): string[] {
   const candidates = [currentSeed];
   const firstProfile = bloubAvatarProfile(currentSeed, null);
-  const unseenSilhouetteIds = new Set<SupportedAvatarSilhouetteId>(SUPPORTED_AVATAR_SILHOUETTES);
+  const unseenSilhouetteIds = new Set<SupportedAvatarSilhouetteId>(ROUND_AVATAR_SILHOUETTES);
   const usedExpressions = new Set<ExpressionId>([firstProfile.expression]);
   unseenSilhouetteIds.delete(firstProfile.shape);
   let index = 1;
@@ -112,6 +115,10 @@ export function avatarCandidateSeeds(agentId: string, currentSeed: string, batch
   }
 
   return candidates;
+}
+
+function isRoundSilhouette(shape: ShapeId): shape is (typeof ROUND_AVATAR_SILHOUETTES)[number] {
+  return ROUND_AVATAR_SILHOUETTES.some((round) => round === shape);
 }
 
 function stableIndex(value: string, length: number): number {

@@ -222,7 +222,8 @@ export function WorkspaceShell(props: { account: () => CentralAuthUser }) {
     <ConnectorsProvider>
       {/* The page rail sits at the left of the frame. The frame is the card of the page that the rail selects. */}
       <div class="app-window">
-        <WorkspacePageRail hidden={chatWindow || remoteDesktopWorkspaceVisible()} />
+        {/* HoleA.I: the clean look has no page rail; the foot of the sidebar opens the other pages. */}
+        <WorkspacePageRail hidden />
         <WorkspaceFrame
           class={chatWindow ? "app-frame-chat-window" : undefined}
           compact={layout.leftPanelCompact()}

@@ -37,6 +37,7 @@ import { usePresence } from "../team/team-context";
 import { SidebarUpdateIsland } from "../updates/SidebarUpdateIsland";
 import { createCommunityCardVisibility } from "./community-card";
 import { createMachineCard } from "./machine-card";
+import { SidebarAccountRow } from "./SidebarAccountRow";
 import { useSidebar } from "./sidebar-context";
 import { createStorageCard } from "./storage-card";
 
@@ -401,6 +402,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
             />
           </Show>
           <SidebarUpdateIsland />
+          <SidebarAccountRow />
         </>
       }
       onOpenMarketplace={() => setSkillsMarketplaceOpen(true)}

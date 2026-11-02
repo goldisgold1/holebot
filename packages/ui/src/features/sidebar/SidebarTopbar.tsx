@@ -26,6 +26,7 @@ export function SidebarTopbar() {
   const { t } = useText();
   return (
     <div class="window-drag sidebar-topbar">
+      {/* HoleA.I: with one server there is nothing to pick, so the name hides, as in a messenger. */}
       <Show
         when={props.serverMenu}
         fallback={
@@ -45,7 +46,11 @@ export function SidebarTopbar() {
           </Button>
         }
       >
-        {(serverMenu) => <ServerMenu {...serverMenu()} serverName={props.serverName} compact={props.compact} />}
+        {(serverMenu) => (
+          <Show when={serverMenu().servers.length > 1}>
+            <ServerMenu {...serverMenu()} serverName={props.serverName} compact={props.compact} />
+          </Show>
+        )}
       </Show>
       <div class="sidebar-topbar-actions">
         <Show when={!props.compact && props.chatHistory}>
