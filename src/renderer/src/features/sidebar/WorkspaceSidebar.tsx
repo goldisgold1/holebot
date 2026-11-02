@@ -271,6 +271,8 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
         channels.hasUnread()
       }
       view={layout.sidebarView()}
+      // HoleA.I: the Team | Agents | Routines switch over the list.
+      onViewChange={layout.setSidebarView}
       serverName={activeServer()?.name ?? t("sidebar.topbar.localServer")}
       onOpenServerSettings={(trigger) => {
         const server = activeServer();
