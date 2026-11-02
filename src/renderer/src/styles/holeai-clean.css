@@ -252,3 +252,120 @@
   border-radius: var(--holeai-radius-pill);
   background: var(--openbot-hover);
 }
+
+/* HoleA.I: the cute face (CuteFace.tsx). Ink, shine and blush are tokens; the body colour is the agent's own.
+   Blink and bob run only while the avatar is animated, which keeps the sidebar's resting rows still. */
+.cute-face .cute-face-body {
+  stroke: var(--agent-avatar-outline, transparent);
+  stroke-width: calc(var(--agent-avatar-outline-width, 1.5px) * 2);
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  vector-effect: non-scaling-stroke;
+}
+
+.cute-face .cute-face-pupil,
+.cute-face .cute-face-mouth {
+  fill: var(--holeai-face-ink);
+}
+
+.cute-face .cute-face-shine {
+  fill: var(--holeai-face-shine);
+}
+
+.cute-face .cute-face-blush {
+  fill: var(--holeai-face-blush);
+  opacity: 0.55;
+}
+
+.cute-face .cute-face-line {
+  fill: none;
+  stroke: var(--holeai-face-ink);
+  stroke-width: 3.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cute-face .cute-face-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: translate var(--openbot-duration-normal) ease;
+}
+
+.cute-face .cute-face-eyes[data-look="up"] {
+  translate: 0 -3px;
+}
+
+.cute-face .cute-face-bob {
+  transform-box: view-box;
+  transform-origin: center 80%;
+}
+
+.cute-face[data-animated] .cute-face-eyes {
+  animation: cute-face-blink 3.2s ease-in-out infinite;
+  animation-delay: var(--cute-face-delay, 0s);
+}
+
+.cute-face[data-animated] .cute-face-bob {
+  animation: cute-face-bob 1.6s ease-in-out infinite;
+  animation-delay: var(--cute-face-delay, 0s);
+}
+
+.cute-face[data-mood="responded"] .cute-face-bob {
+  animation: cute-face-hop 0.6s ease-out 1;
+}
+
+.cute-face[data-mood="asleep"] .cute-face-zz {
+  stroke-width: 2.6;
+  opacity: 0.7;
+}
+
+@keyframes cute-face-blink {
+  0%,
+  44%,
+  52%,
+  100% {
+    scale: 1 1;
+  }
+
+  48% {
+    scale: 1 0.1;
+  }
+}
+
+@keyframes cute-face-bob {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+
+  50% {
+    translate: 0 -3px;
+    scale: 1.02 0.98;
+  }
+}
+
+@keyframes cute-face-hop {
+  0% {
+    translate: 0 0;
+  }
+
+  40% {
+    translate: 0 -8px;
+  }
+
+  70% {
+    translate: 0 1px;
+  }
+
+  100% {
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cute-face .cute-face-eyes,
+  .cute-face .cute-face-bob {
+    animation: none;
+  }
+}

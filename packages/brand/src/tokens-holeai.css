@@ -22,6 +22,10 @@
 }
 
 :root {
+  /* The cute agent face: eye and mouth ink, eye shine, cheek blush. */
+  --holeai-face-ink: #241d26;
+  --holeai-face-shine: #ffffff;
+  --holeai-face-blush: #ff8fb1;
   --holeai-text-row: 15px;
   --holeai-text-preview: 13.5px;
   --holeai-text-bubble: 15px;

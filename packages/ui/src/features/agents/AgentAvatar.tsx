@@ -1,38 +1,28 @@
-import {
-  type Block,
-  BloubBot,
-  BotEngine,
-  type BotFrame,
-  DEMI_VIEWBOX,
-  makeBlock,
-  POSES,
-  RAYON,
-} from "@norbert_bodziony/bloub";
-import {
-  type AvatarMood,
-  avatarMoodIsBusy,
-  avatarMoodPresentation,
-  type ShapeSafeStateId,
-} from "@openbot/brand/bloub-avatar-motion";
+import { BotEngine, type BotFrame, DEMI_VIEWBOX, POSES, RAYON } from "@norbert_bodziony/bloub";
+import { type AvatarMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
 import type { AvatarHue } from "@openbot/contracts/ipc";
 import { prefersReducedMotion } from "@openbot/ui/utils";
 import type { JSX } from "@solidjs/web";
 import { createEffect, createMemo, createSignal, createUniqueId, For, onSettled, Show } from "solid-js";
-import { type AvatarMotion, bloubAvatarProfile, type SupportedAvatarSilhouetteId } from "../../bloub-avatar";
+import {
+  type AvatarMotion,
+  avatarHeadColor,
+  bloubAvatarProfile,
+  type SupportedAvatarSilhouetteId,
+} from "../../bloub-avatar";
 import type { AgentProfile } from "../../data";
-import { createPointerGaze } from "./avatar-pointer-gaze";
+import { CuteFace } from "./CuteFace";
 
 // Cap avatar animation at 30fps: uncapped bloub clocks measured 30% renderer / 24% GPU
 // for two visible avatars. The shape is 24-40px, so the eye cannot see the difference.
 const AVATAR_FPS = 30;
-const SIDEBAR_MOTION_HOLD_FACTOR = 1.25;
 
 // HoleA.I: now and then one resting avatar on screen comes alive for a short burst, so a quiet sidebar does
-// not look frozen. One shared clock picks a single avatar every 15-25 s, and only while the window has the
+// not look frozen. One shared clock picks a single avatar every 6-12 s, and only while the window has the
 // focus: a timer per avatar kept about three of them animating at once, at all times (11% GPU while idle).
 const AMBIENT_BURST_MS = 4_000;
-const AMBIENT_MIN_GAP_MS = 15_000;
-const AMBIENT_GAP_SPREAD_MS = 10_000;
+const AMBIENT_MIN_GAP_MS = 6_000;
+const AMBIENT_GAP_SPREAD_MS = 6_000;
 const ambientCandidates = new Set<(on: boolean) => void>();
 let ambientClock: ReturnType<typeof setTimeout> | undefined;
 
@@ -59,16 +49,6 @@ function setAmbientCandidate(setAmbient: (on: boolean) => void, onScreen: boolea
   if (ambientCandidates.size > 0 && ambientClock === undefined) scheduleAmbientBurst();
 }
 
-// Resting montage shown on hover: shape-safe blocks only, so the seeded silhouette stays
-// on screen while the face carries the personality (blink, wink, wide eyes).
-const DEFAULT_CYCLE: Block[] = [
-  slowerBlock("idle"),
-  makeBlock("wink"),
-  slowerBlock("idle"),
-  makeBlock("wide"),
-  slowerBlock("idle"),
-];
-
 // Decor rings are sampled from the `orbit` pose, not played as a state: `orbit`
 // replaces the body, while sampling only `frame.arcs` keeps the silhouette.
 const RING_POSE = "orbit";
@@ -81,11 +61,6 @@ const STATIC_MOTIONS: ReadonlySet<AvatarMotion> = new Set(["hover", "idle"]);
 // Hover group lookup: the first `[data-avatar-hover]`/control ancestor, since dialogs and
 // scroll regions with `[tabindex]` are too wide to count as one.
 const HOVER_GROUP = "[data-avatar-hover], button, a, [role='button'], [role='link'], [role='menuitem']";
-
-function slowerBlock(state: ShapeSafeStateId): Block {
-  const block = makeBlock(state);
-  return { ...block, duration: block.duration * SIDEBAR_MOTION_HOLD_FACTOR };
-}
 
 interface AgentAvatarProps {
   agent?: Pick<AgentProfile, "avatarSeed" | "avatarHue" | "avatarUrl"> | undefined;
@@ -312,21 +287,11 @@ function GeneratedAvatar(props: {
   style?: Record<string, string>;
 }) {
   let element: HTMLSpanElement | undefined;
-  const gaze = createPointerGaze();
   const [interacting, setInteracting] = createSignal(false);
   const [ambient, setAmbient] = createSignal(false);
   const [reducedMotion, setReducedMotion] = createSignal(prefersReducedMotion());
   const presentation = createMemo(() => avatarMoodPresentation(props.mood));
   const profile = createMemo(() => bloubAvatarProfile(props.seed, props.hue));
-  // The silhouette and the colour are identity and come only from the seed. The mood may lend the
-  // face an expression; when it does not, the seeded one is the resting face.
-  const appearance = createMemo(() => ({
-    shape: props.shape ?? profile().shape,
-    color: profile().color,
-    expression: presentation().expression ?? profile().expression,
-    state: presentation().state,
-  }));
-  const cycle = createMemo(() => offsetCycle(DEFAULT_CYCLE, props.cycleOffset ?? 0));
   // A mood that carries its own motion has to be seen without being pointed at, and so do eyes that
   // follow the pointer; the resting moods keep the hover gating that the perf note above is about.
   const animated = () =>
@@ -336,11 +301,6 @@ function GeneratedAvatar(props: {
       !STATIC_MOTIONS.has(props.motion) ||
       interacting() ||
       ambient());
-  const gazeScript = createMemo(() => (props.followPointer ? gaze.script : null));
-  const motionCycle = () => {
-    if (props.mood !== "idle") return [slowerBlock(presentation().state)];
-    return cycle();
-  };
 
   onSettled(() => {
     const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -390,29 +350,6 @@ function GeneratedAvatar(props: {
     };
   });
 
-  createEffect(
-    () => props.followPointer,
-    (follow) => {
-      if (follow && element) return gaze.attach(element);
-    },
-  );
-
-  const avatar = () => (
-    <BloubBot
-      size={100}
-      shape={appearance().shape}
-      color={appearance().color}
-      expression={appearance().expression}
-      cycle={motionCycle()}
-      playing={true}
-      fps={AVATAR_FPS}
-      initialPhase={props.animationOffset ?? avatarAnimationPhase(props.seed)}
-      gaze={gazeScript()}
-      ariaLabel=""
-      class="bloub-avatar-svg"
-    />
-  );
-
   return (
     <span
       ref={element}
@@ -424,30 +361,14 @@ function GeneratedAvatar(props: {
       aria-hidden="true"
     >
       <AvatarRings when={presentation().rings}>
-        <Show
-          when={animated()}
-          fallback={
-            /* A frozen Bloub frame cannot finish a morph, and the engine reads `state` only when it
-               is built, so a mood change has to rebuild the bot. Keying on the appearance, state
-               included, does both: `frozenAt` alone would sample the seeded idle face. */
-            <Show when={appearance()} keyed>
-              {(frozen) => (
-                <BloubBot
-                  size={100}
-                  shape={frozen.shape}
-                  color={frozen.color}
-                  expression={frozen.expression}
-                  state={frozen.state}
-                  frozenAt={POSES[frozen.state]}
-                  ariaLabel=""
-                  class="bloub-avatar-svg"
-                />
-              )}
-            </Show>
-          }
-        >
-          {avatar()}
-        </Show>
+        <CuteFace
+          seed={props.seed}
+          color={avatarHeadColor(props.seed, props.hue)}
+          shape={props.shape ?? profile().shape}
+          mood={props.mood}
+          animated={animated()}
+          delay={-(props.animationOffset ?? avatarAnimationPhase(props.seed))}
+        />
       </AvatarRings>
     </span>
   );
@@ -460,11 +381,4 @@ function avatarAnimationPhase(seed: string): number {
     hash = Math.imul(hash, 0x01000193);
   }
   return ((hash >>> 0) / 0x100000000) * 1.4;
-}
-
-function offsetCycle(blocks: Block[], offset: number): Block[] {
-  if (blocks.length === 0) return blocks;
-  const start = ((Math.trunc(offset) % blocks.length) + blocks.length) % blocks.length;
-  if (start === 0) return blocks;
-  return [...blocks.slice(start), ...blocks.slice(0, start)];
 }
