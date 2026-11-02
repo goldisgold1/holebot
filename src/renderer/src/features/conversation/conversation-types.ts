@@ -32,7 +32,7 @@ import type {
 } from "@openbot/contracts/ipc";
 import type { ChannelReactionGroup } from "@openbot/contracts/signal-port/reactions";
 import type { ConversationUiBlock } from "@openbot/contracts/ui-blocks";
-import type { AgentMessage, AgentProfile } from "@openbot/ui/data";
+import type { AgentMessage, AgentProfile, ComposerAgent } from "@openbot/ui/data";
 import type { BrowserViewRuntime } from "@openbot/ui/features/browser/BrowserLiveView";
 import type { ChannelWorker } from "@openbot/ui/features/channels/ChannelActivityIndicator";
 import type { AwaitingReplyItem } from "@openbot/ui/features/conversation/AwaitingReplies";
@@ -203,6 +203,8 @@ export interface ConversationProps {
    * messages, so the desktop leaves it out; the timeline still names it from `agents`.
    */
   mentionAgents?: AgentProfile[] | undefined;
+  /** HoleA.I: the people a group chat's @ picker offers beside its agents. */
+  mentionPeople?: ComposerAgent[] | undefined;
   availableRoutineIds?: readonly string[] | undefined;
   /** The agent's routines, for the chat card of a routine the agent created or changed. */
   routines?: readonly RoutineFields[] | undefined;

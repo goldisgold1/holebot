@@ -946,7 +946,7 @@ export function ConversationComposer() {
           <div class="composer-input-label">
             <ComposerEditor
               agentId={props.agent?.id}
-              agents={props.mentionAgents ?? props.agents}
+              agents={[...(props.mentionAgents ?? props.agents), ...(props.mentionPeople ?? [])]}
               everyoneMention={Boolean(channel) && (props.mentionAgents ?? props.agents).length > 1}
               skills={installedSkills()}
               skillsLoadFailed={installedSkillsLoadFailed()}

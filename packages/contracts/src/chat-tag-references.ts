@@ -9,7 +9,8 @@
  * the name. Message bodies are stored as written, so an older app reading a newer message is a
  * real case, and it stays readable.
  */
-export type ChatTagKind = "agent" | "skill" | "mcp" | "quote";
+// HoleA.I: `member` names a person of the server in a group chat (Signal's mention). It wakes no agent.
+export type ChatTagKind = "agent" | "member" | "skill" | "mcp" | "quote";
 
 export interface ChatTagReference {
   kind: ChatTagKind;
@@ -19,7 +20,7 @@ export interface ChatTagReference {
   end: number;
 }
 
-const CHAT_TAG_REFERENCE_PATTERN = /@\[([^\]\r\n]+)\]\((agent|skill|mcp|quote)(\+uri)?:([^)\r\n]+)\)/gu;
+const CHAT_TAG_REFERENCE_PATTERN = /@\[([^\]\r\n]+)\]\((agent|member|skill|mcp|quote)(\+uri)?:([^)\r\n]+)\)/gu;
 
 /*
  * Quoted text is any text, and Markdown reads the marker as a link. A bracket, a backslash, a
@@ -120,7 +121,7 @@ export function leadingAddress(value: string): { mentions: ChatTagReference[]; e
 }
 
 function chatTagKind(value: string | undefined): ChatTagKind {
-  if (value === "skill" || value === "mcp" || value === "quote") return value;
+  if (value === "member" || value === "skill" || value === "mcp" || value === "quote") return value;
   return "agent";
 }
 
@@ -201,7 +202,7 @@ function fileQuoteHeading(file: FileQuoteTarget): string {
 
 /** What the provider reads in place of a marker. A name alone would not say what it names. */
 function expandedChatTag(kind: Exclude<ChatTagKind, "quote">, name: string): string {
-  if (kind === "agent") return `@${name}`;
+  if (kind === "agent" || kind === "member") return `@${name}`;
   return kind === "mcp" ? `${name} (MCP server)` : `${name} (skill)`;
 }
 

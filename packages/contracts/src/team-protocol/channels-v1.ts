@@ -384,6 +384,9 @@ export function channelResponse(path: string, status: number, value: unknown): T
   if (pathname === CHANNEL_ROUTES.list)
     return list((item) => ({
       ...record(item, { unreadCount: sequence, activeTasks: sequence, lastMessage: preview }),
+      ...(isDynamicRecord(item) && item.unreadMentions !== undefined
+        ? { unreadMentions: sequence(item.unreadMentions) }
+        : {}),
       ...record(channel(item), {
         ...draftFields,
         id: identifier,

@@ -1519,3 +1519,11 @@ button.chat-action-target:active,
 .message-reaction-anchor .message-reaction-pill-mine {
   background: color-mix(in srgb, var(--openbot-accent, currentColor) 18%, transparent);
 }
+
+/* HoleA.I: a person mentioned in a group chat (Signal's at-mention). */
+.message-at-mention {
+  border-radius: var(--openbot-radius-sm);
+  background: color-mix(in srgb, var(--openbot-accent, currentColor) 16%, transparent);
+  padding-inline: 2px;
+  font-weight: 600;
+}

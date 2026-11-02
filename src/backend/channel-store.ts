@@ -160,6 +160,13 @@ export class ChannelStore {
                 AND COALESCE(json_extract(m.message_json, '$.message.itemType'), '') != 'channel-change'
                 AND COALESCE(json_extract(m.message_json, '$.message.itemType'), '') != 'commentary'
                 AND COALESCE(json_extract(m.message_json, '$.message.itemType'), '') NOT LIKE ?) AS unread,
+            (SELECT COUNT(*) FROM projection_channel_messages AS m
+              WHERE m.channel_id = c.channel_id
+                AND m.sequence > COALESCE(
+                  (SELECT r.through_sequence FROM projection_channel_reads AS r
+                    WHERE r.channel_id = c.channel_id AND r.member_id = ?), 0)
+                AND json_extract(m.message_json, '$.author.id') IS NOT ?
+                AND instr(COALESCE(json_extract(m.message_json, '$.message.text'), ''), ?) > 0) AS mentions,
             (SELECT COUNT(*) FROM projection_channel_tasks AS t
               WHERE t.channel_id = c.channel_id
                 AND json_extract(t.task_json, '$.state') = 'running') AS running,
@@ -168,7 +175,16 @@ export class ChannelStore {
                 AND json_extract(t.task_json, '$.state') IN ('queued', 'waiting', 'running')) AS open
             FROM projection_channels AS c ORDER BY c.rowid`,
         )
-        .all(memberId, memberId, excludedId, `${CHANNEL_ROUTING_EVENT_ITEM_TYPE_PREFIX}%`),
+        .all(
+          memberId,
+          memberId,
+          excludedId,
+          `${CHANNEL_ROUTING_EVENT_ITEM_TYPE_PREFIX}%`,
+          // HoleA.I: the unread messages that mention this member (Signal's mention badge).
+          memberId,
+          memberId,
+          `(member:${memberId})`,
+        ),
     );
     const threads = new Map<string, ChannelThread[]>();
     for (const row of databaseRows(
@@ -199,6 +215,7 @@ export class ChannelStore {
       return {
         ...channel,
         unreadCount: Number(row.unread ?? 0),
+        unreadMentions: Number(row.mentions ?? 0),
         activeTasks: Number(row.running ?? 0),
         openTasks: Number(row.open ?? 0),
         lastMessage: latest

@@ -94,6 +94,12 @@ export function SidebarChannelRow(rowProps: {
             when={channelWait()}
             fallback={
               <Show when={rowProps.channel.unreadCount > 0}>
+                {/* HoleA.I: an "@" beside the count when an unread message mentions the reader (Signal). */}
+                <Show when={(rowProps.channel.unreadMentions ?? 0) > 0}>
+                  <Badge class="person-unread-badge channel-mention-badge" variant="default" aria-hidden="true">
+                    @
+                  </Badge>
+                </Show>
                 <Badge class="person-unread-badge" variant="primary-light" aria-hidden="true">
                   {Math.min(rowProps.channel.unreadCount, 99)}
                 </Badge>

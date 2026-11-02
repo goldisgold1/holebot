@@ -46,6 +46,7 @@ export interface RichMessageTextProps {
 
 const UNAVAILABLE_TAG_LABELS = {
   agent: "chat.tag.unavailableAgent",
+  member: "chat.tag.unavailableAgent",
   skill: "chat.tag.unavailableSkill",
   mcp: "chat.tag.unavailableMcp",
 } as const satisfies Record<UnavailableTagKind, AppTextKey>;
@@ -161,6 +162,9 @@ export function RichMessageText(props: RichMessageTextProps) {
                 onClick={() => props.onSelectAgent(part.agent?.id ?? "")}
               />
             );
+          }
+          if (part.member) {
+            return <span class="message-at-mention">@{part.member.name}</span>;
           }
           if (part.skill) {
             return (
@@ -335,6 +339,7 @@ export function MessageLink(props: {
 function plainTextPart(part: RichMessagePart): boolean {
   return !(
     part.agent ||
+    part.member ||
     part.skill ||
     part.mcpName ||
     part.quote ||
@@ -356,6 +361,8 @@ interface RichMessagePart {
   mcpName?: string;
   /** Text the user quoted from a message of this chat. */
   quote?: { messageId: string; text: string };
+  /** HoleA.I: a person mentioned in a group chat, drawn as "@Name" (Signal's at-mention). */
+  member?: { id: string; name: string };
   unavailableKind?: UnavailableTagKind;
   citation?: MessageCitation;
   attachment?: AttachmentSummary;
@@ -374,6 +381,7 @@ function richMessageParts(
   for (const taggedReference of semanticTagParts(body, agents, skills)) {
     if (
       taggedReference.agent ||
+      taggedReference.member ||
       taggedReference.skill ||
       taggedReference.mcpName ||
       taggedReference.quote ||
@@ -414,6 +422,9 @@ function semanticTagParts(body: string, agents: ComposerAgent[], skills: Compose
     if (reference.kind === "agent") {
       const agent = agents.find((candidate) => candidate.id === reference.id);
       parts.push(agent ? { text: agent.name, agent } : { text: reference.name, unavailableKind: "agent" });
+    } else if (reference.kind === "member") {
+      const member = agents.find((candidate) => candidate.mentionKind === "member" && candidate.id === reference.id);
+      parts.push({ text: reference.name, member: { id: reference.id, name: member?.name ?? reference.name } });
     } else if (reference.kind === "mcp") {
       parts.push({ text: reference.name, mcpName: reference.name });
     } else if (reference.kind === "quote") {

@@ -94,6 +94,8 @@ export const CHANNEL_PREVIEW_LIMIT = 160;
 
 export interface ChannelSummary extends Channel {
   unreadCount: number;
+  /** HoleA.I: the reader's unread messages that @mention them. Absent from an older host. */
+  unreadMentions?: number;
   activeTasks: number;
   /** Its queued, waiting and running tasks; `activeTasks` counts only running ones. Absent from a host without channel-attention-v1. */
   openTasks?: number;

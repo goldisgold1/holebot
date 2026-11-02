@@ -108,7 +108,8 @@ export function syncAttachmentTokens(
 export function createMentionToken(agent: ComposerAgent): HTMLSpanElement {
   const token = document.createElement("span");
   token.className = `composer-mention-token ${referenceChipClasses.root}`;
-  token.dataset.kind = "agent";
+  token.dataset.kind = agent.mentionKind ?? "agent";
+  if (agent.mentionKind) token.dataset.mentionKind = agent.mentionKind;
   token.title = agent.name;
   token.contentEditable = "false";
   token.dataset.mentionId = agent.id;
@@ -268,6 +269,7 @@ function createUnavailableTagToken(kind: Exclude<ChatTagKind, "quote">, id: stri
   token.contentEditable = "false";
   token.dataset.mentionId = id;
   token.dataset.mentionName = name;
+  if (kind === "member") token.dataset.mentionKind = "member";
   token.setAttribute("aria-label", currentText().t("composer.token.unavailableAgent", { name }));
   token.textContent = name;
   return token;
@@ -366,8 +368,15 @@ export function renderEditorValue(
       cursor = index + match[0].length;
       continue;
     }
+    if (target.startsWith("member:")) {
+      const id = target.slice("member:".length);
+      const member = agents.find((candidate) => candidate.mentionKind === "member" && candidate.id === id);
+      editor.append(member ? createMentionToken(member) : createUnavailableTagToken("member", id, name));
+      cursor = index + match[0].length;
+      continue;
+    }
     const id = target.startsWith("agent:") ? target.slice("agent:".length) : target;
-    const agent = agents.find((candidate) => candidate.id === id);
+    const agent = agents.find((candidate) => candidate.id === id && !candidate.mentionKind);
     editor.append(agent ? createMentionToken(agent) : createUnavailableTagToken("agent", id, name));
     cursor = index + match[0].length;
   }

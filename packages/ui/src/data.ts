@@ -299,7 +299,10 @@ export interface AgentProfile {
 export type ComposerAgent = Pick<
   AgentProfile,
   "id" | "name" | "title" | "description" | "avatarSeed" | "avatarHue" | "avatarUrl"
->;
+> & {
+  /** HoleA.I: a person of the server that a group chat can mention. Absent for an agent. */
+  mentionKind?: "member" | undefined;
+};
 
 /** The skill fields that the composer, the queue and rich text read. */
 export type ComposerSkill = Pick<

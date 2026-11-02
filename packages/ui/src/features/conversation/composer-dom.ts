@@ -64,7 +64,12 @@ function serializeNode(node: Node): string {
   }
   const mentionId = node.dataset.mentionId;
   const mentionName = node.dataset.mentionName;
-  if (mentionId && mentionName) return serializeChatTagReference("agent", mentionName, mentionId);
+  if (mentionId && mentionName)
+    return serializeChatTagReference(
+      node.dataset.mentionKind === "member" ? "member" : "agent",
+      mentionName,
+      mentionId,
+    );
   const skillId = node.dataset.skillId;
   const skillName = node.dataset.skillName;
   if (skillId && skillName) return serializeChatTagReference("skill", skillName, skillId);

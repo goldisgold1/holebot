@@ -42,7 +42,7 @@ function DesktopChannelConversation(props: { channelId: string; account: () => C
   const connectors = useConnectors();
   const { selectAgent, messageFocusRequest, globalSearchOpen } = useNavigation();
   const auth = useAuth();
-  const { teamPresence, currentTeamMember } = usePresence();
+  const { teamPresence, currentTeamMember, directPeople } = usePresence();
   const { activeServer, activeServerSupportsCapability, joinServerOpen } = useServers();
   const { serverSettingsOpen } = useServerSettings();
   const { appSettingsOpen, skillsMarketplaceOpen, generalSettings } = useSettings();
@@ -101,6 +101,16 @@ function DesktopChannelConversation(props: { channelId: string; account: () => C
       agent={undefined}
       agents={agentList()}
       mentionAgents={view.mentionAgents()}
+      mentionPeople={directPeople().map((member) => ({
+        id: member.id,
+        name: member.name?.trim() || member.username,
+        title: "",
+        description: "",
+        avatarSeed: member.id,
+        avatarHue: null,
+        avatarUrl: member.avatarUrl ?? null,
+        mentionKind: "member" as const,
+      }))}
       modelOptions={[]}
       messages={view.messages()}
       unreadCount={view.unreadCount()}
