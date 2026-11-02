@@ -47,6 +47,7 @@ import { createSettingsAgentsSection } from "./SettingsAgentsSection";
 import { SettingsDynamicIslandTab } from "./SettingsDynamicIslandTab";
 import { SettingsGeneralTab } from "./SettingsGeneralTab";
 import { SettingsNotificationsTab } from "./SettingsNotificationsTab";
+import { SettingsServersTab } from "./SettingsServersTab";
 import { SettingsVoiceTab } from "./SettingsVoiceTab";
 import { dynamicIslandSettingsShown, navItem, navItems, type SettingsTab, settingsTabShown } from "./settings-tabs";
 import { createSettingsVoiceStore } from "./settings-voice-store";
@@ -363,6 +364,10 @@ export function SettingsModal(props: SettingsModalProps) {
             canRevokeDevice={Boolean(props.onRevokeMobileConnectedDevice)}
             canSetRoute={Boolean(props.onSetRemoteNetworkRoute)}
           />
+        </Tabs.Content>
+
+        <Tabs.Content value="servers" class="settings-modal-tab-panel" data-tab="servers">
+          <SettingsServersTab />
         </Tabs.Content>
 
         <Tabs.Content value="updates" class="settings-modal-tab-panel" data-tab="updates">

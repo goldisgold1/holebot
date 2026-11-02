@@ -24,6 +24,7 @@ export type SettingsTab =
   | "profile"
   | "billing"
   | "mobile-connect"
+  | "servers"
   | "updates"
   | "hosted-servers";
 
@@ -168,6 +169,16 @@ export const navItems: ReadonlyArray<SettingsNavItem> = [
         titleKey: "settings.mobileConnect.route.title",
         descriptionKey: "settings.mobileConnect.route.description",
       },
+    ],
+  },
+  {
+    value: "servers",
+    titleKey: "settings.tab.servers.title",
+    descriptionKey: "settings.tab.servers.description",
+    icon: Server,
+    rows: [
+      { titleKey: "settings.servers.title", descriptionKey: "settings.servers.description" },
+      { titleKey: "settings.servers.add" },
     ],
   },
   {

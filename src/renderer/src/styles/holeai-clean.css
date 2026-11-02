@@ -1353,3 +1353,67 @@
   font-weight: var(--openbot-weight-semibold);
   text-align: right;
 }
+
+/* HoleA.I: Settings > Servers, one quiet row per server. */
+.settings-servers {
+  display: grid;
+  gap: var(--openbot-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-server {
+  display: flex;
+  align-items: center;
+  gap: var(--openbot-space-3);
+  padding: var(--openbot-space-3);
+  border: 1px solid var(--openbot-border);
+  border-radius: var(--openbot-radius-lg);
+}
+
+.settings-server[data-active] {
+  background: var(--openbot-bg-surface);
+}
+
+.settings-server-icon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--holeai-radius-pill);
+  background: color-mix(in srgb, var(--openbot-text-primary) 8%, transparent);
+  color: var(--openbot-text-muted);
+}
+
+.settings-server-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-server-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-server-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-server-current {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--openbot-space-1);
+  color: var(--openbot-success);
+  font-size: var(--openbot-text-xs);
+}
+
+.settings-server-current svg {
+  width: 14px;
+  height: 14px;
+}
