@@ -60,6 +60,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Switch,
+  Tabs,
   Text,
 } from "@openbot/ui";
 import { normalizeAvatarFile } from "@openbot/ui/avatar-image";
@@ -165,6 +166,8 @@ export interface AgentSettingsPanelProps {
   onResizeEnd: (width: number) => void;
   /** Application-owned navigation and detail surfaces, in the existing panel layout. */
   links?: JSX.Element;
+  /** What the agent has made for the user. With it, the root page splits into Details and Library tabs. */
+  library?: JSX.Element;
   detailOpen?: boolean;
   children?: JSX.Element;
   onUpdateAgent: (agentId: string, updates: Omit<UpdateAgentInput, "agentId">) => Promise<void>;
@@ -221,6 +224,13 @@ const INSTRUCTIONS_SAVE_DELAY_MS = 400;
  * in place, as the mobile app does, and shows one row for each page.
  */
 type AgentSettingsPage = "permissions" | "folders" | "backup-models" | "advanced";
+
+/** The tabs of the root page, under the agent's face and name. */
+type AgentSettingsTab = "details" | "library";
+
+function isAgentSettingsTab(value: string): value is AgentSettingsTab {
+  return value === "details" || value === "library";
+}
 
 const PAGE_TITLE: Record<AgentSettingsPage, AppTextKey> = {
   permissions: "agentSettings.permissions.title",
@@ -312,6 +322,7 @@ export default function AgentSettingsPanel(props: AgentSettingsPanelProps) {
   });
   const avatarUrl = () => props.agent.avatarUrl ?? null;
   const [page, setPage] = createSignal<AgentSettingsPage | null>(null);
+  const [tab, setTab] = createSignal<AgentSettingsTab>("details");
   // The root row that opened the closed page takes the focus back when the root shows again.
   let returnFocusPage: AgentSettingsPage | null = null;
 
@@ -490,6 +501,7 @@ export default function AgentSettingsPanel(props: AgentSettingsPanelProps) {
         if (agentChanged) {
           returnFocusPage = null;
           setPage(null);
+          setTab("details");
         }
         setDraft((state) => {
           if (agentChanged) {
@@ -1022,351 +1034,383 @@ export default function AgentSettingsPanel(props: AgentSettingsPanelProps) {
         <SettingsPanelContent>
           <div ref={(element) => (pageRoot = element)} class="agent-settings-page">
             <Show when={page() === null}>
-              <div ref={(element) => (avatarPickerRoot = element)} class="agent-settings-avatar-picker">
-                <Popover.Root
-                  open={draft.avatar.pickerOpen}
-                  placement="bottom"
-                  gutter={11}
-                  onOpenChange={(open) =>
-                    setDraft((state) => {
-                      if (open) {
-                        state.avatar.candidateSeed = state.avatar.seed;
-                        state.avatar.batch = 0;
-                      }
-                      state.avatar.pickerOpen = open;
-                    })
-                  }
-                >
-                  <Popover.Trigger class="agent-settings-avatar" aria-label={t("agentSettings.avatar.edit")}>
-                    <AgentAvatar seed={draft.avatar.seed} hue={draft.avatar.hue} url={avatarUrl()} motion="always" />
-                    <span class="agent-settings-avatar-badge" aria-hidden="true">
-                      <Pencil class="agent-settings-avatar-badge-icon" />
-                    </span>
-                  </Popover.Trigger>
-                  <Popover.Content class="avatar-editor" aria-hidden={draft.avatar.pickerOpen ? undefined : "true"}>
-                    <Popover.Title class="sr-only">{t("agentSettings.avatar.editor")}</Popover.Title>
-                    <Input
-                      ref={(element) => (avatarFileInput = element)}
-                      class="sr-only"
-                      type="file"
-                      aria-label={t("agentSettings.avatar.attachFiles")}
-                      accept="image/png,image/jpeg,image/gif,image/webp"
-                      onChange={(event) => void uploadAgentAvatar(event.currentTarget.files?.[0])}
-                    />
-                    <div class="avatar-editor-heading">
-                      <span>{t("agentSettings.avatar.image")}</span>
-                      <div class="avatar-editor-actions">
-                        <Show when={avatarUrl()}>
-                          <Button
-                            variant="outline"
-                            type="button"
-                            disabled={draft.avatar.uploadBusy}
-                            onClick={() => void setCustomAvatar(null)}
-                          >
-                            {t("common.remove")}
-                          </Button>
-                        </Show>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      class={["avatar-image-upload", { "avatar-image-upload-active": Boolean(avatarUrl()) }]}
-                      disabled={draft.avatar.uploadBusy}
-                      onClick={() => avatarFileInput?.click()}
-                    >
-                      <span class="avatar-image-upload-preview">
-                        <Show
-                          when={avatarUrl()}
-                          fallback={
-                            <svg aria-hidden="true" viewBox="0 0 24 24">
-                              <path d="M12 5v14M5 12h14" />
-                            </svg>
-                          }
-                        >
-                          <AgentAvatar seed={draft.avatar.seed} hue={draft.avatar.hue} url={avatarUrl()} />
-                        </Show>
+              <div class="agent-settings-hero">
+                <div ref={(element) => (avatarPickerRoot = element)} class="agent-settings-avatar-picker">
+                  <Popover.Root
+                    open={draft.avatar.pickerOpen}
+                    placement="bottom"
+                    gutter={11}
+                    onOpenChange={(open) =>
+                      setDraft((state) => {
+                        if (open) {
+                          state.avatar.candidateSeed = state.avatar.seed;
+                          state.avatar.batch = 0;
+                        }
+                        state.avatar.pickerOpen = open;
+                      })
+                    }
+                  >
+                    <Popover.Trigger class="agent-settings-avatar" aria-label={t("agentSettings.avatar.edit")}>
+                      <AgentAvatar seed={draft.avatar.seed} hue={draft.avatar.hue} url={avatarUrl()} motion="always" />
+                      <span class="agent-settings-avatar-badge" aria-hidden="true">
+                        <Pencil class="agent-settings-avatar-badge-icon" />
                       </span>
-                      <span>
-                        <strong>
-                          {avatarUrl() ? t("agentSettings.avatar.replaceImage") : t("agentSettings.avatar.uploadImage")}
-                        </strong>
-                        <small>{t("agentSettings.avatar.imageHint")}</small>
-                      </span>
-                    </Button>
-                    <div class="avatar-editor-divider" />
-                    <div class="avatar-editor-heading">
-                      <span>{t("agentSettings.avatar.generatedFace")}</span>
-                      <div class="avatar-editor-actions">
-                        <Show when={draft.avatar.seed !== props.agent.id}>
-                          <IconButton
-                            variant="outline"
-                            type="button"
-                            label={t("agentSettings.avatar.resetToId")}
-                            onClick={() => {
-                              setDraft((state) => {
-                                state.avatar.candidateSeed = props.agent.id;
-                                state.avatar.batch = 0;
-                              });
-                              void selectGeneratedAvatar(props.agent.id);
-                            }}
-                          >
-                            <RotateCcw aria-hidden="true" />
-                          </IconButton>
-                        </Show>
-                        <IconButton
-                          variant="outline"
-                          type="button"
-                          label={t("agentSettings.avatar.newSet")}
-                          onClick={() =>
-                            setDraft((state) => {
-                              state.avatar.candidateSeed = state.avatar.seed;
-                              state.avatar.batch += 1;
-                            })
-                          }
-                        >
-                          <RefreshCw aria-hidden="true" />
-                        </IconButton>
+                    </Popover.Trigger>
+                    <Popover.Content class="avatar-editor" aria-hidden={draft.avatar.pickerOpen ? undefined : "true"}>
+                      <Popover.Title class="sr-only">{t("agentSettings.avatar.editor")}</Popover.Title>
+                      <Input
+                        ref={(element) => (avatarFileInput = element)}
+                        class="sr-only"
+                        type="file"
+                        aria-label={t("agentSettings.avatar.attachFiles")}
+                        accept="image/png,image/jpeg,image/gif,image/webp"
+                        onChange={(event) => void uploadAgentAvatar(event.currentTarget.files?.[0])}
+                      />
+                      <div class="avatar-editor-heading">
+                        <span>{t("agentSettings.avatar.image")}</span>
+                        <div class="avatar-editor-actions">
+                          <Show when={avatarUrl()}>
+                            <Button
+                              variant="outline"
+                              type="button"
+                              disabled={draft.avatar.uploadBusy}
+                              onClick={() => void setCustomAvatar(null)}
+                            >
+                              {t("common.remove")}
+                            </Button>
+                          </Show>
+                        </div>
                       </div>
-                    </div>
-                    <fieldset class="avatar-face-grid" aria-label={t("agentSettings.avatar.faces")}>
-                      <For each={avatarCandidates()}>
-                        {(seed, index) => (
-                          <Button
-                            variant="ghost"
-                            type="button"
-                            class={[
-                              "avatar-face-choice",
-                              { "avatar-choice-selected": !avatarUrl() && draft.avatar.seed === seed },
-                            ]}
-                            aria-label={
-                              !avatarUrl() && draft.avatar.seed === seed
-                                ? t("agentSettings.avatar.selected")
-                                : t("agentSettings.avatar.option", { number: index() + 1 })
-                            }
-                            aria-pressed={!avatarUrl() && draft.avatar.seed === seed ? "true" : "false"}
-                            data-cuelume-tap="select"
-                            onClick={() => void selectGeneratedAvatar(seed)}
-                          >
-                            <AgentAvatar seed={seed} hue={draft.avatar.hue} />
-                          </Button>
-                        )}
-                      </For>
-                    </fieldset>
-                    <div class="avatar-editor-divider" />
-                    <div class="avatar-editor-heading">
-                      <span>{t("agentSettings.avatar.color")}</span>
-                    </div>
-                    <fieldset class="avatar-color-grid" aria-label={t("agentSettings.avatar.colorLabel")}>
                       <Button
                         variant="ghost"
                         type="button"
-                        class={["avatar-color-choice", { "avatar-choice-selected": draft.avatar.hue === null }]}
-                        aria-label={t("agentSettings.avatar.autoColor")}
-                        aria-pressed={draft.avatar.hue === null ? "true" : "false"}
-                        data-cuelume-tap="select"
-                        onClick={() => {
-                          setDraft((state) => {
-                            state.avatar.hue = null;
-                          });
-                          void saveAgentPatch({ avatarHue: null });
-                        }}
+                        class={["avatar-image-upload", { "avatar-image-upload-active": Boolean(avatarUrl()) }]}
+                        disabled={draft.avatar.uploadBusy}
+                        onClick={() => avatarFileInput?.click()}
                       >
-                        <span class="avatar-color-swatch avatar-color-swatch-auto">
-                          {t("agentSettings.avatar.autoInitial")}
+                        <span class="avatar-image-upload-preview">
+                          <Show
+                            when={avatarUrl()}
+                            fallback={
+                              <svg aria-hidden="true" viewBox="0 0 24 24">
+                                <path d="M12 5v14M5 12h14" />
+                              </svg>
+                            }
+                          >
+                            <AgentAvatar seed={draft.avatar.seed} hue={draft.avatar.hue} url={avatarUrl()} />
+                          </Show>
+                        </span>
+                        <span>
+                          <strong>
+                            {avatarUrl()
+                              ? t("agentSettings.avatar.replaceImage")
+                              : t("agentSettings.avatar.uploadImage")}
+                          </strong>
+                          <small>{t("agentSettings.avatar.imageHint")}</small>
                         </span>
                       </Button>
-                      <For each={AVATAR_HUE_OPTIONS}>
-                        {(option) => (
-                          <Button
-                            variant="ghost"
+                      <div class="avatar-editor-divider" />
+                      <div class="avatar-editor-heading">
+                        <span>{t("agentSettings.avatar.generatedFace")}</span>
+                        <div class="avatar-editor-actions">
+                          <Show when={draft.avatar.seed !== props.agent.id}>
+                            <IconButton
+                              variant="outline"
+                              type="button"
+                              label={t("agentSettings.avatar.resetToId")}
+                              onClick={() => {
+                                setDraft((state) => {
+                                  state.avatar.candidateSeed = props.agent.id;
+                                  state.avatar.batch = 0;
+                                });
+                                void selectGeneratedAvatar(props.agent.id);
+                              }}
+                            >
+                              <RotateCcw aria-hidden="true" />
+                            </IconButton>
+                          </Show>
+                          <IconButton
+                            variant="outline"
                             type="button"
-                            class={[
-                              "avatar-color-choice",
-                              { "avatar-choice-selected": draft.avatar.hue === option.hue },
-                            ]}
-                            aria-label={t("agentSettings.avatar.hueColor", { hue: t(AVATAR_HUE_LABEL[option.hue]) })}
-                            aria-pressed={draft.avatar.hue === option.hue ? "true" : "false"}
-                            data-cuelume-tap="select"
-                            onClick={() => {
+                            label={t("agentSettings.avatar.newSet")}
+                            onClick={() =>
                               setDraft((state) => {
-                                state.avatar.hue = option.hue;
-                              });
-                              void saveAgentPatch({ avatarHue: option.hue });
-                            }}
+                                state.avatar.candidateSeed = state.avatar.seed;
+                                state.avatar.batch += 1;
+                              })
+                            }
                           >
-                            <span class="avatar-color-swatch" style={{ background: avatarHueSwatch(option.hue) }} />
-                          </Button>
-                        )}
-                      </For>
-                    </fieldset>
-                  </Popover.Content>
-                </Popover.Root>
+                            <RefreshCw aria-hidden="true" />
+                          </IconButton>
+                        </div>
+                      </div>
+                      <fieldset class="avatar-face-grid" aria-label={t("agentSettings.avatar.faces")}>
+                        <For each={avatarCandidates()}>
+                          {(seed, index) => (
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              class={[
+                                "avatar-face-choice",
+                                { "avatar-choice-selected": !avatarUrl() && draft.avatar.seed === seed },
+                              ]}
+                              aria-label={
+                                !avatarUrl() && draft.avatar.seed === seed
+                                  ? t("agentSettings.avatar.selected")
+                                  : t("agentSettings.avatar.option", { number: index() + 1 })
+                              }
+                              aria-pressed={!avatarUrl() && draft.avatar.seed === seed ? "true" : "false"}
+                              data-cuelume-tap="select"
+                              onClick={() => void selectGeneratedAvatar(seed)}
+                            >
+                              <AgentAvatar seed={seed} hue={draft.avatar.hue} />
+                            </Button>
+                          )}
+                        </For>
+                      </fieldset>
+                      <div class="avatar-editor-divider" />
+                      <div class="avatar-editor-heading">
+                        <span>{t("agentSettings.avatar.color")}</span>
+                      </div>
+                      <fieldset class="avatar-color-grid" aria-label={t("agentSettings.avatar.colorLabel")}>
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          class={["avatar-color-choice", { "avatar-choice-selected": draft.avatar.hue === null }]}
+                          aria-label={t("agentSettings.avatar.autoColor")}
+                          aria-pressed={draft.avatar.hue === null ? "true" : "false"}
+                          data-cuelume-tap="select"
+                          onClick={() => {
+                            setDraft((state) => {
+                              state.avatar.hue = null;
+                            });
+                            void saveAgentPatch({ avatarHue: null });
+                          }}
+                        >
+                          <span class="avatar-color-swatch avatar-color-swatch-auto">
+                            {t("agentSettings.avatar.autoInitial")}
+                          </span>
+                        </Button>
+                        <For each={AVATAR_HUE_OPTIONS}>
+                          {(option) => (
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              class={[
+                                "avatar-color-choice",
+                                { "avatar-choice-selected": draft.avatar.hue === option.hue },
+                              ]}
+                              aria-label={t("agentSettings.avatar.hueColor", { hue: t(AVATAR_HUE_LABEL[option.hue]) })}
+                              aria-pressed={draft.avatar.hue === option.hue ? "true" : "false"}
+                              data-cuelume-tap="select"
+                              onClick={() => {
+                                setDraft((state) => {
+                                  state.avatar.hue = option.hue;
+                                });
+                                void saveAgentPatch({ avatarHue: option.hue });
+                              }}
+                            >
+                              <span class="avatar-color-swatch" style={{ background: avatarHueSwatch(option.hue) }} />
+                            </Button>
+                          )}
+                        </For>
+                      </fieldset>
+                    </Popover.Content>
+                  </Popover.Root>
+                </div>
+                {/* The name and title edit in place under the face, as one centred block. */}
+                <div class="agent-settings-hero-text">
+                  <Input
+                    class="agent-settings-hero-name"
+                    value={draft.fields.name}
+                    aria-label={t("agentSettings.nameLabel")}
+                    maxlength={INPUT_LIMITS.agentName}
+                    onValueChange={(value) =>
+                      setDraft((state) => {
+                        state.fields.name = value;
+                        state.dirty.name = true;
+                      })
+                    }
+                    onBlur={saveName}
+                  />
+                  <Input
+                    class="agent-settings-hero-title"
+                    value={draft.fields.title}
+                    aria-label={t("agentSettings.agentTitleLabel")}
+                    placeholder={t("agentSettings.agentTitlePlaceholder")}
+                    maxlength={INPUT_LIMITS.agentTitle}
+                    onValueChange={(value) =>
+                      setDraft((state) => {
+                        state.fields.title = value;
+                        state.dirty.title = true;
+                      })
+                    }
+                    onBlur={saveTitle}
+                  />
+                </div>
               </div>
-              <SettingsField label={t("agentSettings.name")}>
-                <Input
-                  value={draft.fields.name}
-                  aria-label={t("agentSettings.nameLabel")}
-                  maxlength={INPUT_LIMITS.agentName}
-                  onValueChange={(value) =>
-                    setDraft((state) => {
-                      state.fields.name = value;
-                      state.dirty.name = true;
-                    })
-                  }
-                  onBlur={saveName}
-                />
-              </SettingsField>
-              <SettingsField label={t("agentSettings.agentTitle")}>
-                <Input
-                  value={draft.fields.title}
-                  aria-label={t("agentSettings.agentTitleLabel")}
-                  placeholder={t("agentSettings.agentTitlePlaceholder")}
-                  maxlength={INPUT_LIMITS.agentTitle}
-                  onValueChange={(value) =>
-                    setDraft((state) => {
-                      state.fields.title = value;
-                      state.dirty.title = true;
-                    })
-                  }
-                  onBlur={saveTitle}
-                />
-              </SettingsField>
-              <SettingsField label={t("agentSettings.description")}>
-                <ResizableTextarea
-                  class="settings-instructions-input settings-description-input"
-                  rows="3"
-                  value={draft.fields.description}
-                  aria-label={t("agentSettings.descriptionLabel")}
-                  resizeLabel={t("agentSettings.descriptionResize")}
-                  placeholder={t("agentSettings.descriptionPlaceholder")}
-                  invalid={instructionsTooLong(draft.fields.description)}
-                  onValueChange={(value) => {
-                    setDraft((state) => {
-                      state.fields.description = value;
-                      state.dirty.description = true;
-                    });
-                    scheduleInstructionsSave(value);
-                  }}
-                  onBlur={saveDescription}
-                />
-                <InstructionsLimit text={draft.fields.description} tooLong="agent.description.tooLong" />
-              </SettingsField>
-              <SettingsLinkGroup inset class="agent-settings-runtime-rows" title={t("agentSettings.groups.brain")}>
-                <ProviderModelPicker
-                  variant="field"
-                  icon={
-                    <span class="settings-link-icon">
-                      <Cpu aria-hidden="true" />
-                    </span>
-                  }
-                  ariaLabel={t("agentSettings.runtime.model")}
-                  provider={draft.runtime.provider}
-                  foreignProvider={agentForeignProvider()}
-                  value={draft.runtime.model}
-                  agentStatus={props.agentStatus}
-                  modelOptions={props.modelOptions}
-                  runtimeStatuses={props.providerRuntimeStatuses}
-                  customProviders={props.customProviders}
-                  customAgents={props.customAgents}
-                  onDownloadProvider={props.onDownloadProvider}
-                  onCancelProviderDownload={props.onCancelProviderDownload}
-                  onConnectProvider={props.onConnectProvider}
-                  canConnectProvider={props.canConnectProvider}
-                  onManageProviders={props.onManageProviders}
-                  disabledReason={t("agentSettings.runtime.modelUnavailable")}
-                  accountChoice
-                  providerAccountId={agentNextProviderAccountId(props.agent)}
-                  onChange={(nextModel, provider, accountId) => void selectModel(nextModel, provider, accountId)}
-                />
-                <Select<AgentReasoningEffort>
-                  class="agent-settings-runtime-select"
-                  options={reasoningOptions()}
-                  value={draft.runtime.reasoningEffort}
-                  disabled={reasoningSetByProvider() || agentForeignProvider() !== undefined}
-                  onChange={(nextReasoning) => {
-                    if (!nextReasoning || nextReasoning === draft.runtime.reasoningEffort) return;
-                    void selectReasoning(nextReasoning);
-                  }}
-                  itemComponent={(item) => (
-                    <SelectItem item={item.item}>{reasoningLabel(item.item.rawValue)}</SelectItem>
-                  )}
-                >
-                  <SelectTrigger
-                    class="agent-settings-runtime-row"
-                    aria-label={t("agentSettings.runtime.reasoningLabel")}
-                  >
-                    <span class="settings-link-icon">
-                      <Brain aria-hidden="true" />
-                    </span>
-                    <span class="agent-settings-runtime-label">{t("agentSettings.runtime.reasoning")}</span>
-                    <SelectValue<AgentReasoningEffort>>
-                      {(state) => {
-                        if (reasoningSetByProvider()) {
-                          return t("agentSettings.runtime.reasoningSetByProvider", {
-                            provider: agentProviderName(draft.runtime.provider),
-                          });
-                        }
-                        const effort = state.selectedOption();
-                        return effort ? reasoningLabel(effort) : t("agentSettings.runtime.selectReasoning");
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent />
-                </Select>
-              </SettingsLinkGroup>
-              <Show when={props.backupModelsEditable}>
-                <SettingsLinkGroup inset>
-                  <SettingsLinkRow
-                    ref={pageRowRef("backup-models")}
-                    icon={<ArrowLeftRight aria-hidden="true" />}
-                    label={t("agentSettings.backupModels.title")}
-                    value={backupModelsSummary()}
-                    onClick={() => openPage("backup-models")}
-                  />
-                </SettingsLinkGroup>
-              </Show>
-              {props.links}
-              <SettingsLinkGroup inset title={t("agentSettings.groups.rules")}>
-                <SettingsLinkRow
-                  ref={pageRowRef("permissions")}
-                  icon={<ShieldCheck aria-hidden="true" />}
-                  label={t("agentSettings.permissions.title")}
-                  value={t(ACCESS_LABEL[draft.permission])}
-                  onClick={() => openPage("permissions")}
-                />
-                <Show when={props.folders}>
-                  <AgentFoldersRow
-                    ref={pageRowRef("folders")}
-                    folders={agentFolders}
-                    wideAccess={wideAccess()}
-                    onOpen={() => openPage("folders")}
-                  />
+              <Tabs.Root
+                class="agent-settings-tabs"
+                value={tab()}
+                onChange={(value) => {
+                  if (isAgentSettingsTab(value)) setTab(value);
+                }}
+              >
+                <Show when={props.library}>
+                  <Tabs.List class="agent-settings-tab-list" aria-label={t("agentSettings.tabs.label")}>
+                    <Tabs.Trigger class="agent-settings-tab" value="details">
+                      {t("agentSettings.tabs.details")}
+                    </Tabs.Trigger>
+                    <Tabs.Trigger class="agent-settings-tab" value="library">
+                      {t("agentSettings.tabs.library")}
+                    </Tabs.Trigger>
+                  </Tabs.List>
                 </Show>
-                <SettingsLinkRow
-                  ref={pageRowRef("advanced")}
-                  icon={<SlidersHorizontal aria-hidden="true" />}
-                  label={t("agentSettings.advanced.title")}
-                  onClick={() => openPage("advanced")}
-                />
-              </SettingsLinkGroup>
-              <Show when={props.notificationLevel}>
-                {(options) => (
-                  <>
-                    <SettingsLinkGroup inset class="agent-settings-runtime-rows">
+                <Tabs.Content class="agent-settings-tab-panel" value="details">
+                  <SettingsField label={t("agentSettings.description")}>
+                    <ResizableTextarea
+                      class="settings-instructions-input settings-description-input"
+                      rows="3"
+                      value={draft.fields.description}
+                      aria-label={t("agentSettings.descriptionLabel")}
+                      resizeLabel={t("agentSettings.descriptionResize")}
+                      placeholder={t("agentSettings.descriptionPlaceholder")}
+                      invalid={instructionsTooLong(draft.fields.description)}
+                      onValueChange={(value) => {
+                        setDraft((state) => {
+                          state.fields.description = value;
+                          state.dirty.description = true;
+                        });
+                        scheduleInstructionsSave(value);
+                      }}
+                      onBlur={saveDescription}
+                    />
+                    <InstructionsLimit text={draft.fields.description} tooLong="agent.description.tooLong" />
+                  </SettingsField>
+                  <SettingsLinkGroup inset class="agent-settings-runtime-rows" title={t("agentSettings.groups.brain")}>
+                    <ProviderModelPicker
+                      variant="field"
+                      icon={
+                        <span class="settings-link-icon">
+                          <Cpu aria-hidden="true" />
+                        </span>
+                      }
+                      ariaLabel={t("agentSettings.runtime.model")}
+                      provider={draft.runtime.provider}
+                      foreignProvider={agentForeignProvider()}
+                      value={draft.runtime.model}
+                      agentStatus={props.agentStatus}
+                      modelOptions={props.modelOptions}
+                      runtimeStatuses={props.providerRuntimeStatuses}
+                      customProviders={props.customProviders}
+                      customAgents={props.customAgents}
+                      onDownloadProvider={props.onDownloadProvider}
+                      onCancelProviderDownload={props.onCancelProviderDownload}
+                      onConnectProvider={props.onConnectProvider}
+                      canConnectProvider={props.canConnectProvider}
+                      onManageProviders={props.onManageProviders}
+                      disabledReason={t("agentSettings.runtime.modelUnavailable")}
+                      accountChoice
+                      providerAccountId={agentNextProviderAccountId(props.agent)}
+                      onChange={(nextModel, provider, accountId) => void selectModel(nextModel, provider, accountId)}
+                    />
+                    <Select<AgentReasoningEffort>
+                      class="agent-settings-runtime-select"
+                      options={reasoningOptions()}
+                      value={draft.runtime.reasoningEffort}
+                      disabled={reasoningSetByProvider() || agentForeignProvider() !== undefined}
+                      onChange={(nextReasoning) => {
+                        if (!nextReasoning || nextReasoning === draft.runtime.reasoningEffort) return;
+                        void selectReasoning(nextReasoning);
+                      }}
+                      itemComponent={(item) => (
+                        <SelectItem item={item.item}>{reasoningLabel(item.item.rawValue)}</SelectItem>
+                      )}
+                    >
+                      <SelectTrigger
+                        class="agent-settings-runtime-row"
+                        aria-label={t("agentSettings.runtime.reasoningLabel")}
+                      >
+                        <span class="settings-link-icon">
+                          <Brain aria-hidden="true" />
+                        </span>
+                        <span class="agent-settings-runtime-label">{t("agentSettings.runtime.reasoning")}</span>
+                        <SelectValue<AgentReasoningEffort>>
+                          {(state) => {
+                            if (reasoningSetByProvider()) {
+                              return t("agentSettings.runtime.reasoningSetByProvider", {
+                                provider: agentProviderName(draft.runtime.provider),
+                              });
+                            }
+                            const effort = state.selectedOption();
+                            return effort ? reasoningLabel(effort) : t("agentSettings.runtime.selectReasoning");
+                          }}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent />
+                    </Select>
+                  </SettingsLinkGroup>
+                  <Show when={props.backupModelsEditable}>
+                    <SettingsLinkGroup inset>
                       <SettingsLinkRow
-                        icon={<Bell aria-hidden="true" />}
-                        label={t("agentSettings.notificationLevel.title")}
-                        value={notificationLevelLabel(options())}
-                        onClick={(trigger) => options().onOpen(trigger)}
+                        ref={pageRowRef("backup-models")}
+                        icon={<ArrowLeftRight aria-hidden="true" />}
+                        label={t("agentSettings.backupModels.title")}
+                        value={backupModelsSummary()}
+                        onClick={() => openPage("backup-models")}
                       />
                     </SettingsLinkGroup>
-                    <Text as="p" class="agent-settings-runtime-note" variant="caption" tone="muted">
-                      {t("agentSettings.notificationLevel.note")}
-                    </Text>
-                  </>
-                )}
-              </Show>
+                  </Show>
+                  {props.links}
+                  <SettingsLinkGroup inset title={t("agentSettings.groups.rules")}>
+                    <SettingsLinkRow
+                      ref={pageRowRef("permissions")}
+                      icon={<ShieldCheck aria-hidden="true" />}
+                      label={t("agentSettings.permissions.title")}
+                      value={t(ACCESS_LABEL[draft.permission])}
+                      onClick={() => openPage("permissions")}
+                    />
+                    <Show when={props.folders}>
+                      <AgentFoldersRow
+                        ref={pageRowRef("folders")}
+                        folders={agentFolders}
+                        wideAccess={wideAccess()}
+                        onOpen={() => openPage("folders")}
+                      />
+                    </Show>
+                    <SettingsLinkRow
+                      ref={pageRowRef("advanced")}
+                      icon={<SlidersHorizontal aria-hidden="true" />}
+                      label={t("agentSettings.advanced.title")}
+                      onClick={() => openPage("advanced")}
+                    />
+                  </SettingsLinkGroup>
+                  <Show when={props.notificationLevel}>
+                    {(options) => (
+                      <>
+                        <SettingsLinkGroup inset class="agent-settings-runtime-rows">
+                          <SettingsLinkRow
+                            icon={<Bell aria-hidden="true" />}
+                            label={t("agentSettings.notificationLevel.title")}
+                            value={notificationLevelLabel(options())}
+                            onClick={(trigger) => options().onOpen(trigger)}
+                          />
+                        </SettingsLinkGroup>
+                        <Text as="p" class="agent-settings-runtime-note" variant="caption" tone="muted">
+                          {t("agentSettings.notificationLevel.note")}
+                        </Text>
+                      </>
+                    )}
+                  </Show>
+                </Tabs.Content>
+                <Show when={props.library}>
+                  {(library) => (
+                    <Tabs.Content class="agent-settings-tab-panel" value="library">
+                      {library()}
+                    </Tabs.Content>
+                  )}
+                </Show>
+              </Tabs.Root>
             </Show>
             <Show when={page() === "permissions"}>
               <Show when={props.onUpdatePermissions}>

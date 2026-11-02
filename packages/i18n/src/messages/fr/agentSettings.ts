@@ -90,11 +90,15 @@ export const messages = {
   "agentSettings.groups.knows": "Connaissances",
   "agentSettings.groups.does": "Actions",
   "agentSettings.groups.rules": "Règles",
+  "agentSettings.tabs.label": "Sections de l’agent",
+  "agentSettings.tabs.details": "Détails",
+  "agentSettings.tabs.library": "Bibliothèque",
+  "agentSettings.library.note": "Les fichiers et tables que {name} crée pour vous restent ici.",
+  "agentSettings.library.empty":
+    "Rien pour l’instant. Les fichiers et tables que {name} crée pour vous apparaîtront ici.",
   "agentSettings.saveFailed": "Impossible d’enregistrer les réglages de l’agent.",
 
-  "agentSettings.name": "Nom",
   "agentSettings.nameLabel": "Nom de l’agent",
-  "agentSettings.agentTitle": "Titre",
   "agentSettings.agentTitleLabel": "Titre de l’agent",
   "agentSettings.agentTitlePlaceholder": "Décrivez ce que fait votre agent",
   "agentSettings.description": "Description",

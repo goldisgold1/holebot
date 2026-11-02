@@ -46,7 +46,15 @@ import { SharedTablesModal } from "./SharedTablesModal";
 interface AgentSettingsPanelProps
   extends Omit<
     SharedAgentSettingsPanelProps,
-    "width" | "onResize" | "onResizeEnd" | "links" | "detailOpen" | "children" | "browserProfiles" | "notificationLevel"
+    | "width"
+    | "onResize"
+    | "onResizeEnd"
+    | "links"
+    | "library"
+    | "detailOpen"
+    | "children"
+    | "browserProfiles"
+    | "notificationLevel"
   > {
   remoteClient?: boolean;
   /** Routines can copy local run commands only on the computer that runs the agent. */
@@ -434,6 +442,42 @@ export default function AgentSettingsPanel(props: AgentSettingsPanelProps) {
       onResize={setPanelWidth}
       onResizeEnd={saveSettingsPanelWidth}
       detailOpen={draft.routines.open || draft.files.open || draft.memories.open || draft.instructions.open}
+      library={
+        <Show
+          when={props.files || props.tablesVisible !== false}
+          fallback={
+            <p class="agent-settings-library-empty">{t("agentSettings.library.empty", { name: props.agent.name })}</p>
+          }
+        >
+          <SettingsLinkGroup inset>
+            <Show when={props.files}>
+              <SettingsLinkRow
+                icon={<Folder aria-hidden="true" />}
+                label={t("agentSettings.links.files")}
+                value={storage.state.usage ? agentFilesLinkValue(storage.state.usage.breakdown) : undefined}
+                onClick={() =>
+                  setDraft((state) => {
+                    state.files.open = true;
+                  })
+                }
+              />
+            </Show>
+            <Show when={props.tablesVisible !== false}>
+              <SettingsLinkRow
+                icon={<Table2 aria-hidden="true" />}
+                label={t("agentSettings.links.tables")}
+                value={t("agentSettings.links.tablesCount", { count: draft.tables.count })}
+                onClick={() =>
+                  setDraft((state) => {
+                    state.tables.open = true;
+                  })
+                }
+              />
+            </Show>
+          </SettingsLinkGroup>
+          <p class="agent-settings-library-note">{t("agentSettings.library.note", { name: props.agent.name })}</p>
+        </Show>
+      }
       links={
         <>
           <Show when={sessionSettings()}>
@@ -445,15 +489,7 @@ export default function AgentSettingsPanel(props: AgentSettingsPanelProps) {
               />
             )}
           </Show>
-          <Show
-            when={
-              !props.remoteClient ||
-              skillsMode() !== "hidden" ||
-              props.tablesVisible !== false ||
-              props.files ||
-              props.instructionsFile
-            }
-          >
+          <Show when={!props.remoteClient || skillsMode() !== "hidden" || props.instructionsFile}>
             <SettingsLinkGroup inset title={t("agentSettings.groups.knows")}>
               <Show when={props.instructionsFile}>
                 <SettingsLinkRow
@@ -486,30 +522,6 @@ export default function AgentSettingsPanel(props: AgentSettingsPanelProps) {
                   onClick={() =>
                     setDraft((state) => {
                       state.skills.open = true;
-                    })
-                  }
-                />
-              </Show>
-              <Show when={props.files}>
-                <SettingsLinkRow
-                  icon={<Folder aria-hidden="true" />}
-                  label={t("agentSettings.links.files")}
-                  value={storage.state.usage ? agentFilesLinkValue(storage.state.usage.breakdown) : undefined}
-                  onClick={() =>
-                    setDraft((state) => {
-                      state.files.open = true;
-                    })
-                  }
-                />
-              </Show>
-              <Show when={props.tablesVisible !== false}>
-                <SettingsLinkRow
-                  icon={<Table2 aria-hidden="true" />}
-                  label={t("agentSettings.links.tables")}
-                  value={t("agentSettings.links.tablesCount", { count: draft.tables.count })}
-                  onClick={() =>
-                    setDraft((state) => {
-                      state.tables.open = true;
                     })
                   }
                 />

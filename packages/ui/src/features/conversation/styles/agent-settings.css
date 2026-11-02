@@ -2,17 +2,17 @@
   position: relative;
   z-index: 30;
   display: grid;
-  width: 62px;
-  height: 62px;
-  margin: var(--openbot-space-2) auto var(--openbot-space-4);
+  width: 64px;
+  height: 64px;
+  margin: 0;
   place-items: center;
 }
 
 .agent-settings-avatar {
   position: relative;
   display: grid;
-  width: 62px;
-  height: 62px;
+  width: 64px;
+  height: 64px;
   margin: 0;
   place-items: center;
   border: 0;
@@ -21,9 +21,9 @@
 }
 
 .agent-settings-avatar .agent-avatar {
-  --agent-avatar-optical-offset: calc(62px * -0.14);
-  width: 62px;
-  height: 62px;
+  --agent-avatar-optical-offset: calc(64px * -0.14);
+  width: 64px;
+  height: 64px;
 }
 
 .agent-settings-avatar .agent-avatar > svg {
@@ -1544,4 +1544,224 @@
   color: var(--openbot-text-secondary);
   font-size: var(--openbot-text-sm);
   line-height: 15px;
+}
+
+/*
+ * The root page reads like a profile: the face and the name centred at the top, then the tabs, then
+ * the cards. The name and the title edit in place, so they look like text until a hover or a focus.
+ */
+.agent-settings-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--openbot-space-4);
+  padding: var(--openbot-space-2) 0 var(--openbot-space-1);
+}
+
+.agent-settings-hero-text {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--openbot-space-0-5);
+}
+
+.agent-settings-hero .agent-settings-hero-name,
+.agent-settings-hero .agent-settings-hero-title {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  border: 1px solid transparent;
+  border-radius: var(--openbot-radius-md);
+  outline: 0;
+  background: transparent;
+  padding: var(--openbot-space-0-5) var(--openbot-space-2);
+  box-shadow: none;
+  caret-color: var(--openbot-text-primary);
+  text-align: center;
+  text-overflow: ellipsis;
+  transition:
+    background-color var(--openbot-duration-hover) ease,
+    border-color var(--openbot-duration-hover) ease;
+}
+
+.agent-settings-hero .agent-settings-hero-name {
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-xl);
+  font-weight: var(--openbot-weight-medium);
+  line-height: var(--openbot-leading-2xl);
+}
+
+.agent-settings-hero .agent-settings-hero-title {
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+}
+
+.agent-settings-hero .agent-settings-hero-title::placeholder {
+  color: var(--openbot-text-dim);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .agent-settings-hero .agent-settings-hero-name:hover,
+  .agent-settings-hero .agent-settings-hero-title:hover {
+    background: var(--openbot-hover);
+  }
+}
+
+.agent-settings-hero .agent-settings-hero-name:focus,
+.agent-settings-hero .agent-settings-hero-title:focus {
+  border-color: var(--openbot-border-focus);
+  background: transparent;
+  text-align: left;
+}
+
+/* The tabs: small pills in one centred row; the open one sits on a soft fill. */
+.agent-settings-tabs {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--openbot-space-3);
+}
+
+.agent-settings-tab-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--openbot-space-0-5);
+}
+
+.agent-settings-tab {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  border: 0;
+  border-radius: var(--openbot-radius-pill);
+  background: transparent;
+  padding: 0 var(--openbot-space-2);
+  color: var(--openbot-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+  white-space: nowrap;
+  transition:
+    background-color var(--openbot-duration-fast) ease,
+    color var(--openbot-duration-fast) ease;
+}
+
+.agent-settings-tab[data-selected] {
+  background: var(--openbot-bg-surface-raised);
+  color: var(--openbot-text-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .agent-settings-tab:not([data-selected]):hover {
+    color: var(--openbot-text-primary);
+  }
+}
+
+.agent-settings-tab:focus-visible {
+  outline: 0;
+  box-shadow: inset 0 0 0 1px var(--openbot-border-focus);
+}
+
+.agent-settings-tab-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--openbot-space-4);
+  outline: 0;
+  animation: agent-settings-tab-in var(--openbot-duration-normal) var(--openbot-ease-out) both;
+}
+
+@keyframes agent-settings-tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-settings-tab-panel {
+    animation: none;
+  }
+}
+
+.agent-settings-tab-panel > .settings-field {
+  margin: 0;
+}
+
+/* Library: the agent's own work. Empty, it says what will collect here. */
+.agent-settings-library-note,
+.agent-settings-library-empty {
+  margin: 0;
+  color: var(--openbot-text-muted);
+  text-wrap: pretty;
+}
+
+.agent-settings-library-note {
+  padding-inline: var(--openbot-space-3);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
+}
+
+.agent-settings-library-empty {
+  max-width: 256px;
+  margin-inline: auto;
+  padding-top: var(--openbot-space-4);
+  font-size: var(--openbot-text-lg);
+  line-height: var(--openbot-leading-lg);
+  text-align: center;
+}
+
+/*
+ * Cards on the root page and its pages: a rounded card with a little inner padding, rows that round
+ * on hover instead of lines between them, and headings in line with the row text.
+ */
+.agent-settings-page .settings-link-section-title {
+  margin-inline-start: var(--openbot-space-3);
+  color: var(--openbot-text-muted);
+}
+
+.agent-settings-page .settings-link-group.settings-link-group-inset {
+  gap: 0;
+  border-radius: var(--openbot-radius-lg);
+  padding: var(--openbot-space-1);
+}
+
+.agent-settings-page .settings-link-group.settings-link-group-inset > * + * {
+  border-top: 0;
+}
+
+.agent-settings-page .settings-link-group.settings-link-group-inset > *,
+.agent-settings-page .settings-link-group.settings-link-group-inset > * > button,
+.agent-settings-page .settings-link-group.settings-link-group-inset .settings-link,
+.agent-settings-page .settings-link-group.settings-link-group-inset .agent-settings-runtime-row,
+.agent-settings-page .settings-link-group.settings-link-group-inset .provider-model-trigger-field {
+  border-radius: var(--openbot-radius-md);
+}
+
+.agent-settings-page .settings-link-group.settings-link-group-inset .settings-link,
+.agent-settings-page .settings-link-group.settings-link-group-inset .agent-settings-runtime-row,
+.agent-settings-page .settings-link-group.settings-link-group-inset .provider-model-trigger-field,
+.agent-settings-page .settings-link-group.settings-link-group-inset .agent-settings-switch-row {
+  min-height: 36px;
+  padding-inline: var(--openbot-space-2);
+}
+
+.agent-settings-page .settings-link-group.settings-link-group-inset .agent-settings-runtime-path,
+.agent-settings-page .settings-link-group.settings-link-group-inset .agent-session-setting-notes {
+  padding-inline: var(--openbot-space-2);
+}
+
+.agent-settings-page .agent-settings-notifications {
+  min-height: 0;
+  border: 1px solid var(--openbot-border);
+  padding: var(--openbot-space-3);
+}
+
+.agent-settings-page .agent-settings-runtime-note {
+  padding-inline: var(--openbot-space-3);
 }

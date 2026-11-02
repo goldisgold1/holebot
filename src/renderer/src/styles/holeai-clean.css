@@ -711,6 +711,11 @@
   scrollbar-width: thin;
 }
 
+/* An off switch keeps a visible track on a card, not only its knob. */
+.ui-switch:not([data-checked]) {
+  background: color-mix(in srgb, var(--openbot-text-primary) 18%, transparent);
+}
+
 /* The foot of the sidebar: the person using the app, then a menu of the other pages and Settings. */
 .sidebar-account-row {
   display: flex;
