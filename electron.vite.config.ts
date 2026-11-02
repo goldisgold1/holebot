@@ -61,6 +61,9 @@ export default defineConfig({
     },
     ...(rendererPort ? { server: { port: rendererPort, strictPort: true } } : {}),
     build: {
+      // HoleA.I: electron-vite leaves the renderer unminified; the eager bundle was ~15 MB of readable
+      // code for the window to parse and hold. Minified, it loads faster and keeps less in memory.
+      minify: true,
       rollupOptions: {
         input: {
           index: resolve("src/renderer/index.html"),

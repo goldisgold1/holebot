@@ -433,6 +433,10 @@ export function MessageBody(props: {
     container: () => messageContentResize,
     content: () => messageContent,
     enabled: () => props.message.author === "agent" && streamingBody.smoothHeight(),
+    // HoleA.I: once the words stop revealing, a height change (the footer arriving, the activity row
+    // leaving) snaps. Animating it re-measured the list and wrote the scroll on every frame of the
+    // moment the reply ended, which is the hitch at the end of each reply.
+    skip: () => !streamingBody.revealing(),
   });
   /* A named image file downloads by its path. A markdown image is a web address, so it has no download. */
   const namedImageFile = (image: AttachmentSummary) => namedImageFiles().find((file) => fileImageId(file) === image.id);

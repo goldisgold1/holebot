@@ -286,7 +286,6 @@ export function MarkdownInlineText(
 
 interface RenderedToken {
   token: Token;
-  streaming: boolean;
 }
 
 /**
@@ -326,28 +325,27 @@ function MarkdownBlocks(props: {
   const tailAfter = createTailOffsets(tokens, () => props.streamingTailAfter);
   // A streaming reply gives new tokens for the whole body on each revealed word. Keeping the
   // earlier item for a token with the same source keeps its block mounted, so only the growing
-  // tail renders again.
+  // tail renders again. HoleA.I: which block streams is read per render, not kept in the item, so
+  // the last block stays mounted when the reply ends instead of mounting again (and a code block
+  // highlighting again) in the frame the reply finishes.
   const renderedTokens = createMemo<{ linkDefinitions: string | undefined; items: RenderedToken[] }>((previous) => {
     const values = tokens();
     const linkDefinitions = props.linkDefinitions;
     const earlierItems = previous && previous.linkDefinitions === linkDefinitions ? previous.items : [];
-    const streamingTokenIndex = activeStreamingBlockTokenIndex(values);
     const items = values.map((token, index) => {
-      const streaming = props.streaming === true && index === streamingTokenIndex;
       const earlier = earlierItems[index];
-      return earlier?.token.raw === token.raw && earlier.token.type === token.type && earlier.streaming === streaming
-        ? earlier
-        : { token, streaming };
+      return earlier?.token.raw === token.raw && earlier.token.type === token.type ? earlier : { token };
     });
     return { linkDefinitions, items };
   });
+  const streamingIndex = createMemo(() => (props.streaming === true ? activeStreamingBlockTokenIndex(tokens()) : -1));
   return (
     <For each={renderedTokens().items}>
       {(item, index) => (
         <MarkdownBlock
           token={item.token}
           content={props.content}
-          streaming={item.streaming}
+          streaming={index() === streamingIndex()}
           streamingTailAfter={tailAfter()[index()]}
         />
       )}

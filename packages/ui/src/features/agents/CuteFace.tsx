@@ -1,6 +1,7 @@
 import { botClosedEyes, botInset, botToken } from "@openbot/brand/cute-face";
-import { createMemo, For, Show } from "solid-js";
+import { createEffect, createMemo, For, onCleanup, Show } from "solid-js";
 import type { AvatarFaceMood, SupportedAvatarSilhouetteId } from "../../bloub-avatar";
+import { startFaceMotion } from "./face-motion";
 
 /**
  * HoleA.I: the agent face - a little object in one flat seeded colour, drawn as a thick token turned a
@@ -24,6 +25,23 @@ export function CuteFace(props: {
     "--face-base-yaw": String(token().pose.yaw),
     "--face-base-pitch": String(token().pose.pitch),
   });
+  // The turn, nod and body motion come from one shared loop (face-motion.ts), only while the face is
+  // animated and on screen. Each agent moves its own way, from its seed.
+  let svg: SVGSVGElement | undefined;
+  let motion: ReturnType<typeof startFaceMotion> | undefined;
+  // A resting face still hops once when a reply lands, then rests again.
+  createEffect(
+    () => [props.animated || props.mood === "responded", props.seed] as const,
+    ([moving, seed]) => {
+      motion?.stop();
+      motion = moving && svg ? startFaceMotion(svg, seed, props.mood, !props.animated) : undefined;
+    },
+  );
+  createEffect(
+    () => props.mood,
+    (mood) => motion?.setMood(mood),
+  );
+  onCleanup(() => motion?.stop());
   const slices = (className: string, fill?: string) => (
     <g class={className} style={fill ? { fill } : undefined}>
       <For each={token().slices}>
@@ -41,6 +59,7 @@ export function CuteFace(props: {
   );
   return (
     <svg
+      ref={svg}
       class="cute-face bloub-avatar-svg"
       viewBox="-64 -64 128 128"
       data-animated={props.animated ? "" : undefined}

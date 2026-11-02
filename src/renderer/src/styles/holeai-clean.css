@@ -814,28 +814,13 @@
 }
 
 /* The 3D turn (cute-face.ts botToken). The live yaw and pitch are the agent's resting pose plus what the
-   moods animate (--face-turn, --face-nod, --face-front) plus where the pointer is. Every slice of the token
-   steps by its depth along that slant and the whole token skews with the yaw, so it turns like a solid
-   thing; the factors match TURN_STEP and TURN_SKEW. */
-@property --face-turn {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0;
-}
-
-@property --face-nod {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0;
-}
-
-@property --face-front {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0;
-}
-
+   motion loop writes (--face-turn, --face-nod, --face-front; face-motion.ts) plus where the pointer is.
+   Every slice of the token steps by its depth along that slant and the whole token skews with the yaw, so
+   it turns like a solid thing; the factors match TURN_STEP and TURN_SKEW. */
 .cute-face {
+  --face-turn: 0;
+  --face-nod: 0;
+  --face-front: 0;
   --face-look-yaw: 0;
   --face-look-pitch: 0;
   --face-yaw: calc(var(--face-base-yaw, 0.23) * (1 - var(--face-front)) + var(--face-turn) + var(--face-look-yaw));
@@ -857,37 +842,12 @@
   translate: calc(var(--face-yaw) * var(--face-depth) * 1.5px) calc(var(--face-pitch) * var(--face-depth) * -1.6px);
 }
 
-/* Idle: the head follows the glances, turning toward each spot and tipping up or down, while the body
-   breathes. Thinking: it faces you more, looks up and holds a tilt, swaying a little. Happy: it wiggles
-   side to side and bounces. */
-.cute-face[data-animated] {
-  animation: cute-face-turn 4.8s ease-in-out infinite;
-  animation-delay: var(--cute-face-delay, 0s);
-}
-
-.agent-avatar[data-looking] .cute-face {
-  animation: none;
-}
-
-.cute-face:is([data-mood="working"], [data-mood="connecting"]) {
-  animation: cute-face-ponder-turn 3.2s ease-in-out infinite;
-}
-
-.cute-face[data-mood="responded"] {
-  animation: cute-face-wiggle 0.5s ease-in-out 3;
-}
-
 /* Resting motion, learned from watching messenger faces: the eyes do the work. They glance to a spot, hold,
    and jump to the next, with a blink between; the body leans a little toward where they look. */
 .cute-face[data-animated] .cute-face-eyes {
   animation:
     cute-face-glance 4.8s steps(1, end) infinite,
     cute-face-blink 3.2s ease-in-out infinite;
-  animation-delay: var(--cute-face-delay, 0s);
-}
-
-.cute-face[data-animated] .cute-face-bob {
-  animation: cute-face-lean 4.8s ease-in-out infinite;
   animation-delay: var(--cute-face-delay, 0s);
 }
 
@@ -912,19 +872,11 @@
   animation: cute-face-poke 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) 1;
 }
 
-/* Thinking: the same glances, faster, while the face wanders around its spot. Replaces the orbit rings. */
-.cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-bob {
-  animation: cute-face-ponder 3.2s ease-in-out infinite;
-}
-
-.cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-eyes {
+/* Thinking: the eyes glance up and about while the motion loop plays the agent's own thinking habit. */
+.cute-face[data-animated]:is([data-mood="working"], [data-mood="connecting"]) .cute-face-eyes {
   animation:
     cute-face-ponder-eyes 3.2s steps(1, end) infinite,
     cute-face-blink 3.2s ease-in-out infinite;
-}
-
-.cute-face[data-mood="responded"] .cute-face-bob {
-  animation: cute-face-hop 0.5s ease-out 3;
 }
 
 .cute-face[data-mood="asleep"] .cute-face-zz {
@@ -967,91 +919,6 @@
   }
 }
 
-@keyframes cute-face-lean {
-  0%,
-  100% {
-    translate: 0 0;
-    scale: 1 1;
-  }
-
-  25% {
-    translate: 0 -0.6px;
-    scale: 0.99 1.015;
-  }
-
-  50% {
-    translate: 0 0.4px;
-    scale: 1.03 0.96;
-  }
-
-  75% {
-    translate: 0 -0.3px;
-    scale: 1 1;
-  }
-}
-
-/* Lags the glance (steps at 20/40/60/80%) a little, so the eyes lead and the head follows. */
-@keyframes cute-face-turn {
-  0%,
-  20%,
-  100% {
-    --face-turn: 0;
-    --face-nod: 0;
-  }
-
-  27%,
-  40% {
-    --face-turn: -0.12;
-    --face-nod: 0.02;
-  }
-
-  47%,
-  60% {
-    --face-turn: 0.1;
-    --face-nod: -0.03;
-  }
-
-  67%,
-  80% {
-    --face-turn: -0.04;
-    --face-nod: -0.08;
-  }
-
-  87%,
-  94% {
-    --face-turn: 0.06;
-    --face-nod: 0.07;
-  }
-}
-
-@keyframes cute-face-ponder-turn {
-  0%,
-  100% {
-    --face-front: 0.45;
-    --face-turn: -0.03;
-    --face-nod: 0.08;
-  }
-
-  50% {
-    --face-front: 0.45;
-    --face-turn: 0.04;
-    --face-nod: 0.1;
-  }
-}
-
-@keyframes cute-face-ponder {
-  0%,
-  100% {
-    translate: 0 -1px;
-    rotate: -5deg;
-  }
-
-  50% {
-    translate: 0 -2px;
-    rotate: -3deg;
-  }
-}
-
 @keyframes cute-face-ponder-eyes {
   0% {
     translate: 2px -3px;
@@ -1063,21 +930,6 @@
 
   70% {
     translate: 1px -2px;
-  }
-}
-
-@keyframes cute-face-wiggle {
-  0%,
-  100% {
-    --face-turn: 0;
-  }
-
-  25% {
-    --face-turn: 0.14;
-  }
-
-  75% {
-    --face-turn: -0.14;
   }
 }
 
@@ -1095,30 +947,6 @@
   100% {
     scale: 1 1;
     rotate: 360deg;
-  }
-}
-
-@keyframes cute-face-hop {
-  0% {
-    translate: 0 0;
-  }
-
-  40% {
-    translate: 0 -7px;
-    rotate: 4deg;
-    scale: 0.97 1.04;
-  }
-
-  75% {
-    translate: 0 0.5px;
-    rotate: -2deg;
-    scale: 1.05 0.95;
-  }
-
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
-    scale: 1 1;
   }
 }
 
