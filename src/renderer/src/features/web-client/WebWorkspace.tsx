@@ -1808,7 +1808,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                 <>
                   <Show when={!noHost() && workspace.state.status !== "online" && !blockedServer()}>
                     <ServerConnectionNotice
-                      name={workspace.state.host?.name ?? t("webClient.notice.findingHosts")}
+                      name={workspace.state.host?.name ?? t("app.page.serverFallback")}
                       initial={!workspace.state.workspaceLoaded}
                       issue={workspace.state.hostedIssue}
                       start={workspace.state.hostedStart}
