@@ -20,6 +20,7 @@
 @import "./styles/timeline.css";
 @import "./styles/scroll-rail.css";
 @import "./styles/messages.css";
+@import "./styles/exchange.css";
 @import "./styles/agent-steps.css";
 @import "./styles/trace-waterfall.css";
 @import "./styles/agent-chat-empty.css";
@@ -38,6 +39,7 @@
 @import "./styles/panel-layout.css";
 @import "./styles/side-panel.css";
 @import "./styles/notices.css";
+@import "./styles/transcript-freshness.css";
 @import "./styles/context-usage.css";
 @import "./styles/composer-stack.css";
 @import "./styles/interaction-cards.css";

@@ -86,6 +86,13 @@
     --openbot-file-pink-soft: rgba(163, 71, 143, 0.12);
     --openbot-file-default: #5b52df;
     --openbot-file-default-soft: rgba(91, 82, 223, 0.12);
+    /* Chat bubbles. The reader's own bubble is the strongest shape on the screen, near-black with white
+     * text, so who said what reads at a glance. An agent's bubble is its own color, washed out: the
+     * agent color laid over the wash base at the tint strength (0 to 1). */
+    --openbot-bubble-user: #161618;
+    --openbot-bubble-user-text: #ffffff;
+    --openbot-bubble-agent-base: #ffffff;
+    --openbot-bubble-agent-tint: 0.1;
   }
 
   @variant dark {
@@ -150,5 +157,10 @@
     --openbot-file-pink-soft: rgba(217, 138, 201, 0.14);
     --openbot-file-default: #42a0ff;
     --openbot-file-default-soft: rgba(0, 124, 247, 0.14);
+    /* In dark, the reader's bubble is a mid grey, lighter than every surface, still with white text. */
+    --openbot-bubble-user: #59595e;
+    --openbot-bubble-user-text: #ffffff;
+    --openbot-bubble-agent-base: #161616;
+    --openbot-bubble-agent-tint: 0.16;
   }
 }

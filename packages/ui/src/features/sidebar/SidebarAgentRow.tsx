@@ -73,6 +73,11 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
       ? sidebarAgentStateLabel(current, t, format)
       : "";
   };
+  // The "More unreads" pills find unread rows by this count; a row in a group of its own has none.
+  const unreadCount = () => {
+    const current = state();
+    return current?.kind === "unread" && !rowProps.waiting ? current.count : 0;
+  };
   const routineLabel = () => (state()?.kind === "routine" || limit() ? stateLabel() : "");
   // Only a waiting row has a tooltip, so the rows in the sections do not each carry one.
   const row = (): JSX.Element => (
@@ -91,6 +96,7 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
         aria-label={`${rowProps.agent.name}${title() ? `, ${title()}` : ""}${accessLabel()}${windowLabel()}${labelDetail()}${stateLabel() ? `. ${stateLabel()}` : ""}`}
         title={routineLabel() || undefined}
         aria-pressed={props.activeAgentId === rowProps.agent.id ? "true" : "false"}
+        data-sidebar-unread={unreadCount() || undefined}
         data-cuelume-navigate=""
         onClick={(event: MouseEvent) => {
           if (!sidebarClickIsSuppressed(event)) props.onSelectAgent(rowProps.agent.id);

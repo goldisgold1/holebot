@@ -901,3 +901,69 @@
   transform: scale(0.92);
   transition-duration: var(--openbot-duration-fast);
 }
+
+/*
+ * The identity island: the agent's face and name in a pill at the head of the chat. A hover tint fades in over it
+ * and a chevron shows, saying the pill opens something. The voice call (voice.css) hangs from it.
+ */
+.conversation-identity {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--openbot-space-1-5);
+}
+
+.conversation-title.ui-button {
+  position: relative;
+  isolation: isolate;
+}
+
+.conversation-title.ui-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--openbot-hover);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--holeai-duration-island-tint) ease;
+}
+
+.conversation-title.ui-button:is(:hover, :focus-visible, [aria-expanded="true"])::before {
+  opacity: 1;
+}
+
+.conversation-title-chevron {
+  width: 0;
+  height: var(--openbot-icon-sm);
+  flex: none;
+  margin-inline-start: calc(var(--openbot-space-1-5) * -1);
+  color: var(--openbot-text-muted);
+  opacity: 0;
+  stroke-width: var(--openbot-icon-stroke);
+  transition:
+    width var(--holeai-duration-island-tint) ease,
+    margin var(--holeai-duration-island-tint) ease,
+    opacity var(--holeai-duration-island-tint) ease;
+}
+
+.conversation-title.ui-button:is(:hover, :focus-visible) .conversation-title-chevron {
+  width: var(--openbot-icon-sm);
+  margin-inline-start: 0;
+  opacity: 1;
+}
+
+/* A tab of the thread list and an open side panel have no chevron: the pill is a tab, or its pane is already open. */
+.conversation-title.ui-button[data-tab] .conversation-title-chevron,
+.side-panel-docked .conversation-title.ui-button .conversation-title-chevron {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversation-title.ui-button::before,
+  .conversation-title-chevron {
+    transition: none;
+  }
+}

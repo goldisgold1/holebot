@@ -7,7 +7,6 @@ import { BROWSER_NEW_TAB_URL } from "@openbot/ui/features/browser/browser-sugges
 import { SidePanelHeader, SidePanelLauncher, type SidePanelPane } from "@openbot/ui/features/conversation/SidePanel";
 import { SideQuestionPanel } from "@openbot/ui/features/conversation/SideQuestionPanel";
 import { SubagentPanel } from "@openbot/ui/features/conversation/Subagents";
-import { VoicePanel } from "@openbot/ui/features/conversation/VoicePanel";
 import { McpSignInRelayDialog } from "@openbot/ui/features/settings/McpSignInPage";
 import { useText } from "@openbot/ui/text";
 import { actionToast } from "../../action-toast";
@@ -32,35 +31,9 @@ const CONVERSATION_PANEL_MIN = 96;
 const loadAgentSettingsPanel = () => import("./AgentSettingsPanel");
 
 import { Portal } from "@solidjs/web";
-import { createEffect, createMemo, Loading, lazy, onSettled, Show, untrack } from "solid-js";
+import { createEffect, createMemo, Loading, lazy, onSettled, Show } from "solid-js";
 import { agentFolderCalls, agentInstructionsCalls } from "./agent-folders-port";
 import { conversationPort } from "./conversation-port";
-
-/** The voice conversation with the agent that is open when the pane opens. */
-function VoiceConversationPane() {
-  const { props, startVoiceConversation, closeSidePanelPane } = useConversationViewScope();
-  const agentId = untrack(() => props.agent?.id);
-  if (!agentId) return null;
-  const conversation = startVoiceConversation(agentId);
-  return (
-    <Show when={props.agent}>
-      {(agent) => (
-        <VoicePanel
-          agent={agent()}
-          phase={conversation.phase()}
-          muted={conversation.muted()}
-          heard={conversation.heard()}
-          said={conversation.said()}
-          levels={conversation.levels()}
-          error={conversation.error()}
-          onToggleMute={conversation.toggleMute}
-          onInterrupt={conversation.interrupt}
-          onEnd={() => closeSidePanelPane("voice")}
-        />
-      )}
-    </Show>
-  );
-}
 
 /** @internal Stable HMR boundary for conversation panels. */
 export function ConversationPanels(panelProps: { onOpenUsage?: ((trigger: HTMLButtonElement) => void) | undefined }) {
@@ -399,18 +372,7 @@ export function ConversationPanels(panelProps: { onOpenUsage?: ((trigger: HTMLBu
         )}
       </Show>
 
-      {/* Keyed, so another agent or server gets its own conversation; closing the pane ends it. */}
-      <Show
-        when={
-          activeRightPanel() === "voice" &&
-          voiceConversationAvailable() &&
-          props.agent &&
-          `${props.server?.id ?? "local"}:${props.agent.id}`
-        }
-        keyed
-      >
-        <VoiceConversationPane />
-      </Show>
+      {/* The voice call is a popover under the chat header: ConversationHeader.tsx mounts it. */}
 
       {/* Keyed, so each side thread gets its own messages and read state. */}
       <Show when={shownThread()} keyed>

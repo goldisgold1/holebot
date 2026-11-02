@@ -22,6 +22,7 @@ import { createSimpleContext } from "../../simple-context";
 import { useUiErrors } from "../../ui-errors";
 import type { AgentSettingsRequest } from "../conversation/conversation-types";
 import { useDirectMessages } from "../conversation/direct-messages-context";
+import { createStarterAgentDraft } from "../onboarding/onboarding-roles";
 import { remoteAdminServer } from "../servers/server-capabilities";
 import { useServers } from "../servers/servers-context";
 import { useWindowPage } from "../window/window-page-context";
@@ -238,7 +239,8 @@ const Agents = createSimpleContext({
         return (profiles.find((agent) => !hidden.has(agent.id)) ?? profiles[0])?.id ?? "";
       });
       if (profiles.length === 0 && !agentSetupOpen()) {
-        setAgentSetupDraft(createFirstAgentDraft());
+        // The first agent opens on the first starter agent chosen in first run, when there is one.
+        setAgentSetupDraft(createStarterAgentDraft());
         setAgentSetupError(null);
         setAgentSetupOpen(true);
       }

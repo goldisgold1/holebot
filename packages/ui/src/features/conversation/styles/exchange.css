@@ -1,0 +1,214 @@
+/*
+ * Agent exchange: the peer chips of an agent message row and the full-pane "A ⇄ B" view.
+ */
+
+/* Two other agents read "A and B": the joining word is quieter than the chips. */
+.chat-action-peers {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--openbot-space-0-5);
+}
+
+.chat-action-peers-and {
+  flex: 0 0 auto;
+  color: var(--openbot-text-dim);
+  white-space: nowrap;
+}
+
+/* The menu of three or more agents is titled, like a section of a menu. */
+.chat-action-agent-menu-title {
+  padding: var(--openbot-space-1) var(--openbot-space-2) var(--openbot-space-0-5);
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
+  user-select: none;
+}
+
+/* A row that opens an exchange is a target in itself; its own chips keep their pointer. */
+.chat-action-marker-content[data-opens-exchange] {
+  cursor: pointer;
+}
+
+.chat-action-exchange-open svg {
+  width: var(--openbot-icon-xs);
+  height: var(--openbot-icon-xs);
+  transition: translate var(--openbot-duration-hover) var(--openbot-ease-out);
+}
+
+/*
+ * The view takes the place of the chat and its message box, under the chat header. Like an open
+ * side thread, the chat and the box stay mounted and hidden, so the way back keeps the scroll
+ * position and the draft.
+ */
+.conversation-panel:has(> .agent-exchange-view) > .composer-wrap {
+  position: absolute;
+  inset: auto 0 0;
+  visibility: hidden;
+}
+
+.conversation-panel > .conversation-scroll.agent-exchange-covered {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.agent-exchange-view {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  background: var(--openbot-bg-canvas);
+  color: var(--openbot-text-primary);
+  animation: agent-exchange-in var(--openbot-duration-overlay) var(--openbot-ease-out);
+  --agent-exchange-gutter: max(var(--openbot-space-4), calc(50% - 480px));
+}
+
+@keyframes agent-exchange-in {
+  from {
+    opacity: 0;
+    translate: var(--openbot-space-6) 0;
+  }
+}
+
+.agent-exchange-header {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--openbot-space-2);
+  padding: var(--openbot-space-2) var(--agent-exchange-gutter);
+}
+
+.agent-exchange-back {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 40%;
+  gap: var(--openbot-space-1);
+  color: var(--openbot-text-secondary);
+}
+
+.agent-exchange-back > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-exchange-back svg {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+  flex: 0 0 auto;
+}
+
+.agent-exchange-title {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--openbot-space-2);
+  margin: 0;
+  /* The back button sits at the start; the title stays centred in the pane. */
+  margin-inline-end: var(--openbot-space-8);
+  font-size: var(--openbot-text-md);
+  font-weight: var(--openbot-weight-semibold);
+  line-height: var(--openbot-leading-md);
+}
+
+.agent-exchange-party {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--openbot-space-1-5);
+}
+
+.agent-exchange-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-exchange-face {
+  --agent-avatar-optical-offset: -3px;
+
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.agent-exchange-faces {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.agent-exchange-faces .agent-exchange-face + .agent-exchange-face {
+  margin-left: -8px;
+}
+
+.agent-exchange-arrows {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+  flex: 0 0 auto;
+  color: var(--openbot-text-muted);
+}
+
+.agent-exchange-scroll {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The messages fade out under the bottom edge rather than stop at a hard line. */
+.agent-exchange-scroll::after {
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 40px;
+  margin-top: -40px;
+  background: linear-gradient(to top, var(--openbot-bg-canvas), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.agent-exchange-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--openbot-space-1);
+  margin: 0;
+  padding: var(--openbot-space-2) var(--agent-exchange-gutter) var(--openbot-space-8);
+  list-style: none;
+}
+
+.agent-exchange-message {
+  min-width: 0;
+}
+
+.agent-exchange-empty {
+  margin: 0;
+  padding: var(--openbot-space-8) var(--agent-exchange-gutter);
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
+  text-align: center;
+}
+
+.chat-action-marker-content[data-opens-exchange]:hover .chat-action-exchange-open svg {
+  translate: 2px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-exchange-view {
+    animation: none;
+  }
+
+  .chat-action-exchange-open svg {
+    transition: none;
+  }
+}

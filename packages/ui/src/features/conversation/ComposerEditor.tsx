@@ -147,6 +147,8 @@ interface MentionContext {
 }
 
 const DICTATION_INTERIM_WORDS = 2;
+/** A plain-text paste shortcut counts only for the paste that follows it at once. */
+const PLAIN_PASTE_WINDOW_MS = 1_000;
 
 export function expandComposerMentions(value: string): string {
   return value.replace(MENTION_PATTERN, (match, name: string, target: string) => {
@@ -282,6 +284,8 @@ export function ComposerEditor(props: ComposerEditorProps) {
   let lastQuoteRequest = untrack(() => props.quoteRequest?.id ?? 0);
   /* Where the caret was when the editor last had it. A selection in a message takes the caret away. */
   let savedCaret: number | null = null;
+  /** When Ctrl+Shift+V was pressed, so that the paste it sends comes as plain text. */
+  let plainPasteAt: number | null = null;
   let isComposing = false;
   const [compositionRevision, setCompositionRevision] = createSignal(0);
   const attachmentTokenActions: AttachmentTokenActions = {
@@ -498,10 +502,20 @@ export function ComposerEditor(props: ComposerEditorProps) {
       if (mention()) updateMention();
     };
     document.addEventListener("selectionchange", selectionChanged);
+    // Ctrl+Shift+V pastes plain text. The paste event does not say which shortcut sent it, and the key can
+    // come while the page has the focus, before the composer takes the paste, so the whole document counts.
+    const notePasteShortcut = (event: KeyboardEvent) => {
+      plainPasteAt =
+        event.key.toLowerCase() === "v" && (event.ctrlKey || event.metaKey) && event.shiftKey && !event.altKey
+          ? event.timeStamp
+          : null;
+    };
+    document.addEventListener("keydown", notePasteShortcut, true);
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(scheduleCaretScroll);
     observer?.observe(editor);
     return () => {
       document.removeEventListener("selectionchange", selectionChanged);
+      document.removeEventListener("keydown", notePasteShortcut, true);
       observer?.disconnect();
       if (caretFrame !== undefined) view?.cancelAnimationFrame(caretFrame);
     };
@@ -827,10 +841,16 @@ export function ComposerEditor(props: ComposerEditorProps) {
 
   function handlePaste(event: ClipboardEvent) {
     event.preventDefault();
+    const plain = plainPasteAt !== null && event.timeStamp - plainPasteAt < PLAIN_PASTE_WINDOW_MS;
+    plainPasteAt = null;
     if (!editor || props.disabled) return;
 
     const clipboard = event.clipboardData;
     if (!clipboard) return;
+    if (plain) {
+      pastePlainText(clipboard);
+      return;
+    }
     const selection = serializedEditorSelection(editor);
     const pasted = props.onPasteAttachments?.(clipboard, selection);
     if (pasted) {
@@ -852,7 +872,12 @@ export function ComposerEditor(props: ComposerEditorProps) {
       }
       return;
     }
+    pastePlainText(clipboard);
+  }
 
+  /** The clipboard's text alone: no files and no attachments of a composer copy. */
+  function pastePlainText(clipboard: DataTransfer) {
+    if (!editor) return;
     const text = clipboard.getData("text/plain").replace(/\r\n?/g, "\n").slice(0, INPUT_LIMITS.messageText);
     if (!text) return;
 

@@ -42,6 +42,7 @@ import type {
   ComposerDraft,
   ConversationProps,
   ConversationTarget,
+  RightPanelMode,
   SidePanelPane,
 } from "./conversation-types";
 import {
@@ -454,9 +455,16 @@ export function createConversationViewScope(props: ConversationProps) {
     setActiveRightPanel("browser");
     if (browserTabs().length === 0) void openBrowserAddress();
   }
+  /** What the side panel showed before a voice call began, by agent, so hanging up brings it back. */
+  const beforeVoiceCall = new Map<string, RightPanelMode>();
   function openSidePanelPane(pane: SidePanelPane) {
     if (pane === "browser") showBrowserPanel();
-    else setActiveRightPanel(SIDE_PANEL_MODES[pane]);
+    else {
+      const agentId = conversationOwnerId(props);
+      const current = activeRightPanel();
+      if (pane === "voice" && agentId && current !== "voice") beforeVoiceCall.set(agentId, current);
+      setActiveRightPanel(SIDE_PANEL_MODES[pane]);
+    }
   }
   const sideThreadIds = () => props.threads?.side.tabs.map((thread) => thread.id) ?? [];
   /** The side thread that the side panel shows, or null when its tab is gone. */
@@ -539,6 +547,14 @@ export function createConversationViewScope(props: ConversationProps) {
   }
   /** Closes the tab of a pane. The next tab takes its place; with no tab, the panel lists the panes. */
   function closeSidePanelPane(pane: SidePanelPane) {
+    // A voice call is not a tab: hanging up goes back to what showed before the call.
+    if (pane === "voice") {
+      const agentId = conversationOwnerId(props);
+      const before = (agentId && beforeVoiceCall.get(agentId)) || "none";
+      if (agentId) beforeVoiceCall.delete(agentId);
+      if (activeRightPanel() === "voice") setActiveRightPanel(before);
+      return;
+    }
     if (pane === "question") deleteSideQuestion();
     const shown = sidePanelOpen() && sidePanel().selected === pane;
     const next = removeSidePanelPane(pane);

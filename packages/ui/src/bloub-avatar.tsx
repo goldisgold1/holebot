@@ -21,6 +21,7 @@ export {
   type SupportedAvatarSilhouetteId,
 } from "@openbot/brand/bloub-avatar";
 export {
+  type AvatarFaceMood,
   type AvatarMood,
   avatarMoodIsBusy,
   avatarMoodPresentation,

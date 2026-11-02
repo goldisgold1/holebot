@@ -406,4 +406,13 @@ export const messages = defineMessages("chat", {
   "chat.compaction.failed": "Could not compact context",
   "chat.compaction.tokens": "{before} → {after} tokens",
   "chat.compaction.continues": "Queued messages continue.",
+  // Agent exchange: the peer chips of an agent message row and the full-pane "A ⇄ B" view.
+  "chat.exchange.peersAnd": "and",
+  "chat.exchange.peersMenu": "Agents in this exchange",
+  "chat.exchange.peersShow": { one: "{count} agent, show list", other: "{count} agents, show list" },
+  "chat.exchange.open": "Open the exchange with {agents}",
+  "chat.exchange.title": "Agent exchange between {a} and {b}",
+  "chat.exchange.back": "Back to {name}",
+  "chat.exchange.messages": "Messages between {a} and {b}",
+  "chat.exchange.empty": "These messages are no longer in this chat.",
 });

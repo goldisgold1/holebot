@@ -1,4 +1,4 @@
-/* Spoken replies: the speaking bar above the composer, and the voice pane in the side panel. */
+/* Spoken replies: the speaking bar above the composer, and the voice call under the chat header. */
 
 .speaking-bar {
   display: flex;
@@ -48,151 +48,397 @@
   white-space: nowrap;
 }
 
-.voice-panel {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  padding: var(--openbot-space-4);
+/*
+ * The voice call: a compact popover that hangs under the agent's name in the chat header, and the "on call" chip
+ * the call shrinks to. Sizes and timings are the --holeai-voice-* tokens (packages/brand/src/tokens-holeai.css).
+ */
+.voice-call {
+  display: contents;
 }
 
-.voice-panel-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--openbot-space-0-5);
+/* Minimised: a capsule in the agent's colour with its face and the time on the call. */
+.voice-call-chip.ui-button {
+  height: var(--holeai-voice-chip-height);
+  flex: none;
+  gap: var(--openbot-space-2);
+  border-radius: var(--holeai-radius-pill);
+  padding: 10px 14px 10px 8px;
+  background: color-mix(in srgb, var(--voice-agent-color) var(--holeai-voice-tint), var(--openbot-bg-surface));
+  color: var(--openbot-text-primary);
+  transition: background-color var(--openbot-duration-fast) ease;
+  animation: voice-call-chip-in var(--openbot-duration-normal) var(--openbot-ease-out) both;
 }
 
-.voice-panel-name {
-  margin: 0;
-  font-size: var(--openbot-text-md);
-  font-weight: 600;
+.voice-call-chip.ui-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--voice-agent-color) calc(var(--holeai-voice-tint) * 1.6),
+    var(--openbot-bg-surface)
+  );
 }
 
-.voice-panel-phase {
-  color: var(--openbot-text-muted);
-  font-size: var(--openbot-text-sm);
-}
-
-.voice-panel-stage {
-  display: flex;
-  min-height: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--openbot-space-8);
-}
-
-.voice-panel-presence {
-  position: relative;
-  display: grid;
-  width: 140px;
-  height: 140px;
-  place-items: center;
-  transform: scale(var(--voice-presence-scale, 1));
-  transition:
-    transform var(--openbot-duration-fast) linear,
-    opacity var(--openbot-duration-normal) ease;
-}
-
-/* A soft glow of the accent colour behind the face, brighter while the agent speaks. */
-.voice-panel-presence::before {
-  position: absolute;
-  inset: -24px;
-  border-radius: var(--openbot-radius-pill);
-  background: radial-gradient(closest-side, var(--openbot-accent-soft), transparent);
-  content: "";
-  opacity: 0.5;
-  transition: opacity var(--openbot-duration-normal) ease;
-}
-
-.voice-panel-presence[data-phase="speaking"]::before {
-  opacity: 1;
-}
-
-.voice-panel-presence[data-phase="thinking"]::before {
-  animation: voice-panel-think 1.6s var(--openbot-ease-in-out) infinite alternate;
-}
-
-@keyframes voice-panel-think {
-  to {
-    opacity: 0.15;
+@keyframes voice-call-chip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
   }
 }
 
-.voice-panel-avatar {
-  --agent-avatar-optical-offset: calc(112px * -0.14);
+.voice-call-chip-face {
+  --agent-avatar-optical-offset: calc(var(--holeai-voice-chip-face) * -0.14);
 
-  position: relative;
-  width: 112px;
-  height: 112px;
+  width: var(--holeai-voice-chip-face);
+  height: var(--holeai-voice-chip-face);
+  flex: none;
 }
 
-/* The waveform keeps its place when it is hidden, so the captions do not move. */
-/* A muted microphone: the agent's face dims until the user speaks again. */
-.voice-panel-presence[data-muted] {
-  opacity: 0.5;
+.voice-call-chip-time {
+  font-size: var(--openbot-text-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
-.voice-panel-waveform {
+/* Open: the popover hangs under the agent's name, centred on it. */
+.voice-call-popover {
+  position: absolute;
+  z-index: var(--holeai-voice-call-z);
+  top: calc(100% + var(--holeai-voice-call-offset));
+  left: 50%;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  border-radius: var(--holeai-radius-voice-call);
+  background: var(--openbot-bg-surface-raised);
+  box-shadow:
+    inset 0 0 0 0.5px var(--openbot-border),
+    var(--holeai-voice-call-shadow);
+  color: var(--openbot-text-primary);
+  translate: -50% 0;
+  animation: voice-call-in var(--openbot-duration-slow) var(--holeai-ease-standard) both;
+}
+
+@keyframes voice-call-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.voice-call-frame {
   display: flex;
-  width: 141px;
-  color: var(--openbot-text-secondary);
-  opacity: 0;
+  flex-direction: column;
+  padding: 12px;
+}
+
+.voice-call-row {
+  display: flex;
+  align-items: center;
+  gap: var(--openbot-space-6);
+}
+
+.voice-call-head {
+  display: flex;
+  align-items: center;
+  gap: var(--openbot-space-2);
+}
+
+.voice-call-face {
+  display: grid;
+  width: var(--holeai-voice-face);
+  height: var(--holeai-voice-face);
+  flex: none;
+  place-items: center;
   transition: opacity var(--openbot-duration-normal) ease;
 }
 
-.voice-panel-waveform[data-phase] {
+/* A muted microphone: the face dims until the user speaks again. */
+.voice-call-face[data-muted] {
+  opacity: 0.5;
+}
+
+.voice-call-avatar {
+  --agent-avatar-optical-offset: calc(var(--holeai-voice-face) * -0.14);
+
+  width: var(--holeai-voice-face);
+  height: var(--holeai-voice-face);
+}
+
+/* One meter in the agent's colour: faint while nobody talks, full with a voice. The caller's voice runs mirrored,
+   so it flows toward the agent; the agent's flows out. */
+.voice-call-wave {
+  display: flex;
+  width: var(--holeai-voice-wave-width);
+  height: var(--holeai-voice-wave-height);
+  align-items: center;
+  color: var(--voice-agent-color);
+  opacity: 0.2;
+  transition: opacity var(--openbot-duration-normal) ease;
+}
+
+.voice-call-wave[data-source] {
   opacity: 1;
 }
 
-.voice-panel-waveform[data-phase="speaking"] {
-  color: var(--openbot-accent);
+.voice-call-wave[data-source="caller"] {
+  transform: scaleX(-1);
 }
 
-.voice-panel-captions {
-  width: 100%;
-  min-height: calc(var(--openbot-leading-xl) * 4);
-  overflow-y: auto;
-  text-align: center;
+.voice-call-waveform.voice-waveform {
+  height: var(--holeai-voice-wave-height);
 }
 
-.voice-panel-caption {
-  margin: 0;
-  color: var(--openbot-text-secondary);
-  font-size: var(--openbot-text-xl);
-  line-height: var(--openbot-leading-xl);
+/* Before the call is live: an indeterminate bar in the agent's colour. */
+.voice-call-connecting {
+  position: relative;
+  width: var(--holeai-voice-wave-width);
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--holeai-radius-pill);
+  background: color-mix(in srgb, var(--voice-agent-color) var(--holeai-voice-tint), transparent);
 }
 
-.voice-panel-caption[data-empty] {
-  color: var(--openbot-text-muted);
+.voice-call-connecting::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--voice-agent-color);
+  content: "";
+  animation: voice-call-connecting var(--holeai-duration-voice-connecting) ease-in-out infinite alternate;
 }
 
-.voice-panel-error {
-  color: var(--openbot-danger);
-  font-size: var(--openbot-text-md);
-  line-height: var(--openbot-leading-md);
+@keyframes voice-call-connecting {
+  to {
+    translate: 150% 0;
+  }
 }
 
-.voice-panel-controls {
+.voice-call-controls {
   display: flex;
-  justify-content: center;
-  gap: var(--openbot-space-4);
+  align-items: center;
+  gap: var(--openbot-space-2);
 }
 
-.voice-panel-control {
-  border-radius: var(--openbot-radius-pill);
+.voice-call-control.ui-button {
+  width: var(--holeai-voice-control);
+  height: var(--holeai-voice-control);
+  border-radius: var(--holeai-radius-pill);
+  background: var(--openbot-bg-surface);
+  color: var(--openbot-text-secondary);
   transition:
     background-color var(--openbot-duration-fast) ease,
     color var(--openbot-duration-fast) ease;
 }
 
+.voice-call-control.ui-button:hover:not(:disabled),
+.voice-call-control.ui-button[aria-pressed="true"] {
+  background: var(--openbot-hover);
+  color: var(--openbot-text-primary);
+}
+
+.voice-call-hangup.ui-button {
+  background: var(--openbot-danger);
+  color: var(--openbot-text-on-accent);
+}
+
+.voice-call-hangup.ui-button:hover:not(:disabled) {
+  background: var(--openbot-danger-hover);
+  color: var(--openbot-text-on-accent);
+}
+
+/* A fault the call goes on through. */
+/* It wraps to the width of the controls rather than widening the popover. */
+.voice-call-fault {
+  display: flex;
+  width: 0;
+  min-width: calc(100% - var(--openbot-space-2));
+  align-items: flex-start;
+  gap: var(--openbot-space-1-5);
+  margin: var(--openbot-space-3) var(--openbot-space-1) 0;
+  color: var(--openbot-warning-text);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
+}
+
+.voice-call-fault svg {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+  flex: none;
+  margin-top: 1px;
+}
+
+/* The transcript tray: its row grows from 0fr to 1fr while the words slide down into place. */
+.voice-call-tray {
+  display: grid;
+  width: 0;
+  min-width: 100%;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--holeai-duration-tray) var(--holeai-ease-voice-tray);
+}
+
+.voice-call-tray[data-open] {
+  grid-template-rows: 1fr;
+}
+
+.voice-call-tray-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.voice-call-transcript {
+  display: flex;
+  max-height: var(--holeai-voice-transcript-max);
+  flex-direction: column;
+  gap: 10px;
+  margin-top: var(--openbot-space-3);
+  overflow-y: auto;
+  border-top: 0.5px solid var(--openbot-border);
+  padding: 16px var(--openbot-space-1) var(--openbot-space-1);
+  opacity: 0;
+  scrollbar-width: none;
+  transform: translateY(-10px);
+  transition:
+    opacity var(--holeai-duration-tray) var(--holeai-ease-voice-tray),
+    transform var(--holeai-duration-tray) var(--holeai-ease-voice-tray);
+}
+
+.voice-call-transcript:hover {
+  scrollbar-width: thin;
+}
+
+.voice-call-tray[data-open] .voice-call-transcript {
+  opacity: 1;
+  transform: none;
+}
+
+.voice-call-line {
+  margin: 0;
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+}
+
+.voice-call-speaker {
+  display: block;
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
+}
+
+.voice-call-empty {
+  margin: 0;
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-md);
+  text-align: center;
+}
+
+/* A failure that stopped the call replaces the frame. */
+.voice-call-failure {
+  display: grid;
+  max-width: 340px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--openbot-space-3);
+  padding: 16px 16px 12px;
+}
+
+.voice-call-failure-badge {
+  display: grid;
+  width: var(--holeai-voice-badge);
+  height: var(--holeai-voice-badge);
+  place-items: center;
+  border-radius: var(--holeai-radius-pill);
+  background: var(--openbot-danger-soft);
+  color: var(--openbot-danger-text);
+}
+
+.voice-call-failure-badge svg {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+}
+
+.voice-call-failure-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--openbot-space-0-5);
+}
+
+.voice-call-failure-title {
+  margin: 0;
+  font-size: var(--openbot-text-lg);
+  font-weight: 500;
+  line-height: var(--openbot-leading-lg);
+}
+
+.voice-call-failure-detail {
+  margin: 0;
+  color: var(--openbot-text-secondary);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+}
+
+.voice-call-failure-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: var(--openbot-space-1-5);
+}
+
+/* The face in a call: listening leans in with wide eyes, speaking bobs with the words. The static cues (eye size,
+   eye lift) hold under reduced motion too, so a face that listens never looks like one that rests. */
+/* `transform`, not `scale` or `translate`: the blink and glance animations own those, and transform composes with them. */
+.cute-face[data-mood="listening"] .cute-face-eyes {
+  transform: scale(1.15);
+}
+
+.cute-face[data-mood="listening"][data-animated] .cute-face-bob {
+  animation: voice-face-listen var(--holeai-duration-voice-listen) ease-in-out infinite;
+}
+
+.cute-face[data-mood="speaking"] .cute-face-eyes {
+  transform: translateY(-2px);
+}
+
+.cute-face[data-mood="speaking"][data-animated] .cute-face-bob {
+  animation: voice-face-talk var(--holeai-duration-voice-talk) ease-in-out infinite alternate;
+}
+
+@keyframes voice-face-listen {
+  0%,
+  100% {
+    rotate: -7deg;
+    translate: -1px 1px;
+  }
+
+  50% {
+    rotate: -4deg;
+    translate: -2px 0;
+  }
+}
+
+@keyframes voice-face-talk {
+  from {
+    scale: 1 1;
+  }
+
+  to {
+    scale: 1.04 0.95;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .speaking-bar,
-  .voice-panel-presence[data-phase="thinking"]::before {
+  .voice-call-chip.ui-button,
+  .voice-call-popover,
+  .voice-call-connecting::after,
+  .cute-face[data-mood="listening"][data-animated] .cute-face-bob,
+  .cute-face[data-mood="speaking"][data-animated] .cute-face-bob {
     animation: none;
   }
 
-  .voice-panel-presence {
-    transform: none;
+  .voice-call-tray,
+  .voice-call-transcript {
+    transition: none;
   }
 }
 

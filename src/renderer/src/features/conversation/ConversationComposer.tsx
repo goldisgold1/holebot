@@ -42,12 +42,21 @@ import { SpeakingBar } from "@openbot/ui/features/conversation/SpeakingBar";
 import { ComposerVoiceControls, voiceButtonLabel } from "@openbot/ui/features/conversation/VoiceRecordingMorph";
 import { useText } from "@openbot/ui/text";
 import { prefersReducedMotion } from "@openbot/ui/utils";
-import { createEffect, createMemo, createSignal, createStore, For, Loading, lazy, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, createStore, For, Loading, lazy, onCleanup, Show } from "solid-js";
 import { reportErrorBanner, reportNotification } from "../../error-reports";
 import { deviceSendShortcut, sendShortcutAriaKey, sendShortcutHintKey } from "../../send-shortcut-preference";
 import { speechReading } from "../speech/speech-playback";
 import { stopSpokenReply } from "../speech/speech-replies";
+import {
+  ATTACHMENT_DRAG_ACTIVATION_PX,
+  dragShifts,
+  dragTargetIndex,
+  keyboardMoveTarget,
+  moveItem,
+  reorderSubset,
+} from "./composer-attachment-order";
 import { copyComposerSelection, readComposerCopy } from "./composer-clipboard";
+import { focusComposerAtEnd, isPasteShortcut, shouldRoutePasteToComposer } from "./composer-paste-anywhere";
 import { useConversationViewScope } from "./conversation-scope";
 import { currentConversationTarget } from "./stores/composer-store";
 
@@ -472,6 +481,159 @@ export function ConversationComposer() {
       return () => animation.cancel();
     },
   );
+  /*
+   * Paste anywhere: Ctrl+V with the focus on the page, the transcript or a plain button pastes into the
+   * composer, files included. Text fields, open dialogs and menus, settings and code views keep their paste.
+   */
+  createEffect(composerElement, (element) => {
+    if (!element) return;
+    const document = element.ownerDocument;
+    const editorFor = (focused: Element | null) => {
+      if (props.workspaceCovered) return null;
+      const editor = element.querySelector(".composer-editor-surface");
+      return editor instanceof HTMLElement && shouldRoutePasteToComposer(editor, focused) ? editor : null;
+    };
+    // The key comes before the paste: with the focus moved first, the browser's own paste lands in the
+    // composer, which reads files, text and Ctrl+Shift+V there.
+    const pasteKey = (event: KeyboardEvent) => {
+      if (event.isComposing || !isPasteShortcut(event)) return;
+      const editor = editorFor(document.activeElement);
+      if (editor) focusComposerAtEnd(editor);
+    };
+    // A paste with no key, such as one from a menu, still reaches the page. The composer takes it here.
+    const pasteEvent = (event: ClipboardEvent) => {
+      if (event.defaultPrevented || !event.clipboardData) return;
+      const editor = editorFor(event.target instanceof Element ? event.target : document.activeElement);
+      if (!editor) return;
+      event.preventDefault();
+      focusComposerAtEnd(editor);
+      editor.dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: event.clipboardData, bubbles: true, cancelable: true }),
+      );
+    };
+    document.addEventListener("keydown", pasteKey, true);
+    document.addEventListener("paste", pasteEvent);
+    return () => {
+      document.removeEventListener("keydown", pasteKey, true);
+      document.removeEventListener("paste", pasteEvent);
+    };
+  });
+
+  /*
+   * The staged tiles reorder by drag, along the row only, and by Alt+Arrow/Home/End on a focused tile.
+   * The draft keeps the order, so the message sends its files in it.
+   */
+  let tileRow: HTMLDivElement | undefined;
+  /** Stops a drag that is under way, when the composer goes before the pointer is let go. */
+  let stopTileDrag: (() => void) | undefined;
+  onCleanup(() => stopTileDrag?.());
+  const reorderLocked = () => voicePhase() === "transcribing" || savePending() || submitting();
+  const rowIsRtl = () => (tileRow ? getComputedStyle(tileRow).direction === "rtl" : false);
+  const tileFor = (id: string) =>
+    tileRow?.querySelector<HTMLElement>(`[data-attachment-id="${CSS.escape(id)}"]`) ?? undefined;
+  const moveTile = (id: string, to: number) => {
+    const ids = unreferencedDraftAttachments().map((attachment) => attachment.id);
+    const from = ids.indexOf(id);
+    if (from < 0 || from === to) return;
+    updateCurrentDraft({ attachments: reorderSubset(currentDraft().attachments, moveItem(ids, from, to)) });
+  };
+  const handleTileKeyDown = (event: KeyboardEvent, id: string) => {
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.target !== event.currentTarget)
+      return;
+    const ids = unreferencedDraftAttachments().map((attachment) => attachment.id);
+    const to = keyboardMoveTarget(event.key, ids.indexOf(id), ids.length, rowIsRtl());
+    if (to === null) return;
+    // Alt+Arrow is also history navigation; on a tile it only moves the tile.
+    event.preventDefault();
+    event.stopPropagation();
+    if (reorderLocked()) return;
+    moveTile(id, to);
+    // The moved node can lose the focus while the list puts it in its new place.
+    requestAnimationFrame(() => {
+      const tile = tileFor(id);
+      if (tile && tile.ownerDocument.activeElement !== tile) tile.focus();
+      tile?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
+  };
+  const handleTilePointerDown = (event: PointerEvent, id: string) => {
+    const tile = event.currentTarget;
+    const row = tileRow;
+    if (event.button !== 0 || !event.isPrimary || reorderLocked() || !row || !(tile instanceof HTMLElement)) return;
+    if (event.target instanceof Element && event.target.closest("button")) return;
+    const tiles = Array.from(row.querySelectorAll<HTMLElement>(":scope > .composer-attachment"));
+    const rect = tile.getBoundingClientRect();
+    // Horizontal only: the tile moves among the ones on its own line.
+    const line = tiles.filter((other) => Math.abs(other.getBoundingClientRect().top - rect.top) < 1);
+    const lineFrom = line.indexOf(tile);
+    const first = line[0];
+    if (!first || line.length < 2 || lineFrom < 0) return;
+    const lineStart = tiles.indexOf(first);
+    const rects = line.map((other) => other.getBoundingClientRect());
+    const centers = rects.map((other) => other.left + other.width / 2);
+    const minDx = Math.min(...rects.map((other) => other.left)) - rect.left;
+    const maxDx = Math.max(...rects.map((other) => other.right)) - rect.right;
+    const step = rect.width + (Number.parseFloat(getComputedStyle(row).columnGap) || 0);
+    const rtl = rowIsRtl();
+    const startX = event.clientX;
+    const pointerId = event.pointerId;
+    const view = row.ownerDocument.defaultView ?? window;
+    let active = false;
+    let to = lineFrom;
+    const move = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return;
+      const offset = moveEvent.clientX - startX;
+      if (!active) {
+        if (Math.abs(offset) < ATTACHMENT_DRAG_ACTIVATION_PX) return;
+        active = true;
+        tile.setPointerCapture?.(pointerId);
+        row.setAttribute("data-reordering", "");
+        tile.setAttribute("data-dragging", "");
+      }
+      const dx = Math.min(maxDx, Math.max(minDx, offset));
+      tile.style.transform = `translateX(${dx}px)`;
+      to = dragTargetIndex(centers, lineFrom, rect.left + rect.width / 2 + dx, rtl);
+      const shifts = dragShifts(line.length, lineFrom, to, step, rtl);
+      line.forEach((other, index) => {
+        if (other !== tile) other.style.transform = shifts[index] ? `translateX(${shifts[index]}px)` : "";
+      });
+    };
+    const stopListening = () => {
+      view.removeEventListener("pointermove", move);
+      view.removeEventListener("pointerup", finish);
+      view.removeEventListener("pointercancel", finish);
+      if (stopTileDrag === stopListening) stopTileDrag = undefined;
+    };
+    const finish = (endEvent: PointerEvent) => {
+      if (endEvent.pointerId !== pointerId) return;
+      stopListening();
+      if (!active) return;
+      const releasedLeft = tile.getBoundingClientRect().left;
+      // The tiles take their new places at once; only the dropped one slides from where it was let go.
+      row.setAttribute("data-reorder-settling", "");
+      row.removeAttribute("data-reordering");
+      tile.removeAttribute("data-dragging");
+      if (tile.hasPointerCapture?.(pointerId)) tile.releasePointerCapture(pointerId);
+      for (const other of line) other.style.transform = "";
+      if (endEvent.type === "pointerup" && to !== lineFrom && !reorderLocked()) moveTile(id, lineStart + to);
+      requestAnimationFrame(() => {
+        const dropped = tileFor(id);
+        const offset = dropped ? releasedLeft - dropped.getBoundingClientRect().left : 0;
+        if (dropped && offset && !prefersReducedMotion()) {
+          dropped.style.transform = `translateX(${offset}px)`;
+          // Lays out the start position before the transition is turned back on.
+          void dropped.offsetWidth;
+          row.removeAttribute("data-reorder-settling");
+          dropped.style.transform = "";
+        } else row.removeAttribute("data-reorder-settling");
+      });
+    };
+    stopTileDrag?.();
+    stopTileDrag = stopListening;
+    view.addEventListener("pointermove", move);
+    view.addEventListener("pointerup", finish);
+    view.addEventListener("pointercancel", finish);
+  };
+
   return (
     <Show
       when={!channel?.readOnly()}
@@ -728,14 +890,31 @@ export function ConversationComposer() {
           }}
         >
           <Show when={unreferencedDraftAttachments().length > 0}>
-            <div class="composer-attachments">
+            {/* biome-ignore lint/a11y/useSemanticElements: the row is a flex scroller of focusable tiles, not a ul. */}
+            <div
+              ref={(element) => (tileRow = element)}
+              class="composer-attachments"
+              role="list"
+              aria-label={t("composer.attachment.list")}
+            >
               <For each={unreferencedDraftAttachments()}>
                 {(attachment) => {
                   // An image with no preview (the web client) shows as a file, with its name.
                   const chip = () => (attachment.kind === "image" && attachment.previewUrl ? "image" : "file");
                   const name = () => splitFileName(attachment.name);
                   return (
-                    <div class="composer-attachment ui-removable-image" data-kind={chip()}>
+                    // biome-ignore lint/a11y/useSemanticElements: a focusable tile of the scrolling row, which moves with Alt+Arrow keys.
+                    <div
+                      class="composer-attachment ui-removable-image"
+                      data-kind={chip()}
+                      data-attachment-id={attachment.id}
+                      role="listitem"
+                      aria-label={attachment.name}
+                      aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+Home Alt+End"
+                      tabindex={0}
+                      onPointerDown={(event) => handleTilePointerDown(event, attachment.id)}
+                      onKeyDown={(event) => handleTileKeyDown(event, attachment.id)}
+                    >
                       <span
                         class="composer-attachment-preview"
                         data-file-tone={chip() === "file" ? attachmentReferenceTone(attachment.name) : undefined}

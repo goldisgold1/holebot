@@ -27,3 +27,75 @@
   height: var(--openbot-icon-sm);
   flex: none;
 }
+
+/*
+ * "More unreads" pills over the agent list, as in Grok Bot: an accent pill centred at the top or
+ * bottom edge, 8px in, with a halo of the sidebar colour so the rows under it fade out. The anchor is
+ * a zero-height sticky line inside the scrolling list, so the pill stays at the edge while it scrolls.
+ */
+.sidebar-more-unreads-anchor {
+  position: sticky;
+  z-index: var(--holeai-more-unreads-z);
+  height: 0;
+  flex: none;
+}
+
+.sidebar-more-unreads-anchor[data-edge="above"] {
+  top: 0;
+}
+
+.sidebar-more-unreads-anchor[data-edge="below"] {
+  bottom: 0;
+}
+
+.sidebar-more-unreads.ui-button {
+  position: absolute;
+  left: 50%;
+  display: inline-flex;
+  height: auto;
+  min-height: 0;
+  align-items: center;
+  gap: var(--openbot-space-1);
+  padding: var(--openbot-space-1) var(--openbot-space-2) var(--openbot-space-1) var(--openbot-space-1);
+  border-radius: var(--openbot-radius-pill);
+  background: var(--openbot-accent);
+  box-shadow: var(--holeai-more-unreads-shadow);
+  color: var(--openbot-text-on-accent);
+  font-size: var(--openbot-text-sm);
+  font-weight: var(--openbot-weight-medium);
+  line-height: var(--openbot-leading-sm);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: sidebar-more-unreads-in var(--openbot-duration-normal) var(--openbot-ease-out) both;
+}
+
+.sidebar-more-unreads-anchor[data-edge="above"] > .sidebar-more-unreads.ui-button {
+  top: var(--openbot-space-2);
+}
+
+.sidebar-more-unreads-anchor[data-edge="below"] > .sidebar-more-unreads.ui-button {
+  bottom: var(--openbot-space-2);
+}
+
+.sidebar-more-unreads.ui-button:hover {
+  background: var(--openbot-accent-hover);
+  color: var(--openbot-text-on-accent);
+}
+
+.sidebar-more-unreads.ui-button > svg {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+  flex: none;
+}
+
+@keyframes sidebar-more-unreads-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-more-unreads.ui-button {
+    animation: none;
+  }
+}

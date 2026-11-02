@@ -88,6 +88,7 @@ import { useMotionPreference, useReducedMotion } from "@/shared/lib/motion";
 import { isAndroid } from "@/shared/lib/platform";
 import { useText } from "@/shared/lib/text";
 import { activityKind as toolActivityKind } from "../model/activity-label";
+import { agentBubbleFill } from "../model/bubble-colors";
 import { type BubbleJoins, bubbleCorners, bubbleMaxWidth, bubbleRuns } from "../model/bubble-runs";
 import { mentionDraft } from "../model/chat-mentions";
 import type { ChatTarget } from "../model/chat-target";
@@ -172,8 +173,11 @@ function ChatBubble({
   corners,
   className,
   style,
+  fill,
 }: PropsWithChildren<{
   agent: boolean;
+  /** The background of an agent's bubble. Absent, it is the neutral control gray. */
+  fill?: string | null | undefined;
   collapsed?: boolean;
   /** Off when Settings turns reply animation off: the background takes each new size at once. */
   animateSize: boolean;
@@ -225,8 +229,14 @@ function ChatBubble({
           // A new view when the setting changes, so a filled background keeps no animated size.
           key={sized ? "sized" : "filled"}
           pointerEvents="none"
-          className="absolute left-0 top-0 bg-control/60"
-          style={[{ borderCurve: "circular" }, corners, sized ? null : StyleSheet.absoluteFill, background]}
+          className={fill ? "absolute left-0 top-0" : "absolute left-0 top-0 bg-control/60"}
+          style={[
+            { borderCurve: "circular" },
+            fill ? { backgroundColor: fill } : null,
+            corners,
+            sized ? null : StyleSheet.absoluteFill,
+            background,
+          ]}
         />
       ) : null}
       {children}
@@ -328,6 +338,12 @@ interface MessageRowShared {
   themeMuted: string;
   foreground: ViewStyle["backgroundColor"];
   userForeground: string;
+  /** The text on the reader's own bubble in its theme color: white on near-black or mid grey. */
+  userBubbleText: string;
+  /** The color of the agent of this chat, for its bubbles. Null in a channel, where each speaker has its own. */
+  agentColor: string | null;
+  /** The washed-out bubble fill for an agent color, from the theme tokens. Null keeps the neutral bubble. */
+  agentBubbleTint: (agentColor: string) => string | null;
   /** Unset when the user's messages do not use the agent color. */
   userBubbleStyle: ComponentProps<typeof Animated.View>["style"] | undefined;
   /** The agent color for the controls of an attachment, unset with the same setting. */
@@ -551,10 +567,12 @@ const MessageRow = memo(function MessageRow({
   // as on desktop, so it does not read as the reader's own.
   const memberColor =
     message.kind === "message" && message.sender ? getBloubAvatarColor(message.sender.id, null) : undefined;
-  const textColor =
-    message.kind === "message" && message.author === "user" && userBubbleStyle && !memberColor
-      ? userForeground
-      : foreground;
+  const ownBubble = message.kind === "message" && message.author === "user" && !memberColor;
+  const textColor = ownBubble ? (userBubbleStyle ? userForeground : shared.userBubbleText) : foreground;
+  // An agent's reply takes a pale wash of the agent's own color: the speaker's in a channel.
+  const replyColor = speaker ? getBloubAvatarColor(speaker.avatarSeed, speaker.avatarHue) : shared.agentColor;
+  const replyFill =
+    message.kind === "message" && message.author === "agent" && replyColor ? shared.agentBubbleTint(replyColor) : null;
   // A generation owns its first attachment, the image; any further files follow in order.
   const files =
     message.kind === "message"
@@ -659,9 +677,9 @@ const MessageRow = memo(function MessageRow({
             corners={bubbleCorners(message.author === "user" ? "end" : "start", joinsAbove, joinsBelow)}
             className={
               message.author === "user"
-                ? `self-end px-[14px] py-[9px] ${userBubbleStyle || memberColor ? "" : "bg-control/60"} max-w-full`
-                : // HoleA.I: an agent's reply in a quiet gray bubble, as in a phone messenger.
-                  `max-w-full self-start ${waiting ? "" : "bg-control/60 px-[14px] py-[9px]"}`
+                ? `self-end px-[14px] py-[9px] ${userBubbleStyle || memberColor ? "" : "bg-bubble-user"} max-w-full`
+                : // An agent's reply in a pale wash of its color; neutral when the color is unknown.
+                  `max-w-full self-start ${waiting ? "" : `${replyFill ? "" : "bg-control/60"} px-[14px] py-[9px]`}`
             }
             style={[
               { borderCurve: "circular", overflow: "hidden" },
@@ -672,6 +690,7 @@ const MessageRow = memo(function MessageRow({
                   : userBubbleStyle
                 : undefined,
             ]}
+            fill={replyFill}
           >
             {/* The message text stays mounted while the reader selects, so it does not change size or
                 play its reveal again. Without native text views, the selectable text covers it at
@@ -1040,12 +1059,29 @@ export const ChatMessageList = memo(function ChatMessageList({
       );
     }
   }, [approvals, agentsById, target.name, t]);
-  const [userForegroundColor, themeForegroundColor, themeMutedColor] = useCSSVariable([
+  const [
+    userForegroundColor,
+    themeForegroundColor,
+    themeMutedColor,
+    userBubbleTextColor,
+    agentBubbleBaseColor,
+    agentBubbleTintStrength,
+  ] = useCSSVariable([
     "--openbot-text-on-light",
     "--openbot-text-primary",
     "--openbot-text-muted",
+    "--openbot-bubble-user-text",
+    "--openbot-bubble-agent-base",
+    "--openbot-bubble-agent-tint",
   ]);
   const userForeground = String(userForegroundColor);
+  const userBubbleText = String(userBubbleTextColor);
+  const agentBubbleBase = String(agentBubbleBaseColor);
+  const agentBubbleStrength = Number(agentBubbleTintStrength);
+  const agentBubbleTint = useCallback(
+    (agentColor: string) => agentBubbleFill(agentColor, agentBubbleBase, agentBubbleStrength),
+    [agentBubbleBase, agentBubbleStrength],
+  );
   const themeForeground = String(themeForegroundColor);
   const themeMuted = String(themeMutedColor);
   const reducedMotion = useReducedMotion();
@@ -1214,6 +1250,9 @@ export const ChatMessageList = memo(function ChatMessageList({
       themeMuted,
       foreground,
       userForeground,
+      userBubbleText,
+      agentColor: target.kind === "agent" ? userBubbleColor : null,
+      agentBubbleTint,
       // A channel has no one agent color for the reader's messages.
       userBubbleStyle: target.kind === "agent" && agentColorMessages ? userBubbleStyle : undefined,
       attachmentTint:
@@ -1244,6 +1283,8 @@ export const ChatMessageList = memo(function ChatMessageList({
       themeMuted,
       foreground,
       userForeground,
+      userBubbleText,
+      agentBubbleTint,
       userBubbleStyle,
       userBubbleColor,
       agentColorMessages,

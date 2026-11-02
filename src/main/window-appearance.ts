@@ -65,6 +65,37 @@ export function followWindowGlass(window: BrowserWindow, darkColor: string): voi
   follow(window, update);
 }
 
+/** The height of the app's top row (`--left-header-height`), which the Windows window buttons share. */
+const WINDOW_CONTROLS_HEIGHT = 38;
+
+function isDark(): boolean {
+  return current.appearance === "system" ? nativeTheme.shouldUseDarkColors : current.appearance === "dark";
+}
+
+/**
+ * The window buttons on Windows and Linux, drawn by the system over the app's top row: the window
+ * has no title bar, so the page runs edge to edge like on macOS. The page keeps the buttons' corner
+ * free with the `titlebar-area-*` environment values.
+ */
+export function windowControlsOverlay(): Electron.TitleBarOverlayOptions {
+  return { color: "#00000000", symbolColor: isDark() ? "#e6e6e6" : "#1c1c1c", height: WINDOW_CONTROLS_HEIGHT };
+}
+
+/** Frameless window options: macOS keeps its traffic lights, other systems draw buttons over the page. */
+export function framelessWindowOptions(): Electron.BrowserWindowConstructorOptions {
+  return process.platform === "darwin"
+    ? { titleBarStyle: "hidden", trafficLightPosition: { x: 12, y: 13 } }
+    : { titleBarStyle: "hidden", titleBarOverlay: windowControlsOverlay() };
+}
+
+/** Keeps the Windows window buttons readable on the current appearance until the window closes. */
+export function followWindowControls(window: BrowserWindow): void {
+  if (process.platform === "darwin") return;
+  follow(window, () => {
+    if (!window.isDestroyed()) window.setTitleBarOverlay(windowControlsOverlay());
+  });
+}
+
 function follow(window: BrowserWindow, update: () => void): void {
   nativeTheme.on("updated", update);
   listeners.add(update);

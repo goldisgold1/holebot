@@ -1,9 +1,10 @@
 import { TEAM_AGENT_CREATE_MODEL_CAPABILITY } from "@openbot/contracts/team-protocol/current";
-import { FIRST_AGENT_SUGGESTIONS, FirstAgentSetup } from "@openbot/ui/features/agents/FirstAgentSetup";
+import { FirstAgentSetup } from "@openbot/ui/features/agents/FirstAgentSetup";
 import { createEffect, createMemo, createSignal } from "solid-js";
 import { useProviders } from "../../providers";
 import { useCustomAgents } from "../custom-agents/custom-agents-context";
 import { useSetup } from "../onboarding/onboarding-context";
+import { orderStarterSuggestions, rememberedStarterAgents } from "../onboarding/onboarding-roles";
 import { useServerSettings } from "../servers/server-settings";
 import { useServers } from "../servers/servers-context";
 import { useAgentActions } from "./agent-actions";
@@ -67,6 +68,8 @@ export function WorkspaceAgentSetup() {
    * also stops it, so the development default's level does not replace the user's.
    */
   const [modelTouched, setModelTouched] = createSignal(false);
+  /** The starter agents chosen in first run lead the suggestions; the rest follow in their usual order. */
+  const suggestions = orderStarterSuggestions(rememberedStarterAgents());
   createEffect(
     () => ({
       touched: modelTouched(),
@@ -98,7 +101,7 @@ export function WorkspaceAgentSetup() {
   return (
     <FirstAgentSetup
       value={agentSetupDraft()}
-      suggestions={FIRST_AGENT_SUGGESTIONS}
+      suggestions={suggestions}
       mode={agentList().length === 0 ? "first" : "additional"}
       submitting={creatingAgent()}
       error={agentSetupError()}

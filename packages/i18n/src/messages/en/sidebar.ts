@@ -143,4 +143,8 @@ export const messages = defineMessages("sidebar", {
   "sidebar.community.joinDiscord": "Join the Discord",
   "sidebar.community.followX": "Follow OpenBot on X",
   "sidebar.community.dismiss": "Dismiss the community invitation",
+  "sidebar.moreUnreads.label": "More unreads",
+  "sidebar.moreUnreads.above": "More unreads above",
+  "sidebar.moreUnreads.below": "More unreads below",
+  "sidebar.moreUnreads.count": { one: "{count} unread message", other: "{count} unread messages" },
 });

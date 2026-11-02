@@ -1,0 +1,97 @@
+/*
+ * The freshness notice above the transcript, in Grok Bot's compact banner shape: one line, 9/12
+ * padding, 9px corners, a 13px icon in the tone of the phase. It stands in the chat column under the
+ * header and never covers a message.
+ */
+.transcript-freshness {
+  display: flex;
+  width: min(calc(100% - 2 * var(--openbot-space-3)), var(--conversation-column-width, 100%));
+  margin: var(--openbot-space-2) auto 0;
+  flex: none;
+  align-items: center;
+  gap: var(--openbot-space-2);
+  padding: var(--holeai-toast-padding-block) var(--holeai-toast-padding-inline);
+  border: 1px solid var(--openbot-border);
+  border-radius: var(--holeai-radius-toast);
+  background: var(--openbot-bg-surface-raised);
+  box-shadow: var(--openbot-shadow-card);
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+  animation: transcript-freshness-in var(--openbot-duration-normal) var(--openbot-ease-out) both;
+}
+
+.transcript-freshness[data-leaving] {
+  animation: transcript-freshness-out var(--openbot-duration-slow) var(--openbot-ease-out) both;
+}
+
+.transcript-freshness-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--openbot-text-secondary);
+}
+
+.transcript-freshness-icon > svg {
+  width: var(--holeai-icon-toast);
+  height: var(--holeai-icon-toast);
+}
+
+.transcript-freshness[data-phase="refreshing"] .transcript-freshness-icon > svg {
+  animation: transcript-freshness-spin var(--holeai-duration-shimmer) linear infinite;
+}
+
+.transcript-freshness[data-phase="fresh"] .transcript-freshness-icon {
+  color: var(--openbot-accent-text);
+}
+
+.transcript-freshness-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  column-gap: var(--openbot-space-2);
+}
+
+.transcript-freshness-title {
+  font-weight: var(--openbot-weight-medium);
+}
+
+.transcript-freshness-body {
+  min-width: 0;
+  color: var(--openbot-text-muted);
+}
+
+.transcript-freshness-dismiss.ui-button {
+  flex: none;
+  margin-block: calc(-1 * var(--openbot-space-1));
+  margin-inline-end: calc(-1 * var(--openbot-space-1));
+  color: var(--openbot-text-muted);
+}
+
+@keyframes transcript-freshness-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--openbot-space-1)));
+  }
+}
+
+@keyframes transcript-freshness-out {
+  to {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--openbot-space-1)));
+  }
+}
+
+@keyframes transcript-freshness-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transcript-freshness,
+  .transcript-freshness[data-leaving],
+  .transcript-freshness[data-phase="refreshing"] .transcript-freshness-icon > svg {
+    animation: none;
+  }
+}

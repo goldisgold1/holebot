@@ -71,6 +71,7 @@ export function SidebarChannelRow(rowProps: { channel: ChannelSummary; waiting?:
         ]}
         aria-label={`${rowProps.channel.name}${title() ? `, ${title()}` : ""}${labelPreview()}${waitLabel()}`}
         aria-pressed={active() ? "true" : "false"}
+        data-sidebar-unread={rowProps.waiting ? undefined : rowProps.channel.unreadCount || undefined}
         data-cuelume-navigate=""
         onClick={(event: MouseEvent) => {
           if (!sidebarClickIsSuppressed(event)) props.onSelectChannel?.(rowProps.channel.id);

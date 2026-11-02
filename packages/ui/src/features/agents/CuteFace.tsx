@@ -1,6 +1,6 @@
 import { CUTE_FACE_EYE, CUTE_FACE_EYES, cuteFaceBody, cuteFaceClosedEyes } from "@openbot/brand/cute-face";
 import { Show } from "solid-js";
-import type { AvatarMood, SupportedAvatarSilhouetteId } from "../../bloub-avatar";
+import type { AvatarFaceMood, SupportedAvatarSilhouetteId } from "../../bloub-avatar";
 
 /**
  * HoleA.I: the agent face in the Grok Bot style - a flat seeded colour and silhouette with two small
@@ -11,7 +11,7 @@ export function CuteFace(props: {
   seed: string;
   color: string;
   shape: SupportedAvatarSilhouetteId;
-  mood: AvatarMood;
+  mood: AvatarFaceMood;
   animated: boolean;
   delay?: number | undefined;
 }) {

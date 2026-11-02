@@ -1713,10 +1713,11 @@ html.ui-textarea-resizing {
   --normal-border: var(--openbot-border);
   --normal-border-hover: var(--openbot-border-focus);
   --normal-text: var(--openbot-text-primary);
-  --border-radius: var(--openbot-radius-lg);
+  --border-radius: var(--holeai-radius-toast);
 }
 
-/* Three columns and two rows: the mark, the words, and an action row under them. Sonner lays the
+/* Grok Bot's compact toast: 9/12 padding, 9px corners, the small type step and a 13px mark.
+   Three columns and two rows: the mark, the words, and an action row under them. Sonner lays the
    toast out as one flex line, which works until an action is present — the button then sits between
    the description and the close control, and the description wraps early around it. Placing the
    action on its own row gives the words the full width and puts the button where a reader looks for
@@ -1730,16 +1731,16 @@ html.ui-textarea-resizing {
   align-items: start;
   column-gap: 0;
   row-gap: var(--openbot-space-2);
-  min-height: var(--openbot-control-xl);
-  padding: var(--openbot-space-3) var(--openbot-space-4);
+  min-height: 0;
+  padding: var(--holeai-toast-padding-block) var(--holeai-toast-padding-inline);
   border-color: transparent;
-  border-radius: var(--openbot-radius-lg);
+  border-radius: var(--holeai-radius-toast);
   background: var(--openbot-bg-surface-raised);
   box-shadow: 0 0 0 1px var(--openbot-border);
   color: var(--openbot-text-primary);
   font-family: var(--openbot-font-sans);
-  font-size: var(--openbot-text-md);
-  line-height: var(--openbot-leading-md);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
   transition:
     transform var(--ui-toast-motion-duration) var(--openbot-ease-out),
     opacity var(--ui-toast-motion-duration) var(--openbot-ease-out),
@@ -1779,7 +1780,7 @@ html.ui-textarea-resizing {
 .ui-toaster [data-sonner-toast][data-styled="true"] [data-title] {
   color: var(--openbot-text-primary);
   font-weight: var(--openbot-weight-medium);
-  line-height: var(--openbot-leading-md);
+  line-height: var(--openbot-leading-sm);
 }
 
 .ui-toaster [data-sonner-toast][data-styled="true"] [data-description] {
@@ -1835,16 +1836,17 @@ html.ui-textarea-resizing {
 
 .ui-toaster [data-sonner-toast][data-styled="true"] [data-icon] {
   grid-area: 1 / 1;
-  width: var(--openbot-icon-md);
-  height: var(--openbot-icon-md);
+  width: var(--holeai-icon-toast);
+  height: var(--holeai-icon-toast);
   /* The column gap is zero so that a toast with no icon starts its text at the padding edge. The
-     space between the mark and the words is this margin instead. */
-  margin: 1px var(--openbot-space-3) 0 0;
+     space between the mark and the words is this margin instead; the top margin centres the 13px
+     mark on the first 16px line. */
+  margin: 1.5px var(--openbot-space-2) 0 0;
 }
 
 .ui-toast-icon {
-  width: var(--openbot-icon-md);
-  height: var(--openbot-icon-md);
+  width: var(--holeai-icon-toast);
+  height: var(--holeai-icon-toast);
   stroke-width: var(--openbot-icon-stroke);
 }
 

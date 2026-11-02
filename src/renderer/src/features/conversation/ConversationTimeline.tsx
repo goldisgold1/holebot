@@ -6,6 +6,7 @@ import type { AgentMessage, ChatActionMarkerModel } from "@openbot/ui/data";
 import { ChannelActivityIndicator } from "@openbot/ui/features/channels/ChannelActivityIndicator";
 import { AgentActivityIndicator } from "@openbot/ui/features/conversation/AgentActivity";
 import { AgentChatEmptyState } from "@openbot/ui/features/conversation/AgentChatEmptyState";
+import { type AgentExchange, AgentExchangeView } from "@openbot/ui/features/conversation/AgentExchangeView";
 import { AgentStepsDisclosure, type AgentStepsTrace } from "@openbot/ui/features/conversation/AgentSteps";
 import { AttachmentCards } from "@openbot/ui/features/conversation/AttachmentCards";
 import { UsageLimitAskCard } from "@openbot/ui/features/conversation/BackupModels";
@@ -392,6 +393,32 @@ export function ConversationTimeline() {
       </Show>
     );
   };
+  /*
+   * An agent message row opens its messages in a full-pane exchange view over the chat. The messages
+   * draw as the text under a marker does. The row that opened the view gets the focus back on close.
+   */
+  const [openExchange, setOpenExchange] = createSignal<AgentExchange | null>(null);
+  let exchangeReturnFocus: HTMLElement | null = null;
+  const openAgentExchange = (exchange: AgentExchange) => {
+    const selfAgentId = !channel && props.agent?.id ? props.agent.id : exchange.selfAgentId;
+    exchangeReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setOpenExchange({
+      ...exchange,
+      selfAgentId,
+      peerAgentIds: exchange.peerAgentIds.filter((agentId) => agentId !== selfAgentId),
+    });
+  };
+  const closeAgentExchange = () => {
+    setOpenExchange(null);
+    const target = exchangeReturnFocus;
+    exchangeReturnFocus = null;
+    if (target?.isConnected) queueMicrotask(() => target.focus({ preventScroll: true }));
+  };
+  const exchangeReturnName = () => {
+    const exchange = openExchange();
+    const self = props.agents.find((agent) => agent.id === exchange?.selfAgentId);
+    return (channel ? channel.name() : props.agent?.name) ?? self?.name ?? t("chat.message.agentFallback");
+  };
   // A run of one sender breaks where another person starts to write, and in a channel where another
   // agent starts to write.
   const senderRunRow = (message: AgentMessage) => {
@@ -581,8 +608,12 @@ export function ConversationTimeline() {
       </Show>
 
       <div
-        class={["conversation-scroll", scrollFades.classes(), { "conversation-covered": sideThreadOpen() }]}
-        inert={sideThreadOpen()}
+        class={[
+          "conversation-scroll",
+          scrollFades.classes(),
+          { "conversation-covered": sideThreadOpen(), "agent-exchange-covered": openExchange() !== null },
+        ]}
+        inert={sideThreadOpen() || openExchange() !== null}
         ref={(element) => {
           setScrollElement(element);
           rail.ref(element);
@@ -844,6 +875,7 @@ export function ConversationTimeline() {
                                                 onToggleRoutineRun={toggleRoutineRun}
                                                 onToggleAgentMessage={toggleAgentMessage}
                                                 agentMessageText={agentMessageText}
+                                                onOpenAgentExchange={openAgentExchange}
                                                 instructions={localInstructionsCalls()}
                                                 onOpenInstructions={
                                                   channel || !localInstructionsCalls()
@@ -1468,6 +1500,17 @@ export function ConversationTimeline() {
           </div>
         </Show>
       </div>
+      <Show when={!sideThreadOpen() && openExchange()}>
+        {(exchange) => (
+          <AgentExchangeView
+            exchange={exchange()}
+            agents={props.agents}
+            returnName={exchangeReturnName()}
+            renderMessage={agentMessageText}
+            onClose={closeAgentExchange}
+          />
+        )}
+      </Show>
     </>
   );
 }

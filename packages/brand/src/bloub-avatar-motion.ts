@@ -27,6 +27,16 @@ export type ShapeSafeStateId = (typeof SHAPE_SAFE_STATES)[number];
  */
 export type AvatarMood = "idle" | "working" | "waiting" | "failed" | "responded" | "connecting" | "asleep";
 
+/**
+ * The faces of a voice call: the caller talks and the face leans in to hear (`listening`), or the
+ * agent talks and the face moves with its voice (`speaking`). Only the desktop call wears them, so
+ * they sit beside `AvatarMood` rather than in it, and a surface that lists every mood need not.
+ */
+export type VoiceAvatarMood = "listening" | "speaking";
+
+/** Every face an avatar can wear: its moods and the faces of a voice call. */
+export type AvatarFaceMood = AvatarMood | VoiceAvatarMood;
+
 export interface AvatarMoodPresentation {
   state: ShapeSafeStateId;
   /** `null` = wear the expression the seed chose, which is the avatar's resting face. */
@@ -52,7 +62,7 @@ export interface AvatarMoodPresentation {
  * agent that is working looks attentive, one that is waiting on an answer looks curious, a failed
  * turn looks sad, and a fresh reply looks pleased before it settles back to the resting face.
  */
-const MOOD_PRESENTATIONS: Readonly<Record<AvatarMood, AvatarMoodPresentation>> = {
+const MOOD_PRESENTATIONS: Readonly<Record<AvatarFaceMood, AvatarMoodPresentation>> = {
   idle: { state: "idle", expression: null, rings: false, breathe: 0 },
   working: { state: "idle", expression: "attentif", rings: false, breathe: 0 },
   waiting: { state: "idle", expression: "curieux", rings: false, breathe: 0 },
@@ -60,9 +70,11 @@ const MOOD_PRESENTATIONS: Readonly<Record<AvatarMood, AvatarMoodPresentation>> =
   responded: { state: "idle", expression: "heureux", rings: false, breathe: 0 },
   connecting: { state: "swirl", expression: "attentif", rings: false, breathe: 0 },
   asleep: { state: "idle", expression: "somnolent", rings: false, breathe: 0 },
+  listening: { state: "idle", expression: "attentif", rings: false, breathe: 0 },
+  speaking: { state: "idle", expression: "heureux", rings: false, breathe: 0 },
 };
 
-export function avatarMoodPresentation(mood: AvatarMood): AvatarMoodPresentation {
+export function avatarMoodPresentation(mood: AvatarFaceMood): AvatarMoodPresentation {
   return MOOD_PRESENTATIONS[mood];
 }
 
@@ -73,9 +85,11 @@ export function avatarMoodPresentation(mood: AvatarMood): AvatarMoodPresentation
  * held expression, which glides into place through `BotEngine.setExpression` and then rests. The
  * distinction decides whether a surface starts a loop, so it lives here with the table it reads.
  */
-export function avatarMoodIsBusy(mood: AvatarMood): boolean {
+export function avatarMoodIsBusy(mood: AvatarFaceMood): boolean {
   // HoleA.I: a thinking face wanders around instead of flying orbit rings, so it is busy without them.
   if (mood === "working" || mood === "connecting") return true;
+  // A voice call: the face leans in while it listens and bounces with the words while it speaks.
+  if (mood === "listening" || mood === "speaking") return true;
   const presentation = MOOD_PRESENTATIONS[mood];
   return presentation.rings || presentation.breathe > 0;
 }

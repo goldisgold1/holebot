@@ -2,6 +2,7 @@ import { agentProviderDescriptor, isKnownAgentProvider } from "@openbot/contract
 import { DEFAULT_AGENT_ACCESS } from "@openbot/contracts/ipc";
 import { AgentFolderDropOverlay, createAgentFolders } from "@openbot/ui/features/conversation/AgentFolders";
 import { MessageSelectionActions } from "@openbot/ui/features/conversation/SelectionActions";
+import { TranscriptFreshnessBanner } from "@openbot/ui/features/conversation/TranscriptFreshnessBanner";
 import { useText } from "@openbot/ui/text";
 import { createEffect, Show } from "solid-js";
 import { currentDevicePlatform } from "../../send-shortcut-preference";
@@ -14,6 +15,7 @@ import { ConversationTimeline } from "./ConversationTimeline";
 import { ConversationViewScopeContext, createConversationViewScope } from "./conversation-scope";
 import type { ConversationProps } from "./conversation-types";
 import { conversationOwnerId } from "./stores/composer-store";
+import { createTranscriptFreshness } from "./transcript-freshness";
 
 /** @internal Keeps file-drag state active while the pointer moves between conversation descendants. */
 function isDragLeavingConversation(currentTarget: HTMLElement, relatedTarget: EventTarget | null): boolean {
@@ -60,6 +62,12 @@ export function ConversationView(props: ConversationProps) {
     const agent = folderDropAgent();
     return agent ? { agentId: agent.id, agentName: agent.name, calls: folderCalls } : undefined;
   });
+  const freshness = createTranscriptFreshness(() => ({
+    key: `${props.server?.id ?? "local"}:${conversationOwnerId(props) ?? ""}`,
+    server: props.server,
+    loaded: props.loaded,
+    hasMessages: props.messages.length > 0,
+  }));
   createEffect(
     () => props.globalOverlayOpen,
     (open) => {
@@ -85,7 +93,6 @@ export function ConversationView(props: ConversationProps) {
               filePreviewOpen() ||
               filesOpen() ||
               activeRightPanel() === "question" ||
-              activeRightPanel() === "voice" ||
               activeRightPanel() === "subagent" ||
               activeRightPanel() === "thread" ||
               activeRightPanel() === "side-panel",
@@ -131,6 +138,7 @@ export function ConversationView(props: ConversationProps) {
         </Show>
         <ConversationHeader />
         {props.notice}
+        <TranscriptFreshnessBanner phase={freshness.phase()} onDismiss={freshness.dismiss} />
 
         {/* A side thread covers the agent's own chat and its message box. They stay mounted, so the way
             back keeps their rows and scroll position and does not build the chat again. */}

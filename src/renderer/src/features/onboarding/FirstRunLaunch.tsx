@@ -1,7 +1,8 @@
 import type { AppLogoVariant } from "@openbot/brand";
+import { Button } from "@openbot/ui";
 import { AgentAvatar } from "@openbot/ui/features/agents/AgentAvatar";
 import { useText } from "@openbot/ui/text";
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import type { OnboardingAvatarVariant } from "./onboarding-avatars";
 
 // A zigzag in the hand of the logo eyes. It fills from the left with the download, or draws and
@@ -18,6 +19,13 @@ interface FirstRunLaunchProps {
   downloading: boolean;
   /** The download in percent, or null when it reports none. */
   progress: number | null;
+  /** Setup stopped: the download, the start or the save failed. The screen offers to try again. */
+  failed?: boolean;
+  /** Why setup stopped, from the step that failed. */
+  reason?: string;
+  onRetry?: () => void;
+  /** Back to the steps, to choose another way to start. */
+  onBack?: () => void;
 }
 
 /**
@@ -27,12 +35,17 @@ interface FirstRunLaunchProps {
  */
 export function FirstRunLaunch(props: FirstRunLaunchProps) {
   const { t } = useText();
-  const label = () => (props.downloading ? t("onboarding.launch.downloading") : t("onboarding.opening"));
   const percent = () =>
-    props.downloading && props.progress !== null ? Math.min(100, Math.max(0, props.progress)) : null;
+    props.downloading && props.progress !== null ? Math.round(Math.min(100, Math.max(0, props.progress))) : null;
+  const label = () => {
+    if (props.failed) return t("onboarding.launch.failedTitle");
+    const known = percent();
+    if (known !== null) return t("onboarding.launch.settingUp", { percent: known });
+    return props.downloading ? t("onboarding.launch.downloading") : t("onboarding.opening");
+  };
 
   return (
-    <div class="first-run-launch" data-variant={props.variant}>
+    <div class="first-run-launch" data-variant={props.variant} data-failed={props.failed ? "true" : "false"}>
       <div class="first-run-launch-stage">
         <div class="first-run-launch-team" aria-hidden="true">
           <For each={props.team}>
@@ -67,9 +80,27 @@ export function FirstRunLaunch(props: FirstRunLaunchProps) {
               <polyline class="first-run-launch-fill" points={SCRIBBLE_POINTS} pathLength="1" />
             </svg>
           </div>
-          <p class="first-run-launch-label" role="status">
-            {label()}
-          </p>
+          <Show
+            when={props.failed}
+            fallback={
+              <p class="first-run-launch-label" role="status">
+                {label()}
+              </p>
+            }
+          >
+            <div class="first-run-launch-failure" role="alert">
+              <p class="first-run-launch-label">{label()}</p>
+              <p class="first-run-launch-detail">{props.reason || t("onboarding.launch.failedDetail")}</p>
+            </div>
+            <div class="first-run-launch-actions">
+              <Button type="button" variant="default" onClick={() => props.onRetry?.()}>
+                {t("common.tryAgain")}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => props.onBack?.()}>
+                {t("common.back")}
+              </Button>
+            </div>
+          </Show>
         </div>
       </div>
     </div>

@@ -8,12 +8,14 @@ import { ComputerUseSetup } from "../computer-use/ComputerUseSetup";
 import { FirstRunChoice } from "./FirstRunChoice";
 import { FirstRunLaunch } from "./FirstRunLaunch";
 import { FirstRunPlanStep } from "./FirstRunPlanStep";
+import { FirstRunRoleStep } from "./FirstRunRoleStep";
 import { firstRunTransition } from "./first-run-transition";
 import { OnboardingComputerVisual } from "./OnboardingComputerVisual";
 import { createOnboardingAvatarVariant, createOnboardingTeam, onboardingSessionSeed } from "./onboarding-avatars";
 import type { OnboardingJourney } from "./onboarding-context";
 import { onboardingPort } from "./onboarding-port";
 import { FREE_PROVIDER } from "./onboarding-provider-rows";
+import { type OnboardingRoleId, rememberStarterAgents, roleStarters } from "./onboarding-roles";
 import { createSetupProviders, type SetupProviderProps } from "./SetupProviderPicker";
 import { createSetupNext } from "./setup-next";
 
@@ -41,7 +43,7 @@ const TEAM_SIZE = 7;
 const TERMS_URL = "https://openbot.run/terms";
 const PRIVACY_URL = "https://openbot.run/privacy";
 
-type FirstRunStep = "choose" | "plan" | "computer";
+type FirstRunStep = "choose" | "role" | "plan" | "computer";
 /** How the user starts: on free models, or on a plan they connect. `null` until they choose. */
 type FirstRunPath = "free" | "plan" | null;
 
@@ -57,12 +59,21 @@ interface FirstRunState {
   analytics: boolean;
   /** The user changed the box, so a late regional default does not replace their choice. */
   analyticsTouched: boolean;
+  /** What the user works on most. `null` until they answer, or when they skip the question. */
+  role: OnboardingRoleId | null;
+  /** The starter agents chosen on the role step, in the order they were chosen. */
+  starters: string[];
+  /** Setup stopped while the user waited: the setup screen offers to try again. */
+  setupFailed: boolean;
 }
 
 /**
  * First run with one question first: start free, or connect a plan. The free path needs no
  * sign-in. Its provider downloads from the moment first run opens, so it is often ready when the
- * user chooses. Only macOS asks for the Computer Use permissions; other systems have none.
+ * user chooses. Both paths then ask what the user works on most, which chooses a few starter agents
+ * for the first-agent form (the user can skip it). Only macOS asks for the Computer Use permissions;
+ * other systems have none. While setup finishes, the setup screen shows its progress, and when it
+ * fails it offers to try again.
  */
 export function FirstRunFlow(props: FirstRunFlowProps) {
   const { t, errorMessage } = useText();
@@ -74,6 +85,9 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
     skipped: false,
     analytics: false,
     analyticsTouched: false,
+    role: null,
+    starters: [],
+    setupFailed: false,
   });
   // A failed read keeps the box clear, which is the consent answer.
   void onboardingPort()
@@ -103,7 +117,7 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
 
   const stepsFor = (path: FirstRunPath): FirstRunStep[] => {
     const permissions: FirstRunStep[] = props.platform === "darwin" ? ["computer"] : [];
-    return path === "plan" ? ["choose", "plan", ...permissions] : ["choose", ...permissions];
+    return path === "plan" ? ["choose", "role", "plan", ...permissions] : ["choose", "role", ...permissions];
   };
   const steps = () => stepsFor(state.path);
   const stepNumber = () => steps().indexOf(state.step) + 1;
@@ -171,6 +185,7 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
       else if (failed)
         setState((current) => {
           current.finishWhenReady = false;
+          current.setupFailed = true;
         });
     },
   );
@@ -204,15 +219,17 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
       if (fromPlan) current.skipped = true;
     });
     retryFree();
-    // The step after the first question; the plan step's "Start free instead" also lands there.
-    const following = stepsFor("free")[1];
+    // The step after the first question. The plan step's "Start free instead" comes after the role
+    // question, which the user already answered, so it lands on the step after that one.
+    const freeSteps = stepsFor("free");
+    const following = fromPlan ? freeSteps[freeSteps.indexOf("role") + 1] : freeSteps[1];
     if (following) {
       moveTo(following);
       return;
     }
-    // With no other step, the first question is where the user waits for the free provider. The
+    // With no other step, the role question is where the user waits for the free provider. The
     // wait opens the app when it is ready, at once if it is ready now.
-    if (state.step !== "choose") moveTo("choose");
+    if (state.step !== "role") moveTo("role");
     setState((current) => {
       current.finishWhenReady = true;
     });
@@ -225,7 +242,37 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
     setState((current) => {
       current.path = "plan";
     });
-    moveTo("plan");
+    // The role question comes first on both paths; the plan list follows it.
+    moveTo("role");
+  }
+
+  /** An answer chooses its starter agents again, so the cards always match the answer shown. */
+  function chooseRole(role: OnboardingRoleId): void {
+    setState((current) => {
+      current.role = role;
+      current.starters = roleStarters(role);
+    });
+  }
+
+  function toggleStarter(id: string): void {
+    setState((current) => {
+      current.starters = current.starters.includes(id)
+        ? current.starters.filter((starter) => starter !== id)
+        : [...current.starters, id];
+    });
+  }
+
+  /** Skips the role question: no starter agents are chosen, and first run goes on as Next would. */
+  function skipRole(): void {
+    trackStep("skipped");
+    setState((current) => {
+      current.role = null;
+      current.starters = [];
+    });
+    rememberStarterAgents([]);
+    const following = steps()[stepNumber()];
+    if (following) moveTo(following);
+    else openWhenReady();
   }
 
   /** Only the plan step and Open wait for the provider: the free path continues while it starts. */
@@ -237,6 +284,7 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
       return;
     }
     trackStep("next");
+    if (state.step === "role") rememberStarterAgents(state.starters);
     if (following) moveTo(following);
     else openWhenReady();
   }
@@ -275,7 +323,25 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
   function stopWaitUnlessSent(sent: boolean): void {
     if (sent) return;
     setState((current) => {
+      // Only a wait the user started becomes a failure; a background start that fails waits for them.
+      if (current.finishWhenReady) current.setupFailed = true;
       current.finishWhenReady = false;
+    });
+  }
+
+  /** "Try again" on the setup screen: the wait starts again, and the download or start runs again. */
+  function retrySetup(): void {
+    providers.setError("");
+    setState((current) => {
+      current.setupFailed = false;
+    });
+    openWhenReady();
+  }
+
+  /** "Back" on the setup screen: the steps show again, with the reason under them. */
+  function leaveFailedSetup(): void {
+    setState((current) => {
+      current.setupFailed = false;
     });
   }
 
@@ -304,18 +370,21 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
       providers.setError(errorMessage(cause, t("onboarding.error.finish")), cause);
       setState((current) => {
         current.saving = false;
+        current.setupFailed = true;
       });
     }
   }
 
   const busy = () => state.saving || state.finishWhenReady;
+  /** The setup screen shows while first run waits to open the app, and after that wait failed. */
+  const launchWanted = () => busy() || state.setupFailed;
   /** While first run waits to open the app, the splash covers the steps. It comes and goes in a transition. */
   const [launchShown, setLaunchShown] = createSignal(false);
-  createEffect(busy, (waiting) => {
+  createEffect(launchWanted, (waiting) => {
     if (waiting === launchShown()) return;
     // The update runs a frame later. Saving can fail before it, so it reads the state it applies then.
     void firstRunTransition("open", () => {
-      setLaunchShown(busy());
+      setLaunchShown(launchWanted());
     });
   });
   const stepsShown = () => !launchShown();
@@ -359,6 +428,10 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
             variant={logoVariant()}
             downloading={freeDownloading()}
             progress={freeProgress()}
+            failed={state.setupFailed}
+            reason={providers.error()}
+            onRetry={retrySetup}
+            onBack={leaveFailedSetup}
           />
         }
       >
@@ -397,6 +470,16 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
                   }
                   onOpenTerms={() => void onboardingPort().openUrl(TERMS_URL)}
                   onOpenPrivacy={() => void onboardingPort().openUrl(PRIVACY_URL)}
+                />
+              </Match>
+
+              <Match when={state.step === "role"}>
+                <FirstRunRoleStep
+                  role={state.role}
+                  starters={state.starters}
+                  disabled={busy()}
+                  onRoleChange={chooseRole}
+                  onToggleStarter={toggleStarter}
                 />
               </Match>
 
@@ -448,6 +531,11 @@ export function FirstRunFlow(props: FirstRunFlowProps) {
               <Show when={state.step === "plan"}>
                 <Button type="button" variant="ghost" disabled={busy()} onClick={startFree}>
                   {t("onboarding.choice.startFreeInstead")}
+                </Button>
+              </Show>
+              <Show when={state.step === "role"}>
+                <Button type="button" variant="ghost" disabled={busy()} onClick={skipRole}>
+                  {t("onboarding.action.skip")}
                 </Button>
               </Show>
             </div>

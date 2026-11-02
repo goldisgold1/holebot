@@ -20,7 +20,12 @@ import type { MobileAgent } from "@/features/workspace/model/workspace-types";
 import { haptics } from "@/shared/lib/haptics";
 import { usePressScale } from "@/shared/lib/press-scale";
 import { useText } from "@/shared/lib/text";
-import { type ActivityKind, THINKING_PHRASE_MS, THINKING_PHRASES, thinkingPhraseStart } from "../model/activity-label";
+import {
+  type ActivityKind,
+  THINKING_PHRASE_MS,
+  thinkingPhraseKey,
+  thinkingPhrasesAvailable,
+} from "../model/activity-label";
 import { ThinkingTextGradient } from "./thinking-text-gradient";
 
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
@@ -134,7 +139,8 @@ export function ChatActivityRow({
   const { t, locale } = useText();
   const { onPress } = spec;
   const press = usePressScale(Boolean(onPress));
-  const phrase = useThinkingPhrase(spec.key, spec.thinking && locale === "en");
+  const phraseKey = useThinkingPhrase(spec.key, spec.thinking && thinkingPhrasesAvailable(locale));
+  const phrase = phraseKey ? t(phraseKey) : null;
   const label = phrase ?? spec.label;
   // The label rises in when what it names changes: a new phrase, or a step of another kind. A
   // commentary line that grows keeps its place.
@@ -195,10 +201,10 @@ export function ChatActivityRow({
 }
 
 /**
- * The friendly phrase to show while the agent only thinks, changing every few seconds, or null when
- * the row shows its own label. Each agent starts at its own phrase.
+ * The catalog key of the friendly phrase to show while the agent only thinks, changing every few
+ * seconds, or null when the row shows its own label. Each agent starts at its own phrase.
  */
-function useThinkingPhrase(key: string, enabled: boolean): string | null {
+function useThinkingPhrase(key: string, enabled: boolean): ReturnType<typeof thinkingPhraseKey> | null {
   const [step, setStep] = useState(0);
   useEffect(() => {
     setStep(0);
@@ -207,5 +213,5 @@ function useThinkingPhrase(key: string, enabled: boolean): string | null {
     return () => clearInterval(timer);
   }, [enabled]);
   if (!enabled) return null;
-  return THINKING_PHRASES[(thinkingPhraseStart(key) + step) % THINKING_PHRASES.length] ?? null;
+  return thinkingPhraseKey(key, step);
 }

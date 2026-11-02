@@ -74,8 +74,12 @@ function isSidePanelPane(value: string): value is SidePanelPane {
   return value in SIDE_PANEL_MODES;
 }
 
-/** The pane that shows a panel mode, or null for a mode outside the side panel. */
+/**
+ * The pane that shows a panel mode, or null for a mode outside the side panel. A voice call is a
+ * popover under the chat header, not a pane: it takes no tab and does not dock the side panel.
+ */
 function paneOfMode(mode: RightPanelMode): SidePanelPane | null {
+  if (mode === "voice") return null;
   for (const [pane, paneMode] of Object.entries(SIDE_PANEL_MODES)) {
     if (paneMode === mode && isSidePanelPane(pane)) return pane;
   }

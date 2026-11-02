@@ -1451,3 +1451,51 @@ button.chat-action-target:active,
   content: "·";
   margin-inline-end: var(--openbot-space-1);
 }
+
+/*
+ * The delivery line in Grok Bot's shape: end-aligned under the bubble, 12px between the status and
+ * each text button. "Failed to send" is the danger text at the smallest step in medium weight; "Not
+ * delivered yet" is the muted line a queued send shows.
+ */
+.pending-send-status {
+  column-gap: var(--openbot-space-3);
+  row-gap: var(--openbot-space-1);
+  font-size: var(--openbot-text-sm);
+  line-height: var(--openbot-leading-sm);
+}
+
+.pending-send-label {
+  font-weight: var(--openbot-weight-medium);
+}
+
+.pending-send-label:not(:empty) {
+  margin-inline-end: 0;
+}
+
+.pending-send-queued {
+  color: var(--openbot-text-muted);
+  font-weight: var(--openbot-weight-regular);
+}
+
+/* Text buttons: no fill or padding of their own, so the row reads as one line of words. */
+.pending-send-action.ui-button {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--openbot-text-secondary);
+  font-size: var(--openbot-text-sm);
+  font-weight: var(--openbot-weight-medium);
+  line-height: var(--openbot-leading-sm);
+}
+
+.pending-send-action.ui-button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--openbot-text-primary);
+}
+
+/* The row under the bubble hides until hover; a failed or queued send keeps it in view. */
+.message-entry .message-action-row:has(> .pending-send-status:is([data-state="failed"], [data-state="waiting"])) {
+  opacity: 1;
+  visibility: visible;
+}

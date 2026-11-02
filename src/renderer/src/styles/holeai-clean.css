@@ -1014,3 +1014,28 @@
   width: var(--openbot-icon-sm);
   height: var(--openbot-icon-sm);
 }
+
+/* Borderless window. On Windows the window has no title bar: the system draws its window buttons over
+ * the top-right corner of the top row (`windowControlsOverlay` in main). The inset is that corner's
+ * width, and 0 where the system draws no buttons over the page (macOS, the web client). */
+:root {
+  --holeai-window-controls-inset: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+}
+
+.conversation-header-actions {
+  margin-inline-end: var(--holeai-window-controls-inset);
+}
+
+/* With a side panel open, the panel's header is the top-right corner instead of the chat's. */
+.app-frame-panes:has(.side-panel-header, .settings-panel-header, .file-preview-header, .browser-preview-header)
+.conversation-header-actions {
+  margin-inline-end: 0;
+}
+
+:is(.side-panel-header, .settings-panel-header, .file-preview-header, .browser-preview-header) {
+  padding-inline-end: calc(var(--openbot-space-2) + var(--holeai-window-controls-inset));
+}
+
+:is(.agent-usage-header, .routine-planner-title, .tasks-page-header) {
+  padding-inline-end: calc(var(--openbot-space-3) + var(--holeai-window-controls-inset));
+}

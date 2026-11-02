@@ -28,6 +28,8 @@
   --color-action-foreground: var(--openbot-action-foreground);
   --color-drawer-scrim: var(--openbot-drawer-scrim);
   --color-scroll-edge-overlay: var(--openbot-scroll-edge-overlay);
+  --color-bubble-user: var(--openbot-bubble-user);
+  --color-bubble-user-text: var(--openbot-bubble-user-text);
 
   --text-display: 2rem;
   --text-display--line-height: 2.375rem;

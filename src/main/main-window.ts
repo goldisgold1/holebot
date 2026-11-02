@@ -58,7 +58,13 @@ import type { RemoteWorkflowError } from "./remote-service-effects";
 import { sendToRenderer } from "./renderer-ipc";
 import { isTrustedRendererUrl } from "./trusted-renderer";
 import type { UpdateService } from "./update-service";
-import { followAppearance, followWindowGlass, windowBackgroundColor } from "./window-appearance";
+import {
+  followAppearance,
+  followWindowControls,
+  followWindowGlass,
+  framelessWindowOptions,
+  windowBackgroundColor,
+} from "./window-appearance";
 
 /** The dark background of the main and setup windows, under the page's own canvas. */
 const MAIN_WINDOW_DARK_BACKGROUND = "#0b0d0e";
@@ -198,9 +204,7 @@ export function createMainWindowController({
       // it 11px clear of the 82px where the top row's first control starts, in the app frame and in
       // the full-bleed browser header alike, and y 13 puts its centre line within half a pixel of
       // both of those rows. The setup window below uses the same offsets.
-      ...(process.platform === "darwin"
-        ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 12, y: 13 } }
-        : {}),
+      ...framelessWindowOptions(),
       webPreferences: {
         preload: join(__dirname, "../preload/index.cjs"),
         contextIsolation: true,
@@ -212,6 +216,7 @@ export function createMainWindowController({
     });
     hideMenuBar(window);
     followWindowGlass(window, MAIN_WINDOW_DARK_BACKGROUND);
+    followWindowControls(window);
 
     window.once("ready-to-show", () => {
       performance.mark("openbot:window-ready");
@@ -301,9 +306,7 @@ export function createMainWindowController({
       // The page sets the chat name as its title when it loads.
       title: getTranslate()("window.localHostTitle"),
       icon: appIconPath,
-      ...(process.platform === "darwin"
-        ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 12, y: 13 } }
-        : {}),
+      ...framelessWindowOptions(),
       webPreferences: {
         preload: join(__dirname, "../preload/index.cjs"),
         contextIsolation: true,
@@ -315,6 +318,7 @@ export function createMainWindowController({
     });
     hideMenuBar(window);
     followWindowGlass(window, MAIN_WINDOW_DARK_BACKGROUND);
+    followWindowControls(window);
     chatWindows.set(key, { target: { serverId: target.serverId, agentId: target.agentId }, window });
     window.once("ready-to-show", () => window.show());
     window.on("closed", () => {

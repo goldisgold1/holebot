@@ -53,6 +53,11 @@
   --holeai-duration-tray: 300ms;
   --holeai-duration-enter: 240ms;
   --holeai-duration-shimmer: 1400ms;
+  /* Cards that arrive together, as in first run: each rises a little and settles fast, one just after another. */
+  --holeai-duration-card-enter: 360ms;
+  --holeai-ease-card-enter: cubic-bezier(0.1, 0.9, 0.2, 1);
+  --holeai-stagger-card: 22ms;
+  --holeai-rise-card: 8px;
 }
 
 :root[data-openbot-color-scheme="light"] {
@@ -69,3 +74,50 @@
   --holeai-user-bubble: #e6e6e9;
   --holeai-user-bubble-text: var(--openbot-text-primary);
 }
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Voice call (packages/ui/src/features/conversation/VoicePanel.tsx, styles/voice.css) and the header identity
+ * island it hangs from (styles/header-controls.css). A compact popover under the agent's name, a minimised "on
+ * call" chip in the header, and the face moods of a call.
+ * ------------------------------------------------------------------------------------------------------------- */
+:root {
+  --holeai-radius-voice-call: 34px;
+  --holeai-voice-call-offset: 10px;
+  --holeai-voice-call-z: 40;
+  --holeai-voice-call-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.08);
+  --holeai-voice-face: 36px;
+  --holeai-voice-wave-width: 96px;
+  --holeai-voice-wave-height: 28px;
+  --holeai-voice-control: 32px;
+  --holeai-voice-badge: 28px;
+  --holeai-voice-transcript-max: 240px;
+  --holeai-voice-chip-height: 40px;
+  --holeai-voice-chip-face: 24px;
+  /* How much of the agent's colour tints the chip and the waveform track. */
+  --holeai-voice-tint: 16%;
+  --holeai-duration-island-tint: 120ms;
+  --holeai-duration-voice-connecting: 1400ms;
+  --holeai-duration-voice-listen: 2400ms;
+  --holeai-duration-voice-talk: 420ms;
+  --holeai-duration-voice-think: 1600ms;
+  --holeai-ease-voice-tray: cubic-bezier(0.32, 0.72, 0, 1);
+}
+/* --- end voice --- */
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Message states (packages/ui/src/features/conversation/TranscriptFreshnessBanner.tsx, styles/transcript-freshness.css),
+ * compact toasts (packages/ui/src/styles/primitives.css .ui-toaster) and the sidebar "More unreads" pill
+ * (packages/ui/src/features/sidebar/SidebarMoreUnreads.tsx, sidebar-views.css).
+ * ------------------------------------------------------------------------------------------------------------- */
+:root {
+  /* Grok Bot's small toast and notice banner: 9/12 padding, 9px corners, a 13px icon. */
+  --holeai-radius-toast: 9px;
+  --holeai-toast-padding-block: 9px;
+  --holeai-toast-padding-inline: 12px;
+  --holeai-icon-toast: 13px;
+  /* The pill floats over the list with a halo of the sidebar colour, so rows under it fade out. */
+  --holeai-more-unreads-z: 12;
+  --holeai-more-unreads-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 0 4px 8px var(--openbot-bg-sidebar);
+}
+/* --- end message states --- */

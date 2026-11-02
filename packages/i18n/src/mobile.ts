@@ -34,3 +34,12 @@ export function mobileTranslateFor(locale: TranslatedLocale): MobileTranslate {
   translators.set(locale, translate);
   return translate;
 }
+
+/**
+ * True when the language says this key in its own words: English, which is the source, or a catalog
+ * that translates it. Optional extras, such as rotating phrases, show only then, so a language that
+ * has not translated them yet never mixes English into its own text.
+ */
+export function mobileHasTranslation(locale: TranslatedLocale, key: keyof AppMobileMessages): boolean {
+  return locale === "en" || mobileCatalog(locale)[key] !== undefined;
+}

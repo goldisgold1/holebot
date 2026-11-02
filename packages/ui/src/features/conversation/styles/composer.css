@@ -965,6 +965,34 @@
   display: flex;
   min-width: 0;
   align-items: center;
+  /* The other tiles slide aside while one is dragged across them. */
+  transition: transform var(--openbot-duration-normal) var(--openbot-ease-out);
+}
+
+.composer-attachment:focus-visible {
+  outline: none;
+  box-shadow: var(--openbot-focus-ring);
+}
+
+.composer-attachments[data-reordering],
+.composer-attachment[data-dragging] {
+  cursor: grabbing;
+}
+
+/* The dragged tile follows the pointer, above the ones it passes. */
+.composer-attachment[data-dragging],
+.composer-attachments[data-reorder-settling] > .composer-attachment {
+  transition: none;
+}
+
+.composer-attachment[data-dragging] {
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-attachment {
+    transition: none;
+  }
 }
 
 .composer-attachment[data-kind="image"] {

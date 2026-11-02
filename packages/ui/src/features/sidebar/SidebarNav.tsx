@@ -5,11 +5,12 @@
  */
 
 import { Bot, CheckCheck, ContextMenu, FolderPlus, Hash } from "@openbot/ui";
-import { For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { useText } from "../../text";
 import { SidebarChannelRow } from "./SidebarChannelRow";
 import { SidebarEmptyState } from "./SidebarEmptyState";
 import { SidebarHiddenGroup } from "./SidebarHiddenGroup";
+import { createSidebarMoreUnreads, SidebarMoreUnreadsPill } from "./SidebarMoreUnreads";
 import { SidebarPinnedGroup } from "./SidebarPinnedGroup";
 import { SidebarSectionList } from "./SidebarSectionList";
 import { SidebarWaitingGroup } from "./SidebarWaitingGroup";
@@ -35,9 +36,14 @@ export function SidebarNav() {
     waitingChats,
   } = useSidebarScope();
   const { t } = useText();
+  const [listElement, setListElement] = createSignal<HTMLElement>();
+  const moreUnreads = createSidebarMoreUnreads(listElement, () => !props.compact);
   return (
     <nav
-      ref={setAgentListElement}
+      ref={(element) => {
+        setAgentListElement(element);
+        setListElement(element);
+      }}
       aria-label={t("sidebar.nav.label")}
       class={["agent-list", scrollFades.classes()]}
       data-sidebar-dragging={draggingKind()}
@@ -46,6 +52,7 @@ export function SidebarNav() {
       onDrop={dropSidebarNativeDrag}
       onScroll={scrollFades.measure}
     >
+      <SidebarMoreUnreadsPill edge="above" unreads={moreUnreads} />
       <div class="agent-list-content">
         <Show
           when={
@@ -123,6 +130,7 @@ export function SidebarNav() {
           </ContextMenu.Portal>
         </ContextMenu.Root>
       </Show>
+      <SidebarMoreUnreadsPill edge="below" unreads={moreUnreads} />
     </nav>
   );
 }

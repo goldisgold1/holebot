@@ -1,4 +1,4 @@
-import { Badge, Button, Clock3, Lock } from "@openbot/ui";
+import { Badge, Button, ChevronDown, Clock3, Lock } from "@openbot/ui";
 import { ProviderModelPicker } from "@openbot/ui/components/ProviderModelPicker";
 import type { AgentProfile } from "@openbot/ui/data";
 import { AgentAvatar } from "@openbot/ui/features/agents/AgentAvatar";
@@ -30,6 +30,15 @@ export interface ConversationHeaderProps {
    * chat, and is selected while that chat is open.
    */
   titleSelected?: boolean | undefined;
+  /**
+   * The voice call with the agent, while one runs: its popover hangs under the agent's name, and its
+   * "on call" chip sits beside it when minimised.
+   */
+  voiceCall?: JSX.Element | undefined;
+  /** Set while a call runs: a press on the agent's name opens or minimises the call instead. */
+  onToggleVoiceCall?: (() => void) | undefined;
+  /** The call's popover shows, rather than its chip. */
+  voiceCallExpanded?: boolean | undefined;
 }
 
 export interface ConversationHeaderPendingModel {
@@ -53,25 +62,37 @@ export function ConversationHeader(props: ConversationHeaderProps) {
   return (
     <header class="window-drag conversation-header">
       <div class="conversation-heading-group">
-        <Show when={props.agent} fallback={props.title}>
-          {(agent) => (
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              class="conversation-title no-drag"
-              data-tab={titleTab()}
-              data-selected={titleSelected()}
-              aria-label={props.onOpenChat ? t("conversation.header.mainChat") : t("conversation.header.settings")}
-              onPointerEnter={() => props.onOpenChat || props.onSettingsIntent()}
-              onFocus={() => props.onOpenChat || props.onSettingsIntent()}
-              onClick={() => (props.onOpenChat ?? props.onOpenSettings)()}
-            >
-              <AgentAvatar agent={agent()} />
-              <h1>{agent().name}</h1>
-            </Button>
-          )}
-        </Show>
+        {/* The identity island: the agent's face and name in a pill. The voice call hangs from it. */}
+        <div class="conversation-identity" data-voice-call-anchor="">
+          <Show when={props.agent} fallback={props.title}>
+            {(agent) => (
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                class="conversation-title no-drag"
+                data-tab={titleTab()}
+                data-selected={titleSelected()}
+                aria-label={
+                  props.onToggleVoiceCall
+                    ? t("conversation.voice.label", { name: agent().name })
+                    : props.onOpenChat
+                      ? t("conversation.header.mainChat")
+                      : t("conversation.header.settings")
+                }
+                aria-expanded={props.onToggleVoiceCall ? (props.voiceCallExpanded ? "true" : "false") : undefined}
+                onPointerEnter={() => props.onOpenChat || props.onSettingsIntent()}
+                onFocus={() => props.onOpenChat || props.onSettingsIntent()}
+                onClick={() => (props.onToggleVoiceCall ?? props.onOpenChat ?? props.onOpenSettings)()}
+              >
+                <AgentAvatar agent={agent()} />
+                <h1>{agent().name}</h1>
+                <ChevronDown class="conversation-title-chevron" aria-hidden="true" />
+              </Button>
+            )}
+          </Show>
+          {props.voiceCall}
+        </div>
         <Show when={props.agent && agentAccessLockLabel(props.agent, t)}>
           {(label) => (
             <span class="conversation-access-lock" role="img" aria-label={label()} title={label()}>

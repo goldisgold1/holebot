@@ -1,5 +1,5 @@
 import type { SupportedAvatarSilhouetteId } from "./bloub-avatar";
-import type { AvatarMood } from "./bloub-avatar-motion";
+import type { AvatarFaceMood } from "./bloub-avatar-motion";
 
 /**
  * HoleA.I: the agent face in the Grok Bot style, shared by the desktop (`CuteFace.tsx`) and the phone.
@@ -23,7 +23,7 @@ export function cuteFaceBody(shape: SupportedAvatarSilhouetteId) {
 }
 
 /** Closed eyes, as one stroked path, for moods that shut them; null keeps them open. */
-export function cuteFaceClosedEyes(mood: AvatarMood) {
+export function cuteFaceClosedEyes(mood: AvatarFaceMood) {
   if (mood === "responded") return "M -17 -2 Q -12 -9 -7 -2 M 7 -2 Q 12 -9 17 -2";
   if (mood === "asleep") return "M -17 -4 Q -12 1 -7 -4 M 7 -4 Q 12 1 17 -4";
   return null;

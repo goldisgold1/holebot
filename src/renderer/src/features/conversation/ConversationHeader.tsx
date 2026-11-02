@@ -12,7 +12,8 @@ import { providerAccountName } from "@openbot/ui/components/provider-accounts";
 import { ConversationHeader as SharedConversationHeader } from "@openbot/ui/features/conversation/ConversationHeader";
 import { ThreadHeader } from "@openbot/ui/features/conversation/threads/ThreadHeader";
 import { MAIN_THREAD_ID } from "@openbot/ui/features/conversation/threads/thread-types";
-import { Show } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
+import { ConversationVoiceCall } from "./ConversationVoiceCall";
 import { useConversationViewScope } from "./conversation-scope";
 
 const loadAgentSettingsPanel = () => import("./AgentSettingsPanel");
@@ -49,7 +50,20 @@ export function ConversationHeader() {
     sideThreadOpen,
     toggleSidePanel,
     moveThreadToPanel,
+    activeRightPanel,
+    voiceConversationAvailable,
   } = useConversationViewScope();
+  /** The running voice call, keyed by server and agent, so another agent gets its own call. */
+  const voiceCallKey = () =>
+    activeRightPanel() === "voice" &&
+    voiceConversationAvailable() &&
+    props.agent &&
+    `${props.server?.id ?? "local"}:${props.agent.id}`;
+  /** The call's popover shows; otherwise it is minimised to its chip. A new call opens. */
+  const [voiceCallExpanded, setVoiceCallExpanded] = createSignal(true);
+  createEffect(voiceCallKey, (key) => {
+    if (key) setVoiceCallExpanded(true);
+  });
   const runningThreads = () => props.threads?.running ?? 0;
   /** While a side thread is open, the agent's name goes back to the agent's own chat. */
   const openMainChat = () => {
@@ -107,6 +121,13 @@ export function ConversationHeader() {
       onOpenSettings={() => setActiveRightPanel("settings")}
       onOpenChat={openMainChat()}
       titleSelected={titleSelected()}
+      voiceCall={
+        <Show when={voiceCallKey()} keyed>
+          <ConversationVoiceCall expanded={voiceCallExpanded()} onExpandedChange={setVoiceCallExpanded} />
+        </Show>
+      }
+      onToggleVoiceCall={voiceCallKey() ? () => setVoiceCallExpanded(!voiceCallExpanded()) : undefined}
+      voiceCallExpanded={voiceCallExpanded()}
       pendingModel={pendingModel()}
       modelPicker={{
         provider: settingsProvider(),

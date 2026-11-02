@@ -1,5 +1,5 @@
 import { BotEngine, type BotFrame, DEMI_VIEWBOX, POSES, RAYON } from "@norbert_bodziony/bloub";
-import { type AvatarMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
+import { type AvatarFaceMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
 import type { AvatarHue } from "@openbot/contracts/ipc";
 import { prefersReducedMotion } from "@openbot/ui/utils";
 import type { JSX } from "@solidjs/web";
@@ -69,7 +69,7 @@ interface AgentAvatarProps {
   url?: string | null | undefined;
   motion?: AvatarMotion;
   /** What the agent is doing. It chooses the face, never the silhouette. */
-  mood?: AvatarMood;
+  mood?: AvatarFaceMood;
   cycleOffset?: number;
   animationOffset?: number;
   shape?: SupportedAvatarSilhouetteId;
@@ -87,7 +87,7 @@ export function AgentAvatar(props: AgentAvatarProps) {
   const hue = () => (props.hue !== undefined ? props.hue : (props.agent?.avatarHue ?? null));
   const motion = () => props.motion ?? "hover";
   const url = () => (props.url !== undefined ? props.url : (props.agent?.avatarUrl ?? null));
-  const mood = (): AvatarMood => props.mood ?? "idle";
+  const mood = (): AvatarFaceMood => props.mood ?? "idle";
   const presentation = () => avatarMoodPresentation(mood());
   const [imageFailed, setImageFailed] = createSignal(false);
   createEffect(
@@ -277,7 +277,7 @@ function GeneratedAvatar(props: {
   seed: string;
   hue: AvatarHue | null;
   motion: AvatarMotion;
-  mood: AvatarMood;
+  mood: AvatarFaceMood;
   cycleOffset?: number | undefined;
   animationOffset?: number | undefined;
   shape?: SupportedAvatarSilhouetteId | undefined;

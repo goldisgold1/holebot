@@ -4,6 +4,7 @@ import {
   Button,
   CalendarClock,
   ChevronDown,
+  ChevronRight,
   CircleCheck,
   CirclePause,
   Clock3,
@@ -32,6 +33,7 @@ import type {
 import { useText } from "../../text";
 import { prefersReducedMotion } from "../../utils";
 import { AgentAvatar } from "../agents/AgentAvatar";
+import type { AgentExchange } from "./AgentExchangeView";
 import type { AgentInstructionsFileCalls } from "./AgentInstructionsView";
 import { formatChatTimestamp } from "./chat-timestamp";
 import { InstructionsChangeActions } from "./InstructionsChangeActions";
@@ -51,6 +53,11 @@ interface ChatActionMarkerProps {
   onToggleAgentMessage?: ((messageId: string) => void) | undefined;
   /** Draws the text of an open agent message under its marker, by its `messageId`. */
   agentMessageText?: ((messageId: string) => JSX.Element) | undefined;
+  /**
+   * Opens the messages of an agent message row in the full-pane exchange view. Without it, or when
+   * the chat has the text of none of the row's messages, the row opens them inline as before.
+   */
+  onOpenAgentExchange?: ((exchange: AgentExchange) => void) | undefined;
   /** The instruction file of a local agent, for View and Undo on its change line. */
   instructions?: AgentInstructionsFileCalls | undefined;
   /** Opens the Instructions page of the agent. Absent where the chat has no settings page for it. */
@@ -58,7 +65,10 @@ interface ChatActionMarkerProps {
 }
 
 /** The parts of a marker that open the text of an agent message, for the markers in a group. */
-type AgentMessageTextProps = Pick<ChatActionMarkerProps, "onToggleAgentMessage" | "agentMessageText">;
+type AgentMessageTextProps = Pick<
+  ChatActionMarkerProps,
+  "onToggleAgentMessage" | "agentMessageText" | "onOpenAgentExchange"
+>;
 
 const STATUS_LABELS = {
   queued: "chat.marker.status.queued",
@@ -123,6 +133,7 @@ export function ChatActionMarker(props: ChatActionMarkerProps) {
                   onToggleRoutineRun={props.onToggleRoutineRun}
                   onToggleAgentMessage={props.onToggleAgentMessage}
                   agentMessageText={props.agentMessageText}
+                  onOpenAgentExchange={props.onOpenAgentExchange}
                   instructions={props.instructions}
                   onOpenInstructions={props.onOpenInstructions}
                 />
@@ -152,6 +163,7 @@ export function ChatActionMarker(props: ChatActionMarkerProps) {
           onSelectAgent={props.onSelectAgent}
           onToggleAgentMessage={props.onToggleAgentMessage}
           agentMessageText={props.agentMessageText}
+          onOpenAgentExchange={props.onOpenAgentExchange}
         />
       )}
     </Show>
@@ -184,6 +196,8 @@ function MarkerGroup(
     onOpenRoutine?: ((routine: { routineId: string; name: string }) => void) | undefined;
     expanded?: boolean | undefined;
     onToggle?: (() => void) | undefined;
+    /** A click on the row outside its chips opens the row, as its own open button does. */
+    onOpenRow?: (() => void) | undefined;
     summary: (control: MarkerGroupToggle) => JSX.Element;
   },
 ) {
@@ -209,7 +223,11 @@ function MarkerGroup(
   return (
     <Marker class={props.class} role="group" aria-label={props.label}>
       <div class="chat-action-marker-summary">
-        <MarkerContent class="chat-action-marker-content">
+        <MarkerContent
+          class="chat-action-marker-content"
+          data-opens-exchange={props.onOpenRow ? "" : undefined}
+          onClick={(event) => openRowFromClick(event, props.onOpenRow)}
+        >
           {props.summary({
             expanded,
             get listId() {
@@ -240,6 +258,7 @@ function MarkerGroup(
                         onOpenRoutine={props.onOpenRoutine}
                         onToggleAgentMessage={props.onToggleAgentMessage}
                         agentMessageText={props.agentMessageText}
+                        onOpenAgentExchange={props.onOpenAgentExchange}
                       />
                     </li>
                   )}
@@ -271,16 +290,8 @@ function AgentMessageGroupMarker(
   },
 ) {
   const { t, format } = useText();
-  const agentIds = () => [
-    ...new Set(
-      props.group.messages.flatMap(({ marker }) =>
-        marker.direction === "incoming"
-          ? [marker.sourceAgentId]
-          : marker.targetDeliveries.map((delivery) => delivery.agentId),
-      ),
-    ),
-  ];
-  const agents = () => agentIds().map((agentId) => props.agents.find((agent) => agent.id === agentId));
+  const markers = () => props.group.messages.map(({ marker }) => marker);
+  const agentIds = () => counterpartIds(markers());
   /*
    * A burst this agent sent out, each message to agents none of the others went to, is one act of
    * reaching out, so it reads "Messaged 3 agents". A back-and-forth, or several messages to the same
@@ -294,10 +305,11 @@ function AgentMessageGroupMarker(
   };
   const label = () =>
     fanOut() ? t("chat.marker.messaged") : t("chat.marker.messageGroup", { count: props.group.messages.length });
-  const agentsLabel = () => {
-    const ids = agentIds();
-    if (ids.length !== 1) return t("chat.marker.agentCount", { count: ids.length });
-    return agents()[0]?.name ?? t("chat.marker.unavailableAgent");
+  const agentsLabel = () => peersLabel(agentIds(), props.agents, t);
+  const exchange = () => agentExchange(markers(), props.onOpenAgentExchange);
+  const openExchange = () => {
+    const current = exchange();
+    if (current) props.onOpenAgentExchange?.(current);
   };
   return (
     <MarkerGroup
@@ -310,36 +322,180 @@ function AgentMessageGroupMarker(
       onSelectAgent={props.onSelectAgent}
       onToggleAgentMessage={props.onToggleAgentMessage}
       agentMessageText={props.agentMessageText}
+      onOpenAgentExchange={props.onOpenAgentExchange}
+      onOpenRow={exchange() ? openExchange : undefined}
       summary={(control) => (
         <>
           <span class="chat-action-marker-label">{label()}</span>
-          <Button
-            variant="ghost"
-            type="button"
-            class="chat-action-target"
-            aria-expanded={control.expanded() ? "true" : "false"}
-            aria-controls={control.listId}
-            aria-label={t(control.expanded() ? "chat.marker.hideMessages" : "chat.marker.showMessages", {
-              count: props.group.messages.length,
-              agents: agentsLabel(),
-            })}
-            data-cuelume-tap={control.expanded() ? "close" : "open"}
-            onClick={control.toggle}
-          >
-            <span class="chat-action-avatar-stack" aria-hidden="true">
-              <For each={agents().slice(0, 3)}>
-                {(agent) => <AgentAvatar agent={agent} class="chat-action-agent-avatar" />}
-              </For>
-            </span>
-            <span>{agentsLabel()}</span>
-          </Button>
+          <AgentPeers agentIds={agentIds()} agents={props.agents} onSelectAgent={props.onSelectAgent} />
           <time class="chat-action-marker-time" datetime={props.group.timestamp}>
             {formatMarkerTime(props.group.timestamp, t, format)}
           </time>
+          <Show
+            when={exchange()}
+            fallback={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                class="chat-action-history-toggle"
+                type="button"
+                aria-expanded={control.expanded() ? "true" : "false"}
+                aria-controls={control.listId}
+                aria-label={t(control.expanded() ? "chat.marker.hideMessages" : "chat.marker.showMessages", {
+                  count: props.group.messages.length,
+                  agents: agentsLabel(),
+                })}
+                data-cuelume-tap={control.expanded() ? "close" : "open"}
+                onClick={control.toggle}
+              >
+                <ChevronDown aria-hidden="true" />
+              </Button>
+            }
+          >
+            <OpenExchangeButton agentsLabel={agentsLabel()} onOpen={openExchange} />
+          </Show>
         </>
       )}
     />
   );
+}
+
+/** The button that opens the exchange view of an agent message row. */
+function OpenExchangeButton(props: { agentsLabel: string; onOpen: () => void }) {
+  const { t } = useText();
+  return (
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      class="chat-action-exchange-open"
+      type="button"
+      aria-label={t("chat.exchange.open", { agents: props.agentsLabel })}
+      data-cuelume-tap="open"
+      onClick={() => props.onOpen()}
+    >
+      <ChevronRight aria-hidden="true" />
+    </Button>
+  );
+}
+
+/**
+ * The other agents of an agent message row. One agent is one chip, two read "A and B", and three
+ * or more are one chip with their stacked faces that lists them in a menu.
+ */
+function AgentPeers(props: {
+  agentIds: readonly string[];
+  agents: AgentProfile[];
+  onSelectAgent: (agentId: string) => void;
+  /** The delivery state of each agent, shown in the menu. */
+  status?: ((agentId: string) => string | undefined) | undefined;
+}) {
+  const { t } = useText();
+  const agent = (agentId: string | undefined) => props.agents.find((candidate) => candidate.id === agentId);
+  return (
+    <Show
+      when={props.agentIds.length >= 3}
+      fallback={
+        <span class="chat-action-peers">
+          <AgentButton
+            agent={agent(props.agentIds[0])}
+            fallbackId={props.agentIds[0]}
+            onSelectAgent={props.onSelectAgent}
+          />
+          <Show when={props.agentIds.length === 2}>
+            <span class="chat-action-peers-and">{t("chat.exchange.peersAnd")}</span>
+            <AgentButton
+              agent={agent(props.agentIds[1])}
+              fallbackId={props.agentIds[1]}
+              onSelectAgent={props.onSelectAgent}
+            />
+          </Show>
+        </span>
+      }
+    >
+      <DropdownMenu.Root placement="bottom" gutter={8} modal={false}>
+        <DropdownMenu.Trigger
+          class="chat-action-target chat-action-agent-menu-trigger"
+          aria-label={t("chat.exchange.peersShow", { count: props.agentIds.length })}
+        >
+          <span class="chat-action-avatar-stack" aria-hidden="true">
+            <For each={props.agentIds.slice(0, 3)}>
+              {(agentId) => <AgentAvatar agent={agent(agentId)} class="chat-action-agent-avatar" />}
+            </For>
+          </span>
+          <span>{t("chat.marker.agentCount", { count: props.agentIds.length })}</span>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content class="chat-action-agent-menu" aria-label={t("chat.exchange.peersMenu")}>
+          <div class="chat-action-agent-menu-title" aria-hidden="true">
+            {t("chat.exchange.peersMenu")}
+          </div>
+          <For each={props.agentIds}>
+            {(agentId) => (
+              <DropdownMenu.Item
+                class="chat-action-agent-menu-item"
+                disabled={!agent(agentId)}
+                onSelect={() => props.onSelectAgent(agentId)}
+              >
+                <AgentAvatar agent={agent(agentId)} class="chat-action-agent-avatar" />
+                <span class="chat-action-agent-menu-name">
+                  {agent(agentId)?.name ?? t("chat.marker.unavailableAgent")}
+                </span>
+                <span class="chat-action-agent-menu-status">{props.status?.(agentId) ?? ""}</span>
+              </DropdownMenu.Item>
+            )}
+          </For>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    </Show>
+  );
+}
+
+/** The agents on the other end of a run of agent messages, in the order they first appear. */
+function counterpartIds(markers: readonly AgentMessageMarkerModel[]): string[] {
+  return [
+    ...new Set(
+      markers.flatMap((marker) =>
+        marker.direction === "incoming"
+          ? [marker.sourceAgentId]
+          : marker.targetDeliveries.map((delivery) => delivery.agentId),
+      ),
+    ),
+  ];
+}
+
+/** "Name" for one agent, "3 agents" for more. */
+function peersLabel(agentIds: readonly string[], agents: AgentProfile[], t: AppTranslate): string {
+  if (agentIds.length !== 1) return t("chat.marker.agentCount", { count: agentIds.length });
+  return agentName(agents, agentIds[0], t);
+}
+
+/**
+ * The exchange view of a run of agent messages: the agent of this chat, the agents it talked to and
+ * the messages whose text the chat has. None when the host has no view or no text to show, so the
+ * row keeps its inline toggle.
+ */
+function agentExchange(
+  markers: readonly AgentMessageMarkerModel[],
+  onOpen: ((exchange: AgentExchange) => void) | undefined,
+): AgentExchange | undefined {
+  if (!onOpen) return undefined;
+  const messageIds = markers.filter((marker) => marker.expanded !== undefined).map((marker) => marker.messageId);
+  if (messageIds.length === 0) return undefined;
+  const first = markers[0];
+  const selfAgentId = first?.direction === "outgoing" ? first.sourceAgentId : first?.targetDeliveries[0]?.agentId;
+  return {
+    selfAgentId,
+    peerAgentIds: counterpartIds(markers).filter((agentId) => agentId !== selfAgentId),
+    messageIds,
+  };
+}
+
+/** Opens a row from a click on its line, unless the click was on one of its own controls or chose text. */
+function openRowFromClick(event: MouseEvent, open: (() => void) | undefined): void {
+  if (!open) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest("button, a, [role=menu], [role=menuitem]")) return;
+  if (window.getSelection()?.toString()) return;
+  open();
 }
 
 /**
@@ -455,9 +611,18 @@ function SingleChatActionMarker(
     props.agentMessageText
       ? props.marker
       : undefined;
+  // With an exchange view, the row opens it in place of the text under the marker.
+  const exchange = () =>
+    props.marker.kind === "agent-message" ? agentExchange([props.marker], props.onOpenAgentExchange) : undefined;
+  const openExchange = () => {
+    const current = exchange();
+    if (current) props.onOpenAgentExchange?.(current);
+  };
+  const exchangeAgentsLabel = () =>
+    props.marker.kind === "agent-message" ? counterpartName(props.marker, props.agents, t) : "";
   const openTextMessage = () => {
     const marker = textMessage();
-    return marker?.expanded === true ? marker : undefined;
+    return marker?.expanded === true && !exchange() ? marker : undefined;
   };
   return (
     <Marker
@@ -467,7 +632,11 @@ function SingleChatActionMarker(
       aria-label={markerAccessibleLabel(props.marker, props.agents, t, sourceText)}
     >
       <div class="chat-action-marker-summary">
-        <MarkerContent class="chat-action-marker-content">
+        <MarkerContent
+          class="chat-action-marker-content"
+          data-opens-exchange={exchange() ? "" : undefined}
+          onClick={(event) => openRowFromClick(event, exchange() ? openExchange : undefined)}
+        >
           <span class="chat-action-marker-label">{label()}</span>
           <Show when={props.marker.kind === "agent-message" && props.marker}>
             {(marker) => <AgentTarget marker={marker()} agents={props.agents} onSelectAgent={props.onSelectAgent} />}
@@ -548,14 +717,21 @@ function SingleChatActionMarker(
               </Button>
             )}
           </Show>
-          <Show when={textMessage()}>
-            {(marker) => (
-              <AgentMessageTextToggle
-                marker={marker()}
-                agents={props.agents}
-                onToggle={() => props.onToggleAgentMessage?.(marker().messageId)}
-              />
-            )}
+          <Show
+            when={exchange()}
+            fallback={
+              <Show when={textMessage()}>
+                {(marker) => (
+                  <AgentMessageTextToggle
+                    marker={marker()}
+                    agents={props.agents}
+                    onToggle={() => props.onToggleAgentMessage?.(marker().messageId)}
+                  />
+                )}
+              </Show>
+            }
+          >
+            <OpenExchangeButton agentsLabel={exchangeAgentsLabel()} onOpen={openExchange} />
           </Show>
           <Show when={!messagesRun() && (routineHistory()?.length ?? 0) > 0}>
             <Button
@@ -738,65 +914,23 @@ function AgentTarget(props: {
   onSelectAgent: (agentId: string) => void;
 }) {
   const { t } = useText();
-  const source = () => props.agents.find((agent) => agent.id === props.marker.sourceAgentId);
-  const recipients = () => props.marker.targetDeliveries;
-  const singleRecipient = () => {
-    const delivery = recipients()[0];
-    return delivery ? props.agents.find((agent) => agent.id === delivery.agentId) : undefined;
+  const recipientIds = () => props.marker.targetDeliveries.map((delivery) => delivery.agentId);
+  const status = (agentId: string) => {
+    const delivery = props.marker.targetDeliveries.find((candidate) => candidate.agentId === agentId);
+    return delivery ? deliveryStatusLabel(delivery.status, t) : undefined;
   };
   return (
     <Show
       when={props.marker.direction === "outgoing"}
       fallback={
-        <AgentButton agent={source()} fallbackId={props.marker.sourceAgentId} onSelectAgent={props.onSelectAgent} />
+        <AgentButton
+          agent={props.agents.find((agent) => agent.id === props.marker.sourceAgentId)}
+          fallbackId={props.marker.sourceAgentId}
+          onSelectAgent={props.onSelectAgent}
+        />
       }
     >
-      <Show
-        when={recipients().length > 1}
-        fallback={
-          <AgentButton
-            agent={singleRecipient()}
-            fallbackId={recipients()[0]?.agentId}
-            onSelectAgent={props.onSelectAgent}
-          />
-        }
-      >
-        <DropdownMenu.Root placement="bottom" gutter={8} modal={false}>
-          <DropdownMenu.Trigger class="chat-action-target chat-action-agent-menu-trigger">
-            <span class="chat-action-avatar-stack" aria-hidden="true">
-              <For each={recipients().slice(0, 3)}>
-                {(delivery) => (
-                  <AgentAvatar
-                    agent={props.agents.find((agent) => agent.id === delivery.agentId)}
-                    class="chat-action-agent-avatar"
-                  />
-                )}
-              </For>
-            </span>
-            <span>{t("chat.marker.agentCount", { count: recipients().length })}</span>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content class="chat-action-agent-menu">
-            <For each={recipients()}>
-              {(delivery) => {
-                const agent = () => props.agents.find((candidate) => candidate.id === delivery.agentId);
-                return (
-                  <DropdownMenu.Item
-                    class="chat-action-agent-menu-item"
-                    disabled={!agent()}
-                    onSelect={() => props.onSelectAgent(delivery.agentId)}
-                  >
-                    <AgentAvatar agent={agent()} class="chat-action-agent-avatar" />
-                    <span class="chat-action-agent-menu-name">
-                      {agent()?.name ?? t("chat.marker.unavailableAgent")}
-                    </span>
-                    <span class="chat-action-agent-menu-status">{deliveryStatusLabel(delivery.status, t)}</span>
-                  </DropdownMenu.Item>
-                );
-              }}
-            </For>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
-      </Show>
+      <AgentPeers agentIds={recipientIds()} agents={props.agents} onSelectAgent={props.onSelectAgent} status={status} />
     </Show>
   );
 }

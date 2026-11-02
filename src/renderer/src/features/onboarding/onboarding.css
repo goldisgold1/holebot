@@ -1208,3 +1208,187 @@ html:active-view-transition-type(open)::view-transition-new(*) {
   justify-content: center;
   margin-top: var(--openbot-space-3);
 }
+
+/* "What will you work on most?" The answers are pills in a wrapping row; the starter agents they
+   choose are cards under them. A chosen pill or card has a strong outline and a check. */
+.first-run-role .onboarding-description {
+  margin-top: var(--openbot-space-3);
+}
+
+/* Both lists are fieldsets for their group name; they draw no frame of their own. */
+.first-run-role-options,
+.first-run-role-starters {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+
+.first-run-role-options {
+  width: min(100%, 560px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--openbot-space-2);
+  margin-top: var(--openbot-space-6);
+}
+
+.first-run-role-options .first-run-role-option {
+  height: auto;
+  min-height: 36px;
+  border: 1px solid var(--openbot-border-grouped);
+  border-radius: var(--openbot-radius-pill);
+  padding: var(--openbot-space-2) var(--openbot-space-4);
+  background: var(--openbot-bg-grouped);
+  color: var(--openbot-text-secondary);
+  font-size: var(--openbot-text-lg);
+}
+
+.first-run-role-options .first-run-role-option[aria-pressed="true"] {
+  border-color: var(--openbot-text-primary);
+  background: var(--openbot-bg-control-active);
+  color: var(--openbot-text-primary);
+}
+
+.first-run-role-starters-title {
+  margin: var(--openbot-space-8) 0 0;
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-xl);
+  font-weight: var(--openbot-weight-medium);
+}
+
+.first-run-role-starters-hint {
+  margin: var(--openbot-space-1) 0 0;
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-md);
+}
+
+.first-run-role-starters {
+  width: min(100%, 600px);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--openbot-space-2);
+  margin-top: var(--openbot-space-4);
+}
+
+.first-run-role-starters .first-run-role-starter {
+  height: auto;
+  min-height: 64px;
+  justify-content: flex-start;
+  gap: var(--openbot-space-3);
+  border: 1px solid var(--openbot-border-grouped);
+  border-radius: var(--openbot-radius-lg);
+  padding: var(--openbot-space-3);
+  background: var(--openbot-bg-grouped);
+  text-align: left;
+  white-space: normal;
+}
+
+.first-run-role-starters .first-run-role-starter[aria-pressed="true"] {
+  border-color: var(--openbot-text-primary);
+}
+
+.first-run-role-starter-avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+.first-run-role-starter-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
+  font-weight: var(--openbot-weight-regular);
+  line-height: var(--openbot-leading-sm);
+}
+
+.first-run-role-starter-text strong {
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-md);
+  font-weight: var(--openbot-weight-medium);
+}
+
+.first-run-role-starter-check {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--openbot-border-strong);
+  border-radius: var(--openbot-radius-pill);
+  color: var(--openbot-bg-canvas);
+}
+
+.first-run-role-starter[aria-pressed="true"] .first-run-role-starter-check {
+  border-color: var(--openbot-text-primary);
+  background: var(--openbot-text-primary);
+}
+
+.first-run-role-starter-check svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Cards that arrive together rise a little and settle, one just after another. Each card names its
+   place in `--first-run-card-index`. Reduced motion shows them in place at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .first-run-card {
+    animation: first-run-card-enter var(--holeai-duration-card-enter, var(--openbot-duration-overlay))
+      var(--holeai-ease-card-enter, var(--openbot-ease-out)) backwards;
+    animation-delay: calc(var(--first-run-card-index, 0) * var(--holeai-stagger-card, 0ms));
+  }
+}
+
+@keyframes first-run-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--holeai-rise-card, 0px));
+  }
+}
+
+/* The setup screen when setup stopped: the team rests, and the reason and the two ways on show
+   where the progress was. */
+.first-run-launch[data-failed="true"] .first-run-launch-progress {
+  display: none;
+}
+
+.first-run-launch[data-failed="true"] .first-run-launch-avatar {
+  animation: none;
+}
+
+.first-run-launch-failure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--openbot-space-1);
+  text-align: center;
+}
+
+.first-run-launch-failure .first-run-launch-label {
+  color: var(--openbot-text-primary);
+  font-weight: var(--openbot-weight-medium);
+}
+
+.first-run-launch-detail {
+  max-width: 360px;
+  margin: 0;
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-md);
+  line-height: 1.45;
+}
+
+.first-run-launch-actions {
+  width: min(100%, 240px);
+  display: grid;
+  gap: var(--openbot-space-2);
+  margin-top: var(--openbot-space-3);
+}
+
+.first-run-launch-actions .ui-button {
+  width: 100%;
+  min-height: 40px;
+  border-radius: var(--openbot-radius-pill);
+}

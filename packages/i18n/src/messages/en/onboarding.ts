@@ -95,6 +95,23 @@ export const messages = defineMessages("onboarding", {
   "onboarding.action.connect": "Connect",
   "onboarding.action.open": "Open OpenBot",
   "onboarding.action.next": "Next",
+  "onboarding.action.skip": "Skip",
+  // What the user works on most. The answer lines up a few starter agents for it.
+  "onboarding.role.title": "What will you work on most?",
+  "onboarding.role.description": "Pick one and we'll line up a few starter agents. You can change them anytime.",
+  "onboarding.role.label": "What you work on",
+  "onboarding.role.option.work": "Work and email",
+  "onboarding.role.option.writing": "Writing and content",
+  "onboarding.role.option.study": "Study and research",
+  "onboarding.role.option.home": "Home and family",
+  "onboarding.role.option.travel": "Travel and shopping",
+  "onboarding.role.option.mix": "A bit of everything",
+  "onboarding.role.startersTitle": "Your starter agents",
+  "onboarding.role.startersHint": "Tap one to add or remove it. You set each one up after this.",
+  // The setup screen while OpenBot gets ready, and when it could not.
+  "onboarding.launch.settingUp": "Setting up OpenBot… {percent}%",
+  "onboarding.launch.failedTitle": "Setup didn't finish",
+  "onboarding.launch.failedDetail": "Nothing you chose was lost. Try again, or go back and pick another way to start.",
   "onboarding.server.title": "Set up {server}",
   "onboarding.server.description":
     "OpenBot does not include an AI subscription. Connect your own provider to this server before you make an agent.",

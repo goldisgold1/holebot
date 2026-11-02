@@ -27,19 +27,26 @@ const meta = {
     onInterrupt: fn(),
     onEnd: fn(),
   },
-  // Mute is local here; in the app the voice conversation holds it.
+  // Mute is local here; in the app the voice conversation holds it. The popover hangs under a stand-in
+  // for the header's identity pill.
   render: (args) => {
     const [muted, setMuted] = createSignal(untrack(() => args.muted));
     return (
-      <div class="conversation-panel" style="height: 100vh; --browser-panel-width: 380px">
-        <VoicePanel
-          {...args}
-          muted={muted()}
-          onToggleMute={() => {
-            setMuted(!muted());
-            args.onToggleMute();
-          }}
-        />
+      <div class="conversation-panel" style="height: 100vh">
+        <header class="conversation-header">
+          <div class="conversation-heading-group">
+            <div class="conversation-identity" data-voice-call-anchor="">
+              <VoicePanel
+                {...args}
+                muted={muted()}
+                onToggleMute={() => {
+                  setMuted(!muted());
+                  args.onToggleMute();
+                }}
+              />
+            </div>
+          </div>
+        </header>
       </div>
     );
   },
@@ -56,6 +63,10 @@ export const Listening: Story = {};
 export const Hearing: Story = { args: { heard: QUESTION, levels: SPEECH } };
 
 export const Muted: Story = { args: { muted: true } };
+
+export const Transcript: Story = { args: { heard: QUESTION, levels: SPEECH, defaultTranscriptOpen: true } };
+
+export const Minimised: Story = { args: { expanded: false, startedAt: Date.now() - 247_000 } };
 
 export const Thinking: Story = { args: { phase: "thinking", heard: QUESTION } };
 
