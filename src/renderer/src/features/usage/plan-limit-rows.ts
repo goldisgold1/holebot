@@ -20,7 +20,13 @@ const SHARE_REFRESH_MS = 10_000;
  */
 export function usePlanLimitRows() {
   const text = useText();
-  const auth = useAuth();
+  let auth: ReturnType<typeof useAuth>;
+  try {
+    auth = useAuth();
+  } catch {
+    // HoleA.I: the web app has no account provider, so it shows no meters rather than failing the chat.
+    return (): ReturnType<typeof withQuotaShares> => [];
+  }
   const { agentStatus, hostAccountLimits, agentList } = useAgents();
   const { activeServerId } = useServers();
   const rows = createMemo(() =>
