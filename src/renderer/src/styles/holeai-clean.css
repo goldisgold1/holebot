@@ -135,7 +135,8 @@
   opacity: 0.6;
 }
 
-/* The live line under a working agent: its moving face beside what it is doing, at reading size. */
+/* The live line under a working agent: the thinking ball beside one plain word, at reading size. The word
+   is muted and a lighter band sweeps across it. */
 .agent-activity-avatar {
   width: 36px;
   height: 36px;
@@ -145,6 +146,183 @@
 .agent-activity-elapsed {
   font-size: var(--holeai-text-bubble);
   line-height: 22px;
+}
+
+.agent-activity-entry:not([data-waiting="true"]) .agent-activity-label {
+  background-image: linear-gradient(
+    90deg,
+    var(--openbot-text-muted) 0%,
+    var(--openbot-text-muted) 35%,
+    var(--openbot-text-primary) 50%,
+    var(--openbot-text-muted) 65%,
+    var(--openbot-text-muted) 100%
+  );
+}
+
+/* The thinking ball (ThinkingMark.tsx): one 2.8 s loop - pill-eyed face, squeeze into three dots, round-eyed
+   face, a roll that carries the eyes round, then the face again. */
+.thinking-mark {
+  display: block;
+  flex: 0 0 auto;
+  align-self: center;
+  overflow: visible;
+}
+
+.agent-activity-mark {
+  width: 22px;
+  height: 22px;
+}
+
+.thinking-mark .thinking-mark-body,
+.thinking-mark .thinking-mark-side > circle {
+  fill: var(--openbot-text-primary);
+}
+
+.thinking-mark .thinking-mark-eyes > ellipse {
+  fill: var(--openbot-bg-canvas);
+}
+
+.thinking-mark .thinking-mark-ball,
+.thinking-mark .thinking-mark-eyes,
+.thinking-mark .thinking-mark-eyes > ellipse,
+.thinking-mark .thinking-mark-side {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.thinking-mark .thinking-mark-eyes > ellipse {
+  transform-box: fill-box;
+}
+
+.thinking-mark .thinking-mark-side {
+  opacity: 0;
+}
+
+.thinking-mark:not([data-still]) .thinking-mark-ball {
+  animation: thinking-mark-ball 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.thinking-mark:not([data-still]) .thinking-mark-side {
+  animation: thinking-mark-side 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.thinking-mark:not([data-still]) .thinking-mark-eyes {
+  animation: thinking-mark-roll 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.thinking-mark:not([data-still]) .thinking-mark-eyes > ellipse {
+  animation: thinking-mark-eye 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes thinking-mark-ball {
+  0%,
+  16% {
+    scale: 1;
+  }
+
+  24%,
+  34% {
+    scale: 0.32;
+  }
+
+  42% {
+    scale: 1.06;
+  }
+
+  48%,
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes thinking-mark-side {
+  0%,
+  18% {
+    opacity: 0;
+    scale: 0.4;
+  }
+
+  24%,
+  34% {
+    opacity: 0.55;
+    scale: 1;
+  }
+
+  40%,
+  100% {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+@keyframes thinking-mark-eye {
+  0%,
+  16% {
+    opacity: 1;
+    scale: 1 1;
+  }
+
+  22%,
+  36% {
+    opacity: 0;
+    scale: 1 0.5;
+  }
+
+  42%,
+  52% {
+    opacity: 1;
+    scale: 1.1 0.55;
+  }
+
+  60%,
+  84% {
+    opacity: 1;
+    scale: 0.9 0.6;
+  }
+
+  92%,
+  100% {
+    opacity: 1;
+    scale: 1 1;
+  }
+}
+
+@keyframes thinking-mark-roll {
+  0%,
+  52% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+
+  62% {
+    translate: -7px 5px;
+    rotate: -28deg;
+  }
+
+  72% {
+    translate: 6px -6px;
+    rotate: 24deg;
+  }
+
+  82% {
+    translate: 9px 2px;
+    rotate: 8deg;
+  }
+
+  92%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-mark .thinking-mark-ball,
+  .thinking-mark .thinking-mark-side,
+  .thinking-mark .thinking-mark-eyes,
+  .thinking-mark .thinking-mark-eyes > ellipse {
+    animation: none;
+  }
 }
 
 /*

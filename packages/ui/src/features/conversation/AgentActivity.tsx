@@ -5,7 +5,7 @@ import { Button } from "../../button";
 import type { AgentProfile } from "../../data";
 import { ChevronDown } from "../../icons";
 import { useText } from "../../text";
-import { AgentAvatar } from "../agents/AgentAvatar";
+import { ThinkingMark } from "../agents/ThinkingMark";
 import { type AgentStep, AgentStepList } from "./AgentSteps";
 
 /**
@@ -93,7 +93,8 @@ export function AgentActivityIndicator(props: {
   const label = () => {
     const provider = props.waitingFor;
     if (provider) return t("chat.activity.waitingFor", { provider });
-    return props.detail ?? t(agentActivityLabelKey(props.label));
+    // HoleA.I: one plain word while the agent works, as in a messenger, instead of a rotating phrase.
+    return props.detail ?? t("chat.activity.thinking");
   };
   const statusLabel = () => {
     const name = props.agent?.name ?? t("chat.activity.agentFallback");
@@ -102,9 +103,6 @@ export function AgentActivityIndicator(props: {
       ? t("chat.activity.waitingStatus", { name, provider })
       : t("chat.activity.status", { name, label: label() });
   };
-  // A named function, not a ternary in the prop: the compiler wraps a ternary prop in a memo, and
-  // the avatar reads its mood in a tracked effect, where a new memo halts the reactive system.
-  const mood = () => (props.waitingFor ? "connecting" : "working");
   const waiting = () => (props.waitingFor ? "true" : undefined);
   const elapsedMs = createElapsed(() => (props.phase === "exiting" ? undefined : props.since));
   const elapsed = createMemo(() => {
@@ -124,7 +122,7 @@ export function AgentActivityIndicator(props: {
         stepsOpenByDefault={props.stepsOpenByDefault}
         live={props.phase !== "exiting"}
       >
-        <AgentAvatar agent={props.agent} mood={mood()} class="agent-activity-avatar" />
+        <ThinkingMark class="agent-activity-mark" still={Boolean(props.waitingFor)} />
         <span class="agent-activity-label">{label()}</span>
         <Show when={elapsed()}>{(time) => <span class="agent-activity-elapsed">{time()}</span>}</Show>
       </AgentActivityBody>
