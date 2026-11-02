@@ -650,7 +650,8 @@ const MessageRow = memo(function MessageRow({
             className={
               message.author === "user"
                 ? `self-end rounded-[30px] px-4 py-3 ${userBubbleStyle || memberColor ? "" : "bg-control/60"} ${message.attachments?.length ? "max-w-[92%]" : "max-w-full"}`
-                : `max-w-full self-start rounded-[30px] ${waiting ? "" : "px-4 py-3"}`
+                : // HoleA.I: an agent's reply in a quiet gray bubble, as in a phone messenger.
+                  `max-w-full self-start rounded-[30px] ${waiting ? "" : "bg-control/60 px-4 py-3"}`
             }
             style={[
               { borderCurve: "circular", overflow: "hidden" },

@@ -6,10 +6,15 @@
  * two imports (tokens-holeai.css and this file) in styles.css to go back to the upstream look.
  */
 
-/* Sidebar: avatar, name and one muted line. The role and the time stay in the row's label and tooltip. */
+/* Sidebar: avatar, name, a small time and one muted line. The role stays in the row's label and tooltip. */
 .agent-role-badge,
-.sidebar .agent-row-time {
+.sidebar-history-button {
   display: none;
+}
+
+.sidebar .agent-row-time {
+  color: var(--holeai-text-soft);
+  font-size: var(--holeai-text-time);
 }
 
 .agent-row {
@@ -69,4 +74,91 @@
   border: 1px solid var(--holeai-composer-border);
   border-radius: var(--holeai-radius-composer);
   background: var(--holeai-composer);
+}
+
+.composer {
+  box-shadow: var(--holeai-shadow-composer);
+}
+
+/* User bubbles in the accent colour, agent bubbles quiet: who said what reads at a glance. */
+.message-entry-user .ui-bubble-content {
+  background: var(--holeai-user-bubble);
+  color: var(--holeai-user-bubble-text);
+}
+
+/* The rail blends into the sidebar: no frame line, only the pages the user pinned (none by default). */
+.window-rail {
+  border: 0;
+  background: var(--openbot-bg-sidebar);
+}
+
+/*
+ * Header: the agent's face and name in a centred pill, as in a messenger. The model picker and the panel button
+ * stay on the right, quieter until hovered.
+ */
+.conversation-header {
+  position: relative;
+  justify-content: center;
+}
+
+.conversation-heading-group {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.conversation-header .conversation-title {
+  height: 30px;
+  border-radius: var(--holeai-radius-pill);
+  padding-inline: 6px 14px;
+  background: var(--openbot-bg-surface);
+}
+
+.conversation-header-actions {
+  margin-left: auto;
+  opacity: 0.55;
+  transition: opacity var(--openbot-duration-hover) ease;
+}
+
+.conversation-header-actions:hover,
+.conversation-header-actions:focus-within {
+  opacity: 1;
+}
+
+/*
+ * Chat noise: routine runs and "Assigned to" routing lines say nothing the reader needs; they stay in the task
+ * and routine pages. Finished step lists shrink to one quiet line until opened.
+ */
+.chat-action-marker-routine-run,
+.chat-action-marker-routine-run-group,
+.chat-action-marker-channel-routing {
+  display: none;
+}
+
+.agent-steps:not([data-open]) .agent-steps-header {
+  opacity: 0.6;
+}
+
+/* Chips and links inside the accent bubble take its text colour, on a light tint, so they stay readable. */
+.message-entry-user .ui-bubble-content :is(.reference-chip, .message-file-reference, a) {
+  border-radius: var(--holeai-radius-chip);
+  padding-inline: 4px;
+  background: var(--holeai-chip-tint);
+  color: inherit;
+}
+
+.message-entry-user .ui-bubble-content :is(.reference-chip, .message-file-reference) * {
+  color: inherit;
+}
+
+/* The live line under a working agent: its moving face beside what it is doing, at reading size. */
+.agent-activity-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.agent-activity-label,
+.agent-activity-elapsed {
+  font-size: var(--holeai-text-bubble);
+  line-height: 22px;
 }
