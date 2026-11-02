@@ -352,6 +352,9 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "このセッションの接続を解除しますか？",
   "settings.profile.sessions.disconnectConfirm.description":
     "このデバイスはアカウントからサインアウトします。接続するには、もう一度サインインする必要があります。",
+  "settings.profile.signOutConfirm.title": "OpenBot からサインアウトしますか？",
+  "settings.profile.signOutConfirm.description":
+    "このコンピューターで OpenBot を使うには、もう一度サインインする必要があります。",
   "settings.updates.title": "OpenBot のアップデート",
   "settings.updates.track.title": "アップデートのチャンネル",
   "settings.updates.track.description": "Stable ではテスト済みの OpenBot リリースを受け取ります。",

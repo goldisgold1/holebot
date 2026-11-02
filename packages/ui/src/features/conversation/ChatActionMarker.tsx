@@ -22,7 +22,6 @@ import {
 import type { JSX } from "@solidjs/web";
 import { Dynamic } from "@solidjs/web";
 import { createSignal, createUniqueId, For, Show, untrack } from "solid-js";
-import { avatarHeadColor } from "../../bloub-avatar";
 import type {
   AgentMessageMarkerModel,
   AgentProfile,
@@ -282,7 +281,19 @@ function AgentMessageGroupMarker(
     ),
   ];
   const agents = () => agentIds().map((agentId) => props.agents.find((agent) => agent.id === agentId));
-  const label = () => t("chat.marker.messageGroup", { count: props.group.messages.length });
+  /*
+   * A burst this agent sent out, each message to agents none of the others went to, is one act of
+   * reaching out, so it reads "Messaged 3 agents". A back-and-forth, or several messages to the same
+   * agent, keeps the count of messages.
+   */
+  const fanOut = () => {
+    const targets = props.group.messages.flatMap(({ marker }) =>
+      marker.direction === "outgoing" ? marker.targetDeliveries.map((delivery) => delivery.agentId) : [null],
+    );
+    return !targets.includes(null) && new Set(targets).size === targets.length && targets.length > 1;
+  };
+  const label = () =>
+    fanOut() ? t("chat.marker.messaged") : t("chat.marker.messageGroup", { count: props.group.messages.length });
   const agentsLabel = () => {
     const ids = agentIds();
     if (ids.length !== 1) return t("chat.marker.agentCount", { count: ids.length });
@@ -306,7 +317,6 @@ function AgentMessageGroupMarker(
             variant="ghost"
             type="button"
             class="chat-action-target"
-            style={agentTargetsStyle(agents())}
             aria-expanded={control.expanded() ? "true" : "false"}
             aria-controls={control.listId}
             aria-label={t(control.expanded() ? "chat.marker.hideMessages" : "chat.marker.showMessages", {
@@ -752,12 +762,7 @@ function AgentTarget(props: {
         }
       >
         <DropdownMenu.Root placement="bottom" gutter={8} modal={false}>
-          <DropdownMenu.Trigger
-            class="chat-action-target chat-action-agent-menu-trigger"
-            style={agentTargetsStyle(
-              recipients().map((delivery) => props.agents.find((agent) => agent.id === delivery.agentId)),
-            )}
-          >
+          <DropdownMenu.Trigger class="chat-action-target chat-action-agent-menu-trigger">
             <span class="chat-action-avatar-stack" aria-hidden="true">
               <For each={recipients().slice(0, 3)}>
                 {(delivery) => (
@@ -817,7 +822,6 @@ function AgentButton(props: {
           variant="ghost"
           type="button"
           class="chat-action-target"
-          style={agentTargetStyle(agent())}
           aria-label={t("chat.marker.openChat", { name: agent().name })}
           data-cuelume-tap="navigate"
           onClick={() => props.onSelectAgent(agent().id)}
@@ -970,20 +974,6 @@ function markerLabel(
   if (marker.status === "failed") return t("chat.marker.run.failed");
   if (marker.status === "interrupted") return t("chat.marker.run.interrupted");
   return t("chat.marker.run.cancelled");
-}
-
-function agentTargetStyle(agent: AgentProfile | undefined): string | undefined {
-  return agent ? `--chat-action-agent-color: ${avatarHeadColor(agent.avatarSeed, agent.avatarHue)}` : undefined;
-}
-
-function agentTargetsStyle(agents: Array<AgentProfile | undefined>): string | undefined {
-  const colors = agents.flatMap((agent) => (agent ? [avatarHeadColor(agent.avatarSeed, agent.avatarHue)] : []));
-  const mixedColor = colors.reduce<string | undefined>((mix, color, index) => {
-    if (!mix) return color;
-    const previousColorsWeight = Math.round((index / (index + 1)) * 10_000) / 100;
-    return `color-mix(in oklab, ${mix} ${previousColorsWeight}%, ${color})`;
-  }, undefined);
-  return mixedColor ? `--chat-action-agent-color: ${mixedColor}` : undefined;
 }
 
 function markerAccessibleLabel(

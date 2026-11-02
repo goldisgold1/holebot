@@ -57,10 +57,11 @@
   padding: var(--openbot-space-6) 0;
 }
 
+/* The live preview, at the size the look picker shows a character. */
 .first-agent-live-avatar {
   display: grid;
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   place-items: center;
   justify-self: center;
   margin-bottom: var(--openbot-space-1);
@@ -68,8 +69,8 @@
 }
 
 .first-agent-live-avatar .agent-avatar {
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
 }
 
 .first-agent-avatar-fieldset {
@@ -79,67 +80,85 @@
   padding: 0;
 }
 
-.first-agent-color-options,
-.first-agent-face-options {
+.first-agent-color-options {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--openbot-space-1);
 }
 
+/* Square face tiles that wrap into as many rows as the editor needs. */
 .first-agent-face-options {
-  gap: var(--openbot-space-0-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 44px);
+  justify-content: center;
+  gap: var(--openbot-space-1);
 }
 
 .ui-button.first-agent-color-choice,
 .ui-button.first-agent-face-choice {
   box-sizing: border-box;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
   border-color: transparent;
   background: transparent;
   padding: 0;
-  border-radius: var(--openbot-radius-md);
-}
-
-.ui-button.first-agent-face-choice {
-  display: grid;
-  width: 33px;
-  height: 33px;
-  flex-basis: 33px;
-  place-items: center;
-  padding: 0;
+  box-shadow: none;
 }
 
 .ui-button.first-agent-color-choice {
   border-radius: var(--openbot-radius-pill);
 }
 
-.ui-button.first-agent-color-choice:hover:not(:disabled),
-.ui-button.first-agent-face-choice:hover:not(:disabled) {
-  background: var(--openbot-hover);
+.ui-button.first-agent-face-choice {
+  width: 44px;
+  height: 44px;
+  flex-basis: 44px;
+  border-radius: var(--openbot-radius-lg);
 }
 
-.first-agent-color-choice[aria-pressed="true"],
+.ui-button.first-agent-face-choice:hover:not(:disabled),
 .first-agent-face-choice[aria-pressed="true"] {
-  border-color: var(--openbot-accent-text);
-  box-shadow: 0 0 0 2px var(--openbot-accent-soft);
+  background: var(--openbot-bg-control-hover);
 }
 
+/* A colour is a 24px dot in a 32px target. The chosen one gets a ring with a gap of the canvas. */
 .first-agent-color-swatch {
   display: block;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--openbot-border-strong);
+  width: 24px;
+  height: 24px;
   border-radius: var(--openbot-radius-pill);
 }
 
-.first-agent-face-choice .agent-avatar {
-  --agent-avatar-optical-offset: -3.25px;
+.first-agent-color-choice[aria-pressed="true"] .first-agent-color-swatch {
+  box-shadow:
+    0 0 0 3px var(--openbot-bg-canvas),
+    0 0 0 4px var(--openbot-border-focus);
+}
 
-  width: 24px;
-  height: 24px;
+@media (hover: hover) and (pointer: fine) {
+  .ui-button.first-agent-color-choice:hover:not(:disabled) .first-agent-color-swatch {
+    box-shadow:
+      0 0 0 3px var(--openbot-bg-canvas),
+      0 0 0 4px var(--openbot-border-strong);
+  }
+
+  .ui-button.first-agent-color-choice[aria-pressed="true"]:hover:not(:disabled) .first-agent-color-swatch {
+    box-shadow:
+      0 0 0 3px var(--openbot-bg-canvas),
+      0 0 0 4px var(--openbot-border-focus);
+  }
+}
+
+.first-agent-face-choice .agent-avatar {
+  --agent-avatar-optical-offset: -4px;
+
+  width: 30px;
+  height: 30px;
 }
 
 .first-agent-fields {
@@ -342,13 +361,8 @@
 
   .first-agent-live-avatar,
   .first-agent-live-avatar .agent-avatar {
-    width: 62px;
-    height: 62px;
-  }
-
-  .first-agent-face-options {
-    gap: var(--openbot-space-0-5);
-    flex-wrap: wrap;
+    width: 76px;
+    height: 76px;
   }
 
   .first-agent-suggestions {

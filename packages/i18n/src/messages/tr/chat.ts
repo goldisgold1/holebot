@@ -277,7 +277,6 @@ export const messages = {
   "chat.unread.marking": "İşaretleniyor…",
   "chat.unread.markRead": "Okundu olarak işaretle",
   "chat.unread.dividerLabel": "Yeni mesajlar",
-  "chat.unread.dividerBadge": "YENİ",
   "chat.table.comparison": "Karşılaştırma tablosu",
   "chat.table.data": "Veri tablosu",
   "chat.table.copyMarkdown": "Markdown kopyala",

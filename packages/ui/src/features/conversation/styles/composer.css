@@ -132,6 +132,12 @@
     box-shadow var(--openbot-duration-hover) var(--openbot-ease-out);
 }
 
+/* ConversationComposer.tsx animates the height when the box grows out of its one-line pill or folds back.
+   The content takes its new layout at once, so the box clips it until the height catches up. */
+.composer[data-resizing] {
+  overflow: clip;
+}
+
 .composer[data-compact] {
   grid-template-columns: 28px minmax(0, 1fr) auto;
   min-height: 48px;
@@ -318,6 +324,34 @@
   transition: width var(--voice-morph-duration) var(--voice-morph-ease);
 }
 
+/* The send control carries the microphone while there is nothing to send, so the microphone's seat and
+   its disc in the goo layer fold into it. The negative margin takes back the gap before the send button.
+   A recording starts from here too: the bar then grows out of the send button. */
+.voice-morph[data-mic-hidden] .voice-morph-slot {
+  width: 0;
+  margin-inline-start: -6px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    width var(--composer-cta-duration) var(--composer-cta-ease),
+    margin-inline-start var(--composer-cta-duration) var(--composer-cta-ease),
+    opacity var(--composer-cta-duration) var(--composer-cta-ease),
+    visibility 0s linear var(--composer-cta-duration);
+}
+
+.voice-morph[data-mic-hidden] .voice-morph-bar {
+  width: 0;
+  transition: width var(--composer-cta-duration) var(--composer-cta-ease);
+}
+
+/* Back from the fold: the width keeps the pace of the goo disc under it. */
+.voice-morph:not([data-mic-hidden], [data-recording]) .voice-morph-slot {
+  transition:
+    width var(--voice-morph-exit-duration) var(--openbot-ease-out),
+    margin-inline-start var(--composer-cta-duration) var(--composer-cta-ease),
+    opacity var(--composer-cta-duration) var(--composer-cta-ease);
+}
+
 .voice-morph .dictation-button {
   background: transparent;
 }
@@ -467,6 +501,43 @@
 .voice-button {
   background: var(--openbot-text-primary);
   color: var(--openbot-bg-sidebar);
+}
+
+/* The main button's glyphs, one per job (ComposerSendControl.tsx), stacked in one 16px slot. The shown one
+   pops in from half size while the others fade out, so microphone, Send and Stop cross-fade. */
+.voice-morph,
+.voice-button {
+  --composer-cta-duration: 200ms;
+  --composer-cta-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.composer-cta-glyphs {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+}
+
+.composer-cta-glyph {
+  display: grid;
+  grid-area: 1 / 1;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity var(--composer-cta-duration) var(--composer-cta-ease),
+    transform var(--composer-cta-duration) var(--composer-cta-ease);
+}
+
+.composer-cta-glyph[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-cta-glyph {
+    transition: none;
+  }
 }
 
 .voice-button-active {
@@ -936,6 +1007,24 @@
   font-size: var(--openbot-text-sm);
   font-weight: 500;
   line-height: 16px;
+}
+
+/* The base name gives way to the ellipsis; the extension always stays, so "report.pdf" never reads "repo…". */
+.composer-attachment-copy .composer-attachment-name {
+  display: flex;
+  min-width: 0;
+}
+
+.composer-attachment-name-base {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-attachment-name-extension {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .composer-attachment-copy small {

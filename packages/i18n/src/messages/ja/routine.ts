@@ -320,5 +320,7 @@ export const messages = {
   "routine.settings.discardTitle": "変更を破棄しますか？",
   "routine.settings.discardDescription": "このルーティンへの保存されていない変更は失われます。",
   "routine.settings.discardConfirm": "変更を破棄",
+  "routine.settings.deleteConfirm.title": "このルーティンを削除しますか？",
+  "routine.settings.deleteConfirm.description": "今後は実行されず、設定も削除されます。この操作は元に戻せません。",
   "routine.settings.keepEditing": "編集を続ける",
 } as const satisfies PartialTranslation<typeof source>;

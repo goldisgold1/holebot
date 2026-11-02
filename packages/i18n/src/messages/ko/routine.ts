@@ -340,5 +340,7 @@ export const messages = {
   "routine.settings.discardTitle": "변경 사항을 취소할까요?",
   "routine.settings.discardDescription": "이 루틴에서 저장하지 않은 변경 사항이 사라져요.",
   "routine.settings.discardConfirm": "변경 사항 취소",
+  "routine.settings.deleteConfirm.title": "이 루틴을 삭제할까요?",
+  "routine.settings.deleteConfirm.description": "더 이상 실행되지 않고 설정도 삭제돼요. 이 작업은 되돌릴 수 없어요.",
   "routine.settings.keepEditing": "계속 편집",
 } as const satisfies PartialTranslation<typeof source>;

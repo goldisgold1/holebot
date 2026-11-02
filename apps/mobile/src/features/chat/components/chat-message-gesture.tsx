@@ -14,11 +14,14 @@ import { haptics } from "@/shared/lib/haptics";
 export function ChatMessageGesture({
   children,
   selecting,
+  maxWidth,
   onReply,
   onSelectText,
 }: PropsWithChildren<{
   /** The text is selected in the bubble: the handles get the touches, not the swipe. */
   selecting: boolean;
+  /** The widest the message may be. */
+  maxWidth: number;
   onReply?: () => void;
   onSelectText?: () => void;
 }>) {
@@ -66,7 +69,7 @@ export function ChatMessageGesture({
   }, [canReply, canSelect, offset]);
 
   return (
-    <View className="max-w-[92%] self-start">
+    <View className="self-start" style={{ maxWidth }}>
       {iconShown ? (
         <Animated.View pointerEvents="none" className="absolute bottom-0 left-0 top-0 justify-center" style={iconStyle}>
           <Reply color={muted} size={22} />

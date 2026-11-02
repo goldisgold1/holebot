@@ -361,6 +361,9 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "Diese Sitzung trennen?",
   "settings.profile.sessions.disconnectConfirm.description":
     "Dieses Gerät wird von deinem Konto abgemeldet. Es muss sich erneut anmelden, um sich zu verbinden.",
+  "settings.profile.signOutConfirm.title": "Von OpenBot abmelden?",
+  "settings.profile.signOutConfirm.description":
+    "Du musst dich erneut anmelden, um OpenBot auf diesem Computer zu nutzen.",
   "settings.updates.title": "OpenBot-Updates",
   "settings.updates.track.title": "Update-Kanal",
   "settings.updates.track.description": "Der stabile Kanal erhält getestete OpenBot-Versionen.",

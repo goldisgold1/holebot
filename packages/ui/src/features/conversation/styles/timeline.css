@@ -354,17 +354,22 @@
   opacity: 0.55;
 }
 
+/*
+ * Where the unread messages start: a hairline in a faint accent, named in words. It marks a place in
+ * the chat, so it stays quieter than the messages it sits between, with more room above it than
+ * below so it reads as the head of what follows.
+ */
 .unread-messages-divider {
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 8px;
-  margin: var(--openbot-space-1) 0 var(--openbot-space-2);
-  color: var(--openbot-unread-surface);
+  gap: var(--openbot-space-2);
+  margin: calc(var(--openbot-space-3) + var(--openbot-space-0-5)) 0 var(--openbot-space-2);
+  padding-block: var(--openbot-space-0-5);
+  color: var(--openbot-accent);
   font-size: var(--openbot-text-sm);
-  font-weight: 720;
-  letter-spacing: 0.08em;
-  line-height: 12px;
+  font-weight: var(--openbot-weight-medium);
+  line-height: 16px;
 }
 
 .unread-messages-divider hr {
@@ -372,14 +377,14 @@
   height: 1px;
   flex: 1;
   border: 0;
-  background: var(--openbot-unread-surface);
+  background: color-mix(in srgb, var(--openbot-accent) 20%, transparent);
 }
 
 .unread-messages-divider span {
   flex: 0 0 auto;
 }
 
-/* A new NEW line: the badge comes in first, then each line grows out from it. */
+/* A new divider: the label comes in first, then each line grows out from it. */
 .unread-messages-divider[data-arrive] span {
   animation: unread-divider-badge-in var(--openbot-duration-slow) var(--openbot-ease-out) both;
 }

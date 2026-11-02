@@ -15,12 +15,14 @@
   padding-inline: var(--openbot-space-1);
 }
 
-/* Keep the face beside the bubble, independent of the author name and footer height. The face is a
-   little shorter than a one-line bubble, so it reads at the size of the sidebar faces. */
+/* Keep the face beside the bubble, independent of the author name and footer height. The face is
+   small and stands at the foot of the last bubble of a run, so it marks the run without crowding the
+   text; the column is the face alone, and the column gap keeps it off the bubble. */
 .message-entry-with-author,
+.message-author-avatar,
 .message-author-gutter {
-  --message-author-face-size: var(--openbot-space-8);
-  --message-author-column: calc(var(--message-author-face-size) + var(--openbot-space-1));
+  --message-author-face-size: calc(var(--openbot-space-6) - var(--openbot-space-0-5));
+  --message-author-column: var(--message-author-face-size);
 }
 
 .message-entry-with-author {
@@ -47,6 +49,8 @@
 .message-author-avatar {
   width: var(--message-author-column);
   height: var(--message-author-column);
+  /* In a row without a name the face stands in the message's flex line, not in the grid. */
+  flex: 0 0 var(--message-author-column);
   grid-column: 1;
   grid-row: 2;
   align-self: end;
@@ -56,7 +60,7 @@
 }
 
 .message-author-avatar .agent-avatar {
-  --agent-avatar-optical-offset: -4px;
+  --agent-avatar-optical-offset: calc(var(--message-author-face-size) * -0.14);
 
   width: var(--message-author-face-size);
   height: var(--message-author-face-size);
@@ -857,28 +861,41 @@ button.chat-action-target:active,
   translate: 0 -0.5px;
 }
 
+/*
+ * The other agent of a message between agents is a quiet chip: its face and name in muted text,
+ * with no fill until the pointer is on it. The faces carry the agents' colours, so the chip
+ * adds none, and a chat full of handoffs does not turn the accent colour. The face sits closer to the
+ * chip's start than the name to its end, so the pill looks even around the round face.
+ */
 .chat-action-marker-agent-message .chat-action-target {
-  --chat-action-agent-color: var(--openbot-accent);
+  height: var(--openbot-control-xs);
+  min-height: var(--openbot-control-xs);
+  padding: var(--openbot-space-1) var(--openbot-space-1-5) var(--openbot-space-1) var(--openbot-space-1);
+  color: var(--openbot-text-muted);
+  transition:
+    background-color var(--openbot-duration-fast) var(--openbot-ease-out),
+    color var(--openbot-duration-fast) var(--openbot-ease-out),
+    scale var(--openbot-duration-fast) var(--openbot-ease-out);
 }
 
 .chat-action-marker-agent-message button.chat-action-target:hover,
 .chat-action-marker-agent-message .chat-action-agent-menu-trigger:hover,
 .chat-action-marker-agent-message .chat-action-agent-menu-trigger[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--chat-action-agent-color) 16%, transparent);
+  background: var(--openbot-hover);
   box-shadow: none;
-  color: var(--chat-action-agent-color);
+  color: var(--openbot-text-primary);
 }
 
 .chat-action-marker-agent-message button.chat-action-target:focus-visible,
 .chat-action-marker-agent-message .chat-action-agent-menu-trigger:focus-visible {
-  background: color-mix(in srgb, var(--chat-action-agent-color) 16%, transparent);
+  background: var(--openbot-hover);
   box-shadow: var(--openbot-focus-ring);
-  color: var(--chat-action-agent-color);
+  color: var(--openbot-text-primary);
 }
 
 .chat-action-marker-agent-message button.chat-action-target:active,
 .chat-action-marker-agent-message .chat-action-agent-menu-trigger:active {
-  background: color-mix(in srgb, var(--chat-action-agent-color) 34%, transparent);
+  background: var(--openbot-bg-control-active);
   color: var(--openbot-text-primary);
 }
 

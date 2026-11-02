@@ -39,8 +39,9 @@ import { CloseIcon } from "@openbot/ui/features/conversation/ConversationIcons";
 import { type OpenWaitItem, OpenWaits } from "@openbot/ui/features/conversation/OpenWaits";
 import { ReplyQuote } from "@openbot/ui/features/conversation/ReplyQuote";
 import { SpeakingBar } from "@openbot/ui/features/conversation/SpeakingBar";
-import { ComposerVoiceControls } from "@openbot/ui/features/conversation/VoiceRecordingMorph";
+import { ComposerVoiceControls, voiceButtonLabel } from "@openbot/ui/features/conversation/VoiceRecordingMorph";
 import { useText } from "@openbot/ui/text";
+import { prefersReducedMotion } from "@openbot/ui/utils";
 import { createEffect, createMemo, createSignal, createStore, For, Loading, lazy, Show } from "solid-js";
 import { reportErrorBanner, reportNotification } from "../../error-reports";
 import { deviceSendShortcut, sendShortcutAriaKey, sendShortcutHintKey } from "../../send-shortcut-preference";
@@ -54,6 +55,13 @@ import { currentConversationTarget } from "./stores/composer-store";
 const [dismissedCompactions, setDismissedCompactions] = createSignal<Record<string, string>>({});
 // Keyed by provider account, then by chat: a recovered window clears every chat of that account.
 const [dismissedUsageLimits, setDismissedUsageLimits] = createStore<Record<string, Record<string, string>>>({});
+/**
+ * The box folds back into its one-line pill only once the text is this much shorter than when it wrapped.
+ * The open box is wider than the pill's text column, so folding at the same length would flip it at each key.
+ */
+const COMPACT_REFOLD_SHARE = 0.85;
+/** The pill grows into the open box, and folds back, on this curve. */
+const COMPOSER_RESIZE = { duration: 300, easing: "cubic-bezier(0.2, 0, 0, 1)" } as const;
 
 /** @internal Stable HMR boundary for conversation composer. */
 export function ConversationComposer() {
@@ -337,6 +345,12 @@ export function ConversationComposer() {
       .map((extension) => `.${extension}`)
       .join(",");
   };
+  /** The agent works and there is nothing to send: the main button stops the turn. */
+  const stopShown = () =>
+    Boolean(props.activeTurnId && !editingDeliveryId() && !composerHasContent() && voicePhase() !== "recording");
+  /** Nothing to send: the main button is the microphone, and turns into Send with the first text or file. */
+  const voiceFirst = () =>
+    voiceAvailable() && !composerHasContent() && !editingDeliveryId() && voicePhase() !== "recording";
   const sendLabel = () => {
     if (editingDeliveryId()) return t("composer.send.saveQueued");
     if (voicePhase() === "recording") return t("composer.send.voice");
@@ -348,13 +362,22 @@ export function ConversationComposer() {
     voicePhase() === "recording"
       ? undefined
       : t(sendShortcutHintKey(deviceSendShortcut(props.platform), editingDeliveryId() ? "save" : "send"));
-  /** Send, or Stop while the agent works and the message box is empty. */
+  /** Send, Stop while the agent works and the message box is empty, or the microphone while it is empty. */
   const SendControl = () => (
     <ComposerSendControl
-      stop={Boolean(
-        props.activeTurnId && !editingDeliveryId() && !composerHasContent() && voicePhase() !== "recording",
-      )}
+      stop={stopShown()}
       onStop={props.onStop}
+      voice={
+        voiceAvailable()
+          ? {
+              first: voiceFirst(),
+              label: t(voiceButtonLabel(voicePhase())),
+              disabled: !props.agent || !agentReady() || voicePhase() !== "idle",
+              busy: voicePhase() !== "idle",
+              onStart: () => void startVoiceRecording(),
+            }
+          : undefined
+      }
       label={sendLabel()}
       keyShortcuts={sendKeyShortcuts()}
       title={sendTitle()}
@@ -370,6 +393,84 @@ export function ConversationComposer() {
       busy={submitting()}
       onSend={submitComposer}
     />
+  );
+
+  /*
+   * The one-line pill grows into the open box as soon as the text takes a second line, not only at a newline,
+   * and while files wait to be sent. The height follows on a curve rather than jumping.
+   */
+  const [composerElement, setComposerElement] = createSignal<HTMLDivElement | undefined>(undefined, {
+    ownedWrite: true,
+  });
+  /** The text length at which the pill's line wrapped, or null while the text fits on it. */
+  const [wrappedAt, setWrappedAt] = createSignal<number | null>(null);
+  const composerCompact = () =>
+    !currentDraft().text.includes("\n") && unreferencedDraftAttachments().length === 0 && wrappedAt() === null;
+  const measureWrap = (element: HTMLElement) => {
+    const text = currentDraft().text;
+    const at = wrappedAt();
+    if (at !== null) {
+      if (text.length < at * COMPACT_REFOLD_SHARE) setWrappedAt(null);
+      return;
+    }
+    // Only the pill's own line counts: the open box is wider and would say the text fits again.
+    if (!text || !element.hasAttribute("data-compact")) return;
+    const surface = element.querySelector(".composer-editor-surface");
+    if (!(surface instanceof HTMLElement)) return;
+    const style = getComputedStyle(surface);
+    const lineHeight = Number.parseFloat(style.lineHeight);
+    if (!lineHeight) return;
+    const textHeight =
+      surface.scrollHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
+    if (textHeight > lineHeight * 1.5) setWrappedAt(text.length);
+  };
+  let measuredChat: string | null | undefined;
+  createEffect(
+    () => ({ element: composerElement(), text: currentDraft().text, chat: currentChatConversationKey() }),
+    ({ element, chat }) => {
+      if (!element) return;
+      // Another chat's draft starts from the pill; the resize observer measures it again once it is one.
+      if (chat !== measuredChat) {
+        measuredChat = chat;
+        if (wrappedAt() !== null) {
+          setWrappedAt(null);
+          return;
+        }
+      }
+      measureWrap(element);
+    },
+  );
+  /** The height the box last showed, mid-animation included, so a reversed resize starts where it is. */
+  let shownHeight = 0;
+  createEffect(composerElement, (element) => {
+    if (!element) return;
+    // A narrower window wraps the line too, so the width counts as much as the text.
+    const observer = new ResizeObserver(() => {
+      shownHeight = element.getBoundingClientRect().height;
+      measureWrap(element);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  });
+  let resizedChat: string | null | undefined;
+  createEffect(
+    () => ({ element: composerElement(), compact: composerCompact(), chat: currentChatConversationKey() }),
+    ({ element, chat }) => {
+      if (!element) return;
+      const from = shownHeight;
+      const to = element.getBoundingClientRect().height;
+      shownHeight = to;
+      // A chat change shows the other draft at once.
+      const sameChat = chat === resizedChat;
+      resizedChat = chat;
+      if (!sameChat || !from || Math.abs(from - to) < 1 || prefersReducedMotion()) return;
+      element.setAttribute("data-resizing", "");
+      const animation = element.animate([{ height: `${from}px` }, { height: `${to}px` }], COMPOSER_RESIZE);
+      const settle = () => element.removeAttribute("data-resizing");
+      animation.addEventListener("finish", settle);
+      animation.addEventListener("cancel", settle);
+      return () => animation.cancel();
+    },
   );
   return (
     <Show
@@ -613,10 +714,9 @@ export function ConversationComposer() {
           </Show>
         </div>
         <div
+          ref={setComposerElement}
           class="composer"
-          data-compact={
-            currentDraft().text.includes("\n") || unreferencedDraftAttachments().length > 0 ? undefined : ""
-          }
+          data-compact={composerCompact() ? "" : undefined}
           data-has-attachments={unreferencedDraftAttachments().length > 0 ? "" : undefined}
           onPointerDown={(event) => {
             if (!(event.target instanceof Element)) return;
@@ -633,6 +733,7 @@ export function ConversationComposer() {
                 {(attachment) => {
                   // An image with no preview (the web client) shows as a file, with its name.
                   const chip = () => (attachment.kind === "image" && attachment.previewUrl ? "image" : "file");
+                  const name = () => splitFileName(attachment.name);
                   return (
                     <div class="composer-attachment ui-removable-image" data-kind={chip()}>
                       <span
@@ -645,7 +746,10 @@ export function ConversationComposer() {
                       </span>
                       <Show when={chip() === "file"}>
                         <span class="composer-attachment-copy">
-                          <strong title={attachment.name}>{attachment.name}</strong>
+                          <strong class="composer-attachment-name" title={attachment.name}>
+                            <span class="composer-attachment-name-base">{name()[0]}</span>
+                            <span class="composer-attachment-name-extension">{name()[1]}</span>
+                          </strong>
                           <small>{format.fileSize(attachment.size)}</small>
                         </span>
                       </Show>
@@ -688,7 +792,9 @@ export function ConversationComposer() {
                     ? t("composer.placeholder.reply")
                     : composerAnswersPrompt()
                       ? t("composer.placeholder.answer")
-                      : messageLabel()
+                      : currentDraft().attachments.length > 0
+                        ? t("composer.placeholder.filesOnly")
+                        : messageLabel()
               }
               ariaLabel={channel ? t("channel.composer.label") : messageLabel()}
               focusRequest={composerFocusRequest()}
@@ -778,6 +884,7 @@ export function ConversationComposer() {
                   onCancel={cancelVoiceRecording}
                   onFinish={stopVoiceRecording}
                   send={<SendControl />}
+                  micInSend={voiceFirst() && !stopShown()}
                 />
               </Show>
             </div>
@@ -807,6 +914,14 @@ function openWaitItems(waits: readonly AgentWait[], queue: QueueSnapshot | undef
     openedAt: wait.createdAt,
     state: wait.wakeDeliveryId && pending.has(wait.wakeDeliveryId) ? "resuming" : wait.wokenAt ? "woken" : "waiting",
   }));
+}
+
+/** "report.final.pdf" -> ["report.final", ".pdf"]: the chip shortens the base and always shows the type. */
+function splitFileName(name: string): [base: string, extension: string] {
+  const dot = name.lastIndexOf(".");
+  // A dotfile has no extension, and a long tail after the last dot is part of the name.
+  if (dot <= 0 || name.length - dot > 12) return [name, ""];
+  return [name.slice(0, dot), name.slice(dot)];
 }
 
 const QueuePanel = lazy(() =>

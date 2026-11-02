@@ -263,7 +263,6 @@ export const messages = defineMessages("chat", {
   "chat.unread.marking": "Marking…",
   "chat.unread.markRead": "Mark as read",
   "chat.unread.dividerLabel": "New messages",
-  "chat.unread.dividerBadge": "NEW",
   "chat.table.comparison": "Comparison table",
   "chat.table.data": "Data table",
   "chat.table.copyMarkdown": "Copy as Markdown",

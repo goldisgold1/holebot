@@ -348,5 +348,8 @@ export const messages = defineMessages("routine", {
   "routine.settings.discardTitle": "Discard changes?",
   "routine.settings.discardDescription": "Your unsaved changes to this routine will be lost.",
   "routine.settings.discardConfirm": "Discard changes",
+  "routine.settings.deleteConfirm.title": "Delete this routine?",
+  "routine.settings.deleteConfirm.description":
+    "It won't run again, and its settings will be removed. You can't undo this.",
   "routine.settings.keepEditing": "Keep editing",
 });

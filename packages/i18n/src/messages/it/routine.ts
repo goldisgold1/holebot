@@ -330,5 +330,8 @@ export const messages = {
   "routine.settings.discardTitle": "Scartare le modifiche?",
   "routine.settings.discardDescription": "Le modifiche non salvate a questa routine andranno perse.",
   "routine.settings.discardConfirm": "Scarta le modifiche",
+  "routine.settings.deleteConfirm.title": "Eliminare questa routine?",
+  "routine.settings.deleteConfirm.description":
+    "Non verrà più eseguita e le sue impostazioni verranno rimosse. L’operazione non può essere annullata.",
   "routine.settings.keepEditing": "Continua a modificare",
 } as const satisfies PartialTranslation<typeof source>;

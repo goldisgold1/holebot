@@ -372,6 +372,9 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "Отключить этот сеанс?",
   "settings.profile.sessions.disconnectConfirm.description":
     "Это устройство выйдет из аккаунта. Чтобы подключиться, ему нужно снова войти.",
+  "settings.profile.signOutConfirm.title": "Выйти из OpenBot?",
+  "settings.profile.signOutConfirm.description":
+    "Чтобы пользоваться OpenBot на этом компьютере, нужно будет войти снова.",
   "settings.updates.title": "Обновления OpenBot",
   "settings.updates.track.title": "Канал обновлений",
   "settings.updates.track.description": "Stable получает проверенные релизы OpenBot.",

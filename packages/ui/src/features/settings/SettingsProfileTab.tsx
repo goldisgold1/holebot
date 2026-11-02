@@ -10,6 +10,7 @@ import {
   ItemDescription,
   ItemGroup,
   ItemTitle,
+  LogOut,
   Pencil,
   SettingsSection,
   Text,
@@ -61,6 +62,8 @@ export function SettingsProfileTab(props: SettingsProfileTabProps) {
   const { t, format, errorMessage } = useText();
   const [signingOut, setSigningOut] = createSignal(false);
   const [signOutError, setSignOutError] = createSignal<string | null>(null);
+  /** Sign out asks first: it ends this computer's session with the account. */
+  const [confirmingSignOut, setConfirmingSignOut] = createSignal(false);
   /** The session that the Disconnect confirmation is open for. */
   const [disconnectTarget, setDisconnectTarget] = createSignal<string | null>(null);
   const [editing, setEditing] = createSignal(false);
@@ -150,9 +153,27 @@ export function SettingsProfileTab(props: SettingsProfileTabProps) {
               </Text>
               <Show when={props.onSignOut}>
                 {(onSignOut) => (
-                  <Button variant="outline" disabled={signingOut()} onClick={() => void signOut(onSignOut())}>
-                    {signingOut() ? t("account.menu.signingOut") : t("account.menu.signOut")}
-                  </Button>
+                  <>
+                    <Button variant="outline" disabled={signingOut()} onClick={() => setConfirmingSignOut(true)}>
+                      {signingOut() ? t("account.menu.signingOut") : t("account.menu.signOut")}
+                    </Button>
+                    <ConfirmDialog
+                      open={confirmingSignOut()}
+                      onCancel={() => setConfirmingSignOut(false)}
+                      onConfirm={async () => {
+                        // A failure shows under the Email row, so the dialog closes either way.
+                        await signOut(onSignOut());
+                        setConfirmingSignOut(false);
+                      }}
+                      tone="default"
+                      icon={<LogOut />}
+                      title={t("settings.profile.signOutConfirm.title")}
+                      description={t("settings.profile.signOutConfirm.description")}
+                      confirmLabel={t("account.menu.signOut")}
+                      pendingLabel={t("account.menu.signingOut")}
+                      initialFocus="cancel"
+                    />
+                  </>
                 )}
               </Show>
             </ItemActions>

@@ -1,15 +1,12 @@
 import { Typography } from "heroui-native";
 import Brain from "lucide-react-native/icons/brain";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
-import { useState } from "react";
 import { type ColorValue, Pressable } from "react-native";
-import Animated, { cubicBezier } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { haptics } from "@/shared/lib/haptics";
-import { useReducedMotion } from "@/shared/lib/motion";
+import { usePressScale } from "@/shared/lib/press-scale";
 import { type MobileText, useText } from "@/shared/lib/text";
 import type { TurnStepsSummary } from "../model/turn-thinking";
-
-const PRESS_EASING = cubicBezier(0.23, 1, 0.32, 1);
 
 /** "12s" or "1m 04s". */
 export function turnDuration(seconds: number, { t, format }: Pick<MobileText, "t" | "format">): string {
@@ -32,8 +29,7 @@ export function ChatTurnStepsRow({
   onPress: () => void;
 }) {
   const text = useText();
-  const reducedMotion = useReducedMotion();
-  const [pressed, setPressed] = useState(false);
+  const press = usePressScale();
   const steps = text.t("mobile.chat.thinking.steps", { count: summary.steps });
   const label =
     summary.seconds === null
@@ -45,23 +41,15 @@ export function ChatTurnStepsRow({
       accessibilityLabel={label}
       accessibilityHint={text.t("mobile.chat.thinking.openHint")}
       hitSlop={8}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       onPress={() => {
         void haptics.selection();
         onPress();
       }}
       className="self-start"
     >
-      <Animated.View
-        className="flex-row items-center gap-1.5 px-1 py-1"
-        style={{
-          transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }],
-          transitionProperty: "transform",
-          transitionDuration: 120,
-          transitionTimingFunction: PRESS_EASING,
-        }}
-      >
+      <Animated.View className="flex-row items-center gap-1.5 px-1 py-1" style={press.style}>
         <Brain size={14} color={muted} />
         <Typography.Paragraph type="body-xs" className="text-muted" numberOfLines={1}>
           {label}

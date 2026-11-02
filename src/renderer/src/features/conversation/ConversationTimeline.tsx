@@ -692,6 +692,24 @@ export function ConversationTimeline() {
                     startsDay: dayMarker() !== null,
                   });
                 });
+                /*
+                 * Whether the row below carries this run on, by the same rule `continuesRun` applies
+                 * to it. The face of a run stands beside its last message, so it marks where the run
+                 * ends. A card below that draws no message row ends the run here.
+                 */
+                const runContinuesBelow = createMemo(() => {
+                  const current = index();
+                  const row = message();
+                  const next = current === undefined ? undefined : timelineMessages()[current + 1];
+                  if (!row || !next || !rowDrawsTime(next)) return false;
+                  if (next.id === unreadBoundaryMessageId() || next.actionMarker) return false;
+                  return continuesSenderRun(senderRunRow(row), senderRunRow(next), {
+                    previousDrawsTime: rowDrawsTime(row),
+                    startsDay:
+                      next.createdAt !== undefined &&
+                      dayMarkerLabel(row.createdAt, next.createdAt, { t, format }) !== null,
+                  });
+                });
                 const author = createMemo((): ChatMessageAuthor => {
                   const current = message();
                   const sender = otherSender(current);
@@ -1208,6 +1226,7 @@ export function ConversationTimeline() {
                                 ? !continuesRun()
                                 : undefined
                             }
+                            showFace={!runContinuesBelow()}
                             showTime={!continuesRun()}
                             animate={animateEntrance}
                             agents={props.agents}

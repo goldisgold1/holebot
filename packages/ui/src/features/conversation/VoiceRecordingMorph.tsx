@@ -47,6 +47,8 @@ export function VoiceRecordingMorph(props: {
   children: JSX.Element;
   /** The send control. Finish buds off it. */
   send: JSX.Element;
+  /** The send control carries the microphone job, so the microphone's own seat folds away. */
+  micHidden?: boolean | undefined;
 }): JSX.Element {
   const { t } = useText();
   const filterId = `voice-morph-goo-${createUniqueId()}`;
@@ -58,6 +60,7 @@ export function VoiceRecordingMorph(props: {
       class="voice-morph"
       data-recording={props.recording ? "" : undefined}
       data-countdown={props.recording && countingDown() ? "" : undefined}
+      data-mic-hidden={props.micHidden && !props.recording ? "" : undefined}
     >
       <svg class="voice-morph-filter" aria-hidden="true">
         <filter id={filterId} color-interpolation-filters="sRGB">
@@ -135,6 +138,11 @@ export function ComposerVoiceControls(props: {
   onFinish: () => void;
   /** The send control. Finish buds off it. */
   send: JSX.Element;
+  /**
+   * The send control starts dictation itself while there is nothing to send (see ComposerSendControl's
+   * `voice`), so the microphone beside it folds away and comes back once there is something to send.
+   */
+  micInSend?: boolean | undefined;
 }): JSX.Element {
   const { t } = useText();
   return (
@@ -151,6 +159,7 @@ export function ComposerVoiceControls(props: {
         onCancel={() => props.onCancel()}
         onFinish={() => props.onFinish()}
         send={props.send}
+        micHidden={props.micInSend}
       >
         <Button
           variant="ghost"

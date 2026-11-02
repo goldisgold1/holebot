@@ -167,6 +167,14 @@ export function AgentRoutinesSettings(props: AgentRoutinesSettingsProps) {
 
   onCleanup(scrollFades.stop);
 
+  /** The second line of a list row: when it runs, or only "Paused" while it is switched off. */
+  const routineListLine = (routine: RoutineEditorRecord): string => {
+    if (routineCompleted(routine)) {
+      return t("routine.settings.completed", { schedule: routineListSummary(routine, text) });
+    }
+    return routine.active ? routineListSummary(routine, text) : t("routine.settings.paused");
+  };
+
   // Only the newest list applies: an older response can arrive after a save and undo it.
   let listRequest = 0;
 
@@ -813,11 +821,7 @@ export function AgentRoutinesSettings(props: AgentRoutinesSettingsProps) {
                               </span>
                               <span>
                                 <strong>{routine.name}</strong>
-                                <small>
-                                  {routineCompleted(routine)
-                                    ? t("routine.settings.completed", { schedule: routineListSummary(routine, text) })
-                                    : routineListSummary(routine, text)}
-                                </small>
+                                <small>{routineListLine(routine)}</small>
                               </span>
                             </Button>
                             {/* A done one-time routine needs a new time to run again, so only the editor resumes it. */}
@@ -848,68 +852,47 @@ export function AgentRoutinesSettings(props: AgentRoutinesSettingsProps) {
                   onChange={(active) => changeDraft((value) => ({ ...value, active }))}
                 />
                 <div class="agent-routine-action-buttons">
+                  <Button
+                    variant="destructive"
+                    type="button"
+                    size="sm"
+                    disabled={deleting()}
+                    onClick={() => (current().id ? setConfirmDelete(true) : void deleteRoutine())}
+                  >
+                    {t("common.delete")}
+                  </Button>
                   <Show
-                    when={!confirmDelete()}
+                    when={dirty()}
                     fallback={
                       <>
+                        <Show when={props.port.runCommand && current().id}>
+                          <Button variant="secondary" type="button" size="sm" onClick={() => void copyRunCommand()}>
+                            {t("routine.settings.copyRunCommand")}
+                          </Button>
+                        </Show>
                         <Button
-                          variant="destructive"
                           type="button"
                           size="sm"
-                          loading={deleting()}
-                          loadingLabel={t("routine.settings.deleting")}
-                          onClick={() => void deleteRoutine()}
+                          class="agent-routine-test"
+                          disabled={!current().id || !validDraft(current())}
+                          loading={testing()}
+                          loadingLabel={t("routine.settings.starting")}
+                          onClick={() => void testRun()}
                         >
-                          {t("routine.settings.deleteNow")}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          type="button"
-                          size="sm"
-                          disabled={deleting()}
-                          onClick={() => setConfirmDelete(false)}
-                        >
-                          {t("common.cancel")}
+                          {t("routine.settings.testRun")}
                         </Button>
                       </>
                     }
                   >
-                    <Button variant="destructive" type="button" size="sm" onClick={() => setConfirmDelete(true)}>
-                      {t("common.delete")}
-                    </Button>
-                    <Show
-                      when={dirty()}
-                      fallback={
-                        <>
-                          <Show when={props.port.runCommand && current().id}>
-                            <Button variant="secondary" type="button" size="sm" onClick={() => void copyRunCommand()}>
-                              {t("routine.settings.copyRunCommand")}
-                            </Button>
-                          </Show>
-                          <Button
-                            type="button"
-                            size="sm"
-                            class="agent-routine-test"
-                            disabled={!current().id || !validDraft(current())}
-                            loading={testing()}
-                            loadingLabel={t("routine.settings.starting")}
-                            onClick={() => void testRun()}
-                          >
-                            {t("routine.settings.testRun")}
-                          </Button>
-                        </>
-                      }
+                    <Button
+                      type="button"
+                      size="sm"
+                      loading={saving()}
+                      loadingLabel={t("common.saving")}
+                      onClick={() => void saveDraft()}
                     >
-                      <Button
-                        type="button"
-                        size="sm"
-                        loading={saving()}
-                        loadingLabel={t("common.saving")}
-                        onClick={() => void saveDraft()}
-                      >
-                        {t("common.save")}
-                      </Button>
-                    </Show>
+                      {t("common.save")}
+                    </Button>
                   </Show>
                 </div>
               </div>
@@ -1121,6 +1104,20 @@ export function AgentRoutinesSettings(props: AgentRoutinesSettingsProps) {
           <HostedUpsellRoutinesNotice count={routines().filter((routine) => routine.active).length} />
         </div>
       </Show>
+      <ConfirmDialog
+        open={confirmDelete()}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          // A failure shows under the editor, so the dialog closes either way.
+          await deleteRoutine();
+          setConfirmDelete(false);
+        }}
+        title={t("routine.settings.deleteConfirm.title")}
+        description={t("routine.settings.deleteConfirm.description")}
+        confirmLabel={t("routine.settings.deleteNow")}
+        pendingLabel={t("routine.settings.deleting")}
+        initialFocus="cancel"
+      />
       <ConfirmDialog
         open={pendingExit() !== null}
         onCancel={() => setPendingExit(null)}

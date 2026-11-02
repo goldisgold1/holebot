@@ -360,6 +360,8 @@ export const messages = {
   "settings.profile.sessions.disconnectFailed": "无法断开该会话，请重试。",
   "settings.profile.sessions.disconnectConfirm.title": "断开该会话？",
   "settings.profile.sessions.disconnectConfirm.description": "这台设备将退出你的账号登录，必须重新登录才能连接。",
+  "settings.profile.signOutConfirm.title": "退出 OpenBot 登录？",
+  "settings.profile.signOutConfirm.description": "要在这台电脑上使用 OpenBot，需要重新登录。",
   // The Updates tab. {target} is "OpenBot v1.2.3" or settings.updates.target.latest.
   "settings.updates.title": "OpenBot 更新",
   "settings.updates.track.title": "更新通道",

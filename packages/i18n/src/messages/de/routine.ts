@@ -334,5 +334,8 @@ export const messages = {
   "routine.settings.discardTitle": "Änderungen verwerfen?",
   "routine.settings.discardDescription": "Deine ungespeicherten Änderungen an dieser Routine gehen verloren.",
   "routine.settings.discardConfirm": "Änderungen verwerfen",
+  "routine.settings.deleteConfirm.title": "Diese Routine löschen?",
+  "routine.settings.deleteConfirm.description":
+    "Sie wird nicht mehr ausgeführt und ihre Einstellungen werden entfernt. Das lässt sich nicht rückgängig machen.",
   "routine.settings.keepEditing": "Weiter bearbeiten",
 } as const satisfies PartialTranslation<typeof source>;

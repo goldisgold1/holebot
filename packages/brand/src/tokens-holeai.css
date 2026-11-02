@@ -41,6 +41,13 @@
     0 0 0 0.5px rgba(127, 127, 127, 0.16), 0 1px 4px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.035);
   --holeai-radius-pill: 999px;
   --holeai-shadow-composer: 0 6px 24px rgba(0, 0, 0, 0.18);
+  /* Grok Bot's switches: 32x20, the small one 26x16. */
+  --openbot-switch-width: 32px;
+  --openbot-switch-sm-width: 26px;
+  --openbot-switch-sm-height: 16px;
+  --openbot-switch-sm-inset: 2px;
+  /* Keyboard focus is easy to see: a 2px ring, still neutral grey. */
+  --openbot-focus-ring: 0 0 0 2px var(--openbot-text-muted);
   /* Motion: a calm standard curve for things that appear in place, and a longer rise for new messages. */
   --holeai-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --holeai-duration-tray: 300ms;

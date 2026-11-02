@@ -571,13 +571,13 @@
   }
 }
 
-/* The settings page: the nav at the width of the sidebar. */
+/* The settings page: a fixed, narrow nav column beside the panel. */
 .settings-page {
   display: grid;
   width: 100%;
   height: 100%;
   min-height: 0;
-  grid-template-columns: max(var(--left-panel-width, 280px), 220px) minmax(0, 1fr);
+  grid-template-columns: 198px minmax(0, 1fr);
 }
 
 .settings-page-nav {
@@ -587,7 +587,7 @@
   flex-direction: column;
   gap: var(--openbot-space-1);
   overflow: hidden;
-  border-right: 1px solid var(--openbot-border);
+  border-right: 0.5px solid var(--openbot-border-strong);
   padding: var(--openbot-space-4) var(--openbot-space-3) 0;
 }
 
@@ -657,8 +657,18 @@
   height: var(--openbot-icon-md);
 }
 
+.settings-page-nav-group .settings-modal-nav {
+  gap: var(--openbot-space-0-5);
+}
+
+/* A compact nav row: 13px text, a 16px icon, 7px by 9px padding and 8px corners. */
 .settings-page-nav-group .settings-modal-nav-item {
-  padding-inline: var(--openbot-space-3);
+  min-height: 0;
+  gap: calc(var(--openbot-space-2) + 1px);
+  border-radius: var(--openbot-radius-md);
+  padding: calc(var(--openbot-space-2) - 1px) calc(var(--openbot-space-2) + 1px);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
 }
 
 .settings-page-nav-group .settings-modal-nav-item[data-selected] {

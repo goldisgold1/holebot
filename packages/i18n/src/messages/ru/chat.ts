@@ -362,7 +362,6 @@ export const messages = {
   "chat.unread.marking": "Отмечаем…",
   "chat.unread.markRead": "Отметить прочитанным",
   "chat.unread.dividerLabel": "Новые сообщения",
-  "chat.unread.dividerBadge": "НОВОЕ",
   "chat.table.comparison": "Сравнительная таблица",
   "chat.table.data": "Таблица данных",
   "chat.table.copyMarkdown": "Копировать Markdown",

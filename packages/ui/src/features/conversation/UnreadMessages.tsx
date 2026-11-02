@@ -47,8 +47,8 @@ export function UnreadMessagesDivider(props: {
   const arrives = untrack(() => props.animateIn?.() === true);
   return (
     <div class="unread-messages-divider" data-arrive={arrives ? "" : undefined} ref={props.elementRef}>
-      <hr aria-label={t("chat.unread.dividerLabel")} />
-      <span>{t("chat.unread.dividerBadge")}</span>
+      <hr />
+      <span>{t("chat.unread.dividerLabel")}</span>
       <hr />
     </div>
   );

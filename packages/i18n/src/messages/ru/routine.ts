@@ -376,5 +376,8 @@ export const messages = {
   "routine.settings.discardTitle": "Отменить изменения?",
   "routine.settings.discardDescription": "Несохранённые изменения этой регулярной задачи будут потеряны.",
   "routine.settings.discardConfirm": "Отменить изменения",
+  "routine.settings.deleteConfirm.title": "Удалить эту регулярную задачу?",
+  "routine.settings.deleteConfirm.description":
+    "Она больше не будет запускаться, а её настройки будут удалены. Это действие нельзя отменить.",
   "routine.settings.keepEditing": "Продолжить правку",
 } as const satisfies PartialTranslation<typeof source>;

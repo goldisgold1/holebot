@@ -256,7 +256,6 @@ export const messages = {
   "chat.unread.marking": "既読にしています…",
   "chat.unread.markRead": "既読にする",
   "chat.unread.dividerLabel": "新しいメッセージ",
-  "chat.unread.dividerBadge": "新着",
   "chat.table.comparison": "比較表",
   "chat.table.data": "データ表",
   "chat.table.copyMarkdown": "Markdown としてコピー",

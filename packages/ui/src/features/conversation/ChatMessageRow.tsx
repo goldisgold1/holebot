@@ -47,6 +47,12 @@ export interface ChatMessageRowProps {
    * `false` keeps an empty gutter where the face stands; leave it out when the row has no face.
    */
   showAuthor?: boolean | undefined;
+  /**
+   * Whether the face stands beside the bubble, apart from the name. A run of several messages names
+   * its author on the first one and draws the face beside the last one, as a messenger does, so the
+   * face marks where the run ends. Left out, the face follows `showAuthor`.
+   */
+  showFace?: boolean | undefined;
   /** Whether the time stands beside the author name. Without a name, the time is in the action row. */
   showTime?: boolean | undefined;
   animate?: boolean;
@@ -162,9 +168,11 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
       { capture: true },
     );
   };
+  // A row in a chat with faces draws the face, or keeps its column empty so the bubbles stay in line.
+  const face = () => (props.showAuthor === undefined || person() ? undefined : (props.showFace ?? props.showAuthor));
   const body = (): JSX.Element => (
     <>
-      <Show when={props.showAuthor && !person()}>
+      <Show when={face()}>
         <MessageAvatar class="message-author-avatar">
           <Show when={props.author.agent} fallback={<AgentAvatar seed={seed()} />}>
             {(agent) => (
@@ -180,7 +188,8 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
           </Show>
         </MessageAvatar>
       </Show>
-      <Show when={props.showAuthor === false && !person()}>
+      {/* A named row keeps its face column in its grid, so only a row without a name needs the spacer. */}
+      <Show when={face() === false && props.showAuthor === false}>
         <div class="message-author-gutter" aria-hidden="true" />
       </Show>
       <MessageContent>

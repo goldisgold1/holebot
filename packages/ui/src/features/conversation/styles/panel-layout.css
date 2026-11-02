@@ -148,18 +148,53 @@
   }
 }
 
+/*
+ * Files dragged over the chat: the whole pane takes a light tint and a small dark pill says what a drop does.
+ * The tint is the pane's own layer, so the label element can be the pill; both fade in quickly.
+ */
+.conversation-panel:has(> .attachment-drop-overlay)::after {
+  position: absolute;
+  z-index: 59;
+  inset: 0;
+  background: color-mix(in srgb, var(--openbot-text-primary) 10%, transparent);
+  content: "";
+  pointer-events: none;
+  animation: attachment-drop-in 120ms ease-out both;
+}
+
 .attachment-drop-overlay {
   position: absolute;
   z-index: 60;
-  inset: 12px;
-  display: grid;
-  place-items: center;
-  border: 1px dashed color-mix(in srgb, var(--accent) 70%, var(--openbot-text-primary));
-  border-radius: var(--openbot-radius-lg);
-  background: color-mix(in srgb, var(--background) 38%, transparent);
-  color: var(--text-primary);
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  margin: auto;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--openbot-text-primary);
+  padding: 6px 12px;
+  color: var(--openbot-bg-canvas);
   font-size: var(--openbot-text-lg);
-  font-weight: 650;
-  backdrop-filter: blur(3px);
+  font-weight: 400;
+  line-height: 20px;
+  white-space: nowrap;
   pointer-events: none;
+  animation: attachment-drop-in 120ms ease-out both;
+}
+
+/* The message box shows where the files go. */
+.conversation-panel:has(> .attachment-drop-overlay) .composer {
+  border-color: var(--openbot-accent);
+}
+
+@keyframes attachment-drop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversation-panel:has(> .attachment-drop-overlay)::after,
+  .attachment-drop-overlay {
+    animation: none;
+  }
 }

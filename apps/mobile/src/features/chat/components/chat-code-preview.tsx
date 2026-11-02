@@ -8,13 +8,13 @@ import CodeXml from "lucide-react-native/icons/code-xml";
 import Workflow from "lucide-react-native/icons/workflow";
 import { memo, useState } from "react";
 import { Pressable, useWindowDimensions, View } from "react-native";
-import Animated, { cubicBezier } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useUniwind } from "uniwind";
 import { type CodePreviewEntry, storeCodePreview } from "@/features/chat/model/code-preview-store";
 import { useMermaidDiagram } from "@/features/chat/model/mermaid-diagrams";
 import { expoGoDomOptions } from "@/shared/lib/expo-go-dom";
 import { haptics } from "@/shared/lib/haptics";
-import { useReducedMotion } from "@/shared/lib/motion";
+import { usePressScale } from "@/shared/lib/press-scale";
 import { useText } from "@/shared/lib/text";
 import HtmlPreview from "./html-preview.dom";
 import { useHistoryShown } from "./use-history-shown";
@@ -22,7 +22,6 @@ import { useListSettled } from "./use-list-settled";
 
 /** The lines of code that the card shows while the block streams, or when it cannot draw it. */
 const EXCERPT_LINES = 4;
-const PRESS_EASING = cubicBezier(0.23, 1, 0.32, 1);
 /** The picture is landscape: twice as wide as it is high. */
 const PREVIEW_ASPECT = 2;
 /** A wide, flat diagram is not drawn lower than this. */
@@ -50,13 +49,12 @@ export const ChatCodePreview = memo(function ChatCodePreview({
   file?: CodePreviewEntry["file"];
 }) {
   const { t } = useText();
-  const reducedMotion = useReducedMotion();
+  const press = usePressScale();
   // A card that mounts during a fast fling of the chat draws its page or diagram when the list slows down.
   const settled = useListSettled();
   // A web view starts only once the chat shows its history, so it does not slow the chat that opens.
   const historyShown = useHistoryShown();
   const [muted, foreground] = useThemeColor(["muted", "foreground"]);
-  const [pressed, setPressed] = useState(false);
   const [width, setWidth] = useState(0);
   const screen = useWindowDimensions();
   const previewHeight = Math.round(width / PREVIEW_ASPECT);
@@ -68,8 +66,8 @@ export const ChatCodePreview = memo(function ChatCodePreview({
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityHint={t("mobile.chat.preview.openHint")}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       style={{ width: screen.width - CARD_SIDE_SPACE, maxWidth: "100%" }}
       // The picture fills the card inside its 1-point border.
       onLayout={(event) => setWidth(Math.round(event.nativeEvent.layout.width) - 2)}
@@ -81,14 +79,7 @@ export const ChatCodePreview = memo(function ChatCodePreview({
     >
       <Animated.View
         className="overflow-hidden border border-separator bg-control/50"
-        style={{
-          borderRadius: 18,
-          borderCurve: "continuous",
-          transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }],
-          transitionProperty: "transform",
-          transitionDuration: 120,
-          transitionTimingFunction: PRESS_EASING,
-        }}
+        style={[{ borderRadius: 18, borderCurve: "continuous" }, press.style]}
       >
         <View className="flex-row items-center gap-2.5 border-b border-separator px-3 py-2.5">
           <Icon size={18} color={String(foreground)} />

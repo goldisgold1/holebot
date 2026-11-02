@@ -87,6 +87,8 @@ import { haptics } from "@/shared/lib/haptics";
 import { useMotionPreference, useReducedMotion } from "@/shared/lib/motion";
 import { isAndroid } from "@/shared/lib/platform";
 import { useText } from "@/shared/lib/text";
+import { activityKind as toolActivityKind } from "../model/activity-label";
+import { type BubbleJoins, bubbleCorners, bubbleMaxWidth, bubbleRuns } from "../model/bubble-runs";
 import { mentionDraft } from "../model/chat-mentions";
 import type { ChatTarget } from "../model/chat-target";
 import { nativeTextSelection } from "../model/native-text-selection";
@@ -122,8 +124,6 @@ const OPENING_ROWS_TO_USER = 12;
 const ROW_STYLE = { paddingBottom: CHAT_ROW_GAP };
 /** The side padding of the list. */
 const LIST_PADDING = 16;
-/** A user's message is at most this part of the list width, as `max-w-[92%]` on its row. */
-const USER_BUBBLE_WIDTH = 0.92;
 
 /** The list keeps the sizes it measured by message, so rows that stay keep their place when the data changes. */
 function rowKey(message: VisibleMessage): string {
@@ -155,7 +155,7 @@ const STARTER_OPTIONS = [
   { id: "solve", label: "mobile.chat.starter.solveLabel", detail: "mobile.chat.starter.solveDetail" },
 ] as const satisfies readonly { id: string; label: MobileTextKey; detail: MobileTextKey }[];
 
-const USER_MESSAGE_ENTRANCE = FadeInDown.duration(240)
+const USER_MESSAGE_ENTRANCE = FadeInDown.duration(260)
   .easing(Easing.bezier(0.23, 1, 0.32, 1))
   .withInitialValues({ opacity: 0, transform: [{ translateY: 12 }] })
   .reduceMotion(ReduceMotion.System);
@@ -169,6 +169,7 @@ function ChatBubble({
   agent,
   collapsed = false,
   animateSize,
+  corners,
   className,
   style,
 }: PropsWithChildren<{
@@ -176,6 +177,8 @@ function ChatBubble({
   collapsed?: boolean;
   /** Off when Settings turns reply animation off: the background takes each new size at once. */
   animateSize: boolean;
+  /** The corner radii: tucked where the bubble joins its neighbour in a run. */
+  corners: ReturnType<typeof bubbleCorners>;
   className: string;
   style: ComponentProps<typeof Animated.View>["style"];
 }>) {
@@ -201,7 +204,7 @@ function ChatBubble({
   return (
     <Animated.View
       className={className}
-      style={style}
+      style={[corners, style]}
       onLayout={
         sized
           ? ({ nativeEvent }) => {
@@ -222,8 +225,8 @@ function ChatBubble({
           // A new view when the setting changes, so a filled background keeps no animated size.
           key={sized ? "sized" : "filled"}
           pointerEvents="none"
-          className="absolute left-0 top-0 rounded-[30px] bg-control/60"
-          style={[{ borderCurve: "circular" }, sized ? null : StyleSheet.absoluteFill, background]}
+          className="absolute left-0 top-0 bg-control/60"
+          style={[{ borderCurve: "circular" }, corners, sized ? null : StyleSheet.absoluteFill, background]}
         />
       ) : null}
       {children}
@@ -453,9 +456,15 @@ const MessageRow = memo(function MessageRow({
   selecting = false,
   arriving,
   revealed,
+  joinsAbove = false,
+  joinsBelow = false,
   shared,
 }: {
   message: VisibleMessage;
+  /** The bubble joins the bubble of the same speaker above it, in one run. */
+  joinsAbove?: boolean;
+  /** The bubble joins the bubble of the same speaker below it. */
+  joinsBelow?: boolean;
   /** The first message of the chat, sent from this phone: it rises from the composer. */
   isFirstUser: boolean;
   arriving: boolean;
@@ -647,14 +656,16 @@ const MessageRow = memo(function MessageRow({
             agent={message.author === "agent"}
             collapsed={waiting}
             animateSize={shared.textReveal}
+            corners={bubbleCorners(message.author === "user" ? "end" : "start", joinsAbove, joinsBelow)}
             className={
               message.author === "user"
-                ? `self-end rounded-[30px] px-4 py-3 ${userBubbleStyle || memberColor ? "" : "bg-control/60"} ${message.attachments?.length ? "max-w-[92%]" : "max-w-full"}`
+                ? `self-end px-[14px] py-[9px] ${userBubbleStyle || memberColor ? "" : "bg-control/60"} max-w-full`
                 : // HoleA.I: an agent's reply in a quiet gray bubble, as in a phone messenger.
-                  `max-w-full self-start rounded-[30px] ${waiting ? "" : "bg-control/60 px-4 py-3"}`
+                  `max-w-full self-start ${waiting ? "" : "bg-control/60 px-[14px] py-[9px]"}`
             }
             style={[
               { borderCurve: "circular", overflow: "hidden" },
+              message.attachments?.length ? { maxWidth: bubbleMaxWidth(shared.listWidth) } : undefined,
               message.author === "user"
                 ? memberColor
                   ? { backgroundColor: `${memberColor}38` }
@@ -714,7 +725,12 @@ const MessageRow = memo(function MessageRow({
           ? "max-w-full self-start gap-1"
           : message.attachments?.length
             ? "max-w-full self-end gap-1"
-            : "max-w-[92%] self-end gap-1"
+            : "self-end gap-1"
+      }
+      style={
+        message.author === "user" && !message.attachments?.length
+          ? { maxWidth: bubbleMaxWidth(shared.listWidth) }
+          : undefined
       }
     >
       {message.replyToMessageId ? (
@@ -733,6 +749,7 @@ const MessageRow = memo(function MessageRow({
       {message.author === "agent" ? (
         <ChatMessageGesture
           selecting={selecting}
+          maxWidth={bubbleMaxWidth(shared.listWidth)}
           onReply={shared.canReply ? () => actions.reply(message) : undefined}
           onSelectText={selectable ? () => actions.selectText(message) : undefined}
         >
@@ -741,7 +758,7 @@ const MessageRow = memo(function MessageRow({
       ) : outbox ? (
         <OutboxMessageMenu
           status={outbox}
-          maxWidth={message.attachments?.length ? shared.listWidth : shared.listWidth * USER_BUBBLE_WIDTH}
+          maxWidth={message.attachments?.length ? shared.listWidth : bubbleMaxWidth(shared.listWidth)}
         >
           {rendered}
         </OutboxMessageMenu>
@@ -788,6 +805,8 @@ interface RowContextValue {
   selectingMessageId: string | null;
   turnSummaries: ReadonlyMap<string, TurnStepsSummary> | undefined;
   onOpenTurn: ((turnId: string) => void) | undefined;
+  /** The text bubbles that join their neighbours in a run of one speaker. */
+  bubbleJoins: ReadonlyMap<string, BubbleJoins>;
 }
 
 const RowContext = createContext<RowContextValue | null>(null);
@@ -821,6 +840,8 @@ function ChatRow({ message }: { message: VisibleMessage }) {
         selecting={message.id === row.selectingMessageId}
         arriving={row.arrivals.has(message.id)}
         revealed={row.revealedIds.has(message.id)}
+        joinsAbove={row.bubbleJoins.get(message.id)?.above}
+        joinsBelow={row.bubbleJoins.get(message.id)?.below}
         shared={row.shared}
       />
     </Animated.View>
@@ -847,6 +868,20 @@ function conversationImages(messages: readonly VisibleMessage[]): AttachmentSumm
   return messages.flatMap((message) =>
     message.kind === "message" ? (message.attachments ?? []).filter(isViewableImage) : [],
   );
+}
+
+/** The last runs while they stay the same, so a streamed chunk does not hand the rows a new map. */
+function useStableJoins(joins: ReadonlyMap<string, BubbleJoins>): ReadonlyMap<string, BubbleJoins> {
+  const kept = useRef(joins);
+  const previous = kept.current;
+  const same =
+    previous.size === joins.size &&
+    [...joins].every(([id, join]) => {
+      const before = previous.get(id);
+      return before?.above === join.above && before.below === join.below;
+    });
+  if (!same) kept.current = joins;
+  return kept.current;
 }
 
 /** The text that Copy puts on the clipboard: tags and file references show their names. */
@@ -1235,6 +1270,9 @@ export const ChatMessageList = memo(function ChatMessageList({
   // list does not render every row again.
   const promptController = questionForm?.messageId ? questionForm : undefined;
   const responseIds = useMemo(() => new Set(rows.slice(tailIndex + 1).map((row) => row.id)), [rows, tailIndex]);
+  const bubbleJoins = useStableJoins(
+    useMemo(() => bubbleRuns(rows, (id) => turnSummaries?.has(id) ?? false), [rows, turnSummaries]),
+  );
   // The opening rows do not start at the first message of the chat.
   const firstUserId = rowsShown && tailIndex === 0 && !hasOlder ? (rows[0]?.id ?? null) : null;
   const rowContext = useMemo<RowContextValue>(
@@ -1253,6 +1291,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       selectingMessageId,
       turnSummaries,
       onOpenTurn,
+      bubbleJoins,
     }),
     [
       shared,
@@ -1269,6 +1308,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       selectingMessageId,
       turnSummaries,
       onOpenTurn,
+      bubbleJoins,
     ],
   );
   const activitySpec = (activity?: MobileAgentActivity): ChatActivitySpec | null => {
@@ -1317,6 +1357,17 @@ export const ChatMessageList = memo(function ChatMessageList({
                 : replying
                   ? t("mobile.chat.activity.responding")
                   : t("mobile.chat.activity.thinking");
+    // The kind of step names the icon. A wait and a host's step line have one; the agent's own
+    // commentary and the reply do not.
+    const activityKind =
+      sending && !activity
+        ? null
+        : activity?.phase === "waiting"
+          ? "waiting"
+          : !thinkingDetail && activity?.phase !== "responding"
+            ? toolActivityKind(activity?.detail)
+            : null;
+    const onlyThinking = activityLabel === t("mobile.chat.activity.thinking");
     const activityAgent = activity?.agentId
       ? agentsById.get(activity.agentId)
       : target.kind === "agent"
@@ -1332,6 +1383,8 @@ export const ChatMessageList = memo(function ChatMessageList({
       key: activity?.agentId ?? activityAgent?.id ?? target.id,
       label: activityLabel,
       accessibilityLabel: `${activityAgent?.name ?? target.name}: ${activityLabel}`,
+      kind: activityKind,
+      thinking: onlyThinking && animateMessages,
       agent: activityAgent,
       mood: animateMessages ? agentActivityMood(activity) : "idle",
       online,

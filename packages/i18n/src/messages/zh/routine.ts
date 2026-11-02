@@ -337,5 +337,7 @@ export const messages = {
   "routine.settings.discardTitle": "放弃更改？",
   "routine.settings.discardDescription": "你对该自动化任务未保存的更改将会丢失。",
   "routine.settings.discardConfirm": "放弃更改",
+  "routine.settings.deleteConfirm.title": "删除该自动化任务？",
+  "routine.settings.deleteConfirm.description": "它将不再运行，其设置也会被移除。此操作无法撤销。",
   "routine.settings.keepEditing": "继续编辑",
 } as const satisfies PartialTranslation<typeof source>;

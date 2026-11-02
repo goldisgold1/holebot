@@ -1,4 +1,4 @@
-import { AudioLines, DropdownMenu, File, Image, MessageCircleQuestionMark, Plus, Puzzle } from "@openbot/ui";
+import { AudioLines, DropdownMenu, File, MessageCircleQuestionMark, Plus, Puzzle } from "@openbot/ui";
 import { useText } from "@openbot/ui/text";
 import { Show } from "solid-js";
 
@@ -7,7 +7,7 @@ export interface ComposerAddMenuProps {
   onOpenChange: (open: boolean) => void;
   disabled: boolean;
   attachDisabled?: boolean | undefined;
-  /** Opens the file picker. Without it, the menu has no image or context item. */
+  /** Opens the file picker. Without it, the menu has no attach item. */
   onAttach?: (() => void) | undefined;
   /** Opens the skill picker of the editor, after the menu gave the focus back. Without it, no skill item. */
   onPickSkill?: (() => void) | undefined;
@@ -49,6 +49,7 @@ export function ComposerAddMenu(props: ComposerAddMenuProps) {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content aria-label={t("composer.add.label")}>
+          {/* One item for every kind of file: images and context files go through the same picker. */}
           <Show when={props.onAttach}>
             <DropdownMenu.Item
               disabled={props.attachDisabled ?? false}
@@ -57,8 +58,8 @@ export function ComposerAddMenu(props: ComposerAddMenuProps) {
               }}
               onKeyDown={attachFromKey}
             >
-              <Image aria-hidden="true" />
-              <span>{t("composer.add.image")}</span>
+              <File aria-hidden="true" />
+              <span>{t("composer.add.files")}</span>
             </DropdownMenu.Item>
           </Show>
           <Show when={props.onPickSkill}>
@@ -72,18 +73,6 @@ export function ComposerAddMenu(props: ComposerAddMenuProps) {
             >
               <Puzzle aria-hidden="true" />
               <span>{t("composer.add.skill")}</span>
-            </DropdownMenu.Item>
-          </Show>
-          <Show when={props.onAttach}>
-            <DropdownMenu.Item
-              disabled={props.attachDisabled ?? false}
-              onPointerDown={(event) => {
-                if (event.button === 0) attach();
-              }}
-              onKeyDown={attachFromKey}
-            >
-              <File aria-hidden="true" />
-              <span>{t("composer.add.context")}</span>
             </DropdownMenu.Item>
           </Show>
           <Show when={props.onSideQuestion}>

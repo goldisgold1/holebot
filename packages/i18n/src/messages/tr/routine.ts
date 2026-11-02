@@ -331,5 +331,7 @@ export const messages = {
   "routine.settings.discardTitle": "Değişiklikler atılsın mı?",
   "routine.settings.discardDescription": "Bu rutinde yaptığınız kaydedilmemiş değişiklikler kaybolacak.",
   "routine.settings.discardConfirm": "Değişiklikleri at",
+  "routine.settings.deleteConfirm.title": "Bu rutin silinsin mi?",
+  "routine.settings.deleteConfirm.description": "Artık çalışmayacak ve ayarları kaldırılacak. Bu işlem geri alınamaz.",
   "routine.settings.keepEditing": "Düzenlemeye devam et",
 } as const satisfies PartialTranslation<typeof source>;

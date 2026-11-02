@@ -385,6 +385,8 @@ export const messages = defineMessages("settings", {
   "settings.profile.sessions.disconnectConfirm.title": "Disconnect this session?",
   "settings.profile.sessions.disconnectConfirm.description":
     "This device is signed out of your account. It must sign in again to connect.",
+  "settings.profile.signOutConfirm.title": "Sign out of OpenBot?",
+  "settings.profile.signOutConfirm.description": "You'll need to sign in again to use OpenBot on this computer.",
   // The Updates tab. {target} is "OpenBot v1.2.3" or settings.updates.target.latest.
   "settings.updates.title": "OpenBot updates",
   "settings.updates.track.title": "Update track",

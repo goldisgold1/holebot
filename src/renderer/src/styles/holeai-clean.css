@@ -244,13 +244,16 @@
 }
 
 /*
- * Chat noise: routine runs and "Assigned to" routing lines say nothing the reader needs; they stay in the task
- * and routine pages. Finished step lists shrink to one quiet line until opened.
+ * Routine runs and "Assigned to" routing lines show as Grok Bot shows them: one quiet centred line, small and
+ * muted, so the activity is there without pulling the eye. Finished step lists shrink until opened.
  */
 .chat-action-marker-routine-run,
 .chat-action-marker-routine-run-group,
 .chat-action-marker-channel-routing {
-  display: none;
+  min-height: 24px;
+  justify-content: center;
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
 }
 
 .agent-steps:not([data-open]) .agent-steps-header {
@@ -682,6 +685,30 @@
   .message-attachment:hover {
     border-color: transparent;
   }
+}
+
+/* Menus as Grok Bot draws them: 30px rows with small corners, a hairline separator, a quicker open. */
+.ui-action-menu {
+  --openbot-control-md: 30px;
+  --ui-menu-item-radius: var(--openbot-radius-sm);
+  --ui-menu-duration: var(--openbot-duration-fast);
+}
+
+.ui-action-menu > hr {
+  height: 0.5px;
+}
+
+/* Tooltips: regular weight, a little more air and rounder. */
+.ui-tooltip {
+  border-radius: var(--openbot-radius-md);
+  padding: 6px 10px;
+  font-weight: var(--openbot-weight-regular);
+}
+
+/* Thin, quiet scrollbars everywhere. */
+* {
+  scrollbar-color: color-mix(in srgb, var(--openbot-text-primary) 16%, transparent) transparent;
+  scrollbar-width: thin;
 }
 
 /* The foot of the sidebar: the person using the app, then a menu of the other pages and Settings. */

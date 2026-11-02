@@ -264,7 +264,6 @@ export const messages = {
   "chat.unread.marking": "正在标记…",
   "chat.unread.markRead": "标为已读",
   "chat.unread.dividerLabel": "新消息",
-  "chat.unread.dividerBadge": "新",
   "chat.table.comparison": "对比表",
   "chat.table.data": "数据表",
   "chat.table.copyMarkdown": "复制为 Markdown",

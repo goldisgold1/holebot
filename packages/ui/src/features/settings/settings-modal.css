@@ -188,49 +188,44 @@
   display: none;
 }
 
+/*
+ * A settings card is one quiet surface with a hairline edge. Its rows have no dividers and no fixed
+ * height: the 10px row padding inside the card's 8px block padding sets the rhythm.
+ */
 .settings-modal-card:is(.ui-card, .ui-item-group) {
+  --settings-modal-row-padding-block: calc(var(--openbot-space-2) + var(--openbot-space-0-5));
+  --settings-modal-row-padding-inline: calc(var(--openbot-space-3) + var(--openbot-space-0-5));
   width: 100%;
   display: grid;
   overflow: hidden;
   border: 0;
   border-radius: var(--openbot-radius-lg);
+  outline: 0.5px solid var(--openbot-border-strong);
+  outline-offset: -0.5px;
   background: var(--openbot-bg-surface);
   box-shadow: none;
+}
+
+.settings-modal-card.ui-item-group {
+  padding-block: var(--openbot-space-2);
 }
 
 .settings-modal-card.ui-card {
   padding: 0 var(--openbot-space-4);
 }
 
-.settings-modal-card > .ui-switch-field,
-.settings-modal-card > .ui-item {
-  padding: var(--openbot-space-3) var(--openbot-space-4);
-}
-
-.settings-modal-row {
-  min-height: 64px;
+.settings-modal-card:is(.ui-card, .ui-item-group) > :is(.ui-switch-field, .ui-item) {
+  min-height: auto;
+  padding: var(--settings-modal-row-padding-block) var(--settings-modal-row-padding-inline);
 }
 
 .settings-modal-card > .ui-switch-field {
   width: 100%;
   justify-content: space-between;
-  padding: var(--openbot-space-3) var(--openbot-space-4);
 }
 
 .settings-modal-card > :not(:first-child) {
-  position: relative;
   border-top: 0;
-}
-
-.settings-modal-card > :not(:first-child)::before {
-  position: absolute;
-  top: 0;
-  right: var(--openbot-space-4);
-  left: var(--openbot-space-4);
-  height: 1px;
-  background: var(--openbot-border);
-  pointer-events: none;
-  content: "";
 }
 
 .settings-modal-row {
@@ -317,13 +312,16 @@
 }
 
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-nav {
-  gap: var(--openbot-space-1);
+  gap: var(--openbot-space-0-5);
 }
 
+/* A compact nav row: 13px text, a 16px icon, 7px by 9px padding. */
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-nav-item {
-  min-height: var(--openbot-control-md);
-  padding-inline: var(--openbot-space-3);
-  font-size: var(--openbot-text-lg);
+  min-height: 0;
+  gap: calc(var(--openbot-space-2) + 1px);
+  padding: calc(var(--openbot-space-2) - 1px) calc(var(--openbot-space-2) + 1px);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
 }
 
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-nav-item[data-selected] {
@@ -332,9 +330,11 @@
   font-weight: var(--openbot-weight-medium);
 }
 
+/* The title sits a little inside the card edge, and close above the first section. */
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-header {
   align-items: center;
-  padding: var(--openbot-space-4) var(--openbot-space-4) var(--openbot-space-6) var(--openbot-space-8);
+  padding: var(--openbot-space-8) var(--openbot-space-8) var(--openbot-space-1-5)
+    calc(var(--openbot-space-8) + var(--openbot-space-2));
 }
 
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-description {
@@ -349,7 +349,8 @@
 
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-content {
   gap: var(--openbot-space-6);
-  padding: 0 var(--openbot-space-8) calc(var(--openbot-space-8) + var(--settings-modal-floating-space, 0px));
+  padding: var(--openbot-space-3) var(--openbot-space-8)
+    calc(var(--openbot-space-8) + var(--settings-modal-floating-space, 0px));
 }
 
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .settings-modal-tab-panel {
@@ -362,11 +363,13 @@
   gap: var(--openbot-space-2);
 }
 
+/* A section title is a muted label that starts where the text inside its card starts. */
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .ui-settings-section-header {
-  padding-inline: 0;
+  padding: 0 var(--openbot-space-1) 0 calc(var(--openbot-space-3) + var(--openbot-space-0-5));
 }
 
 :is(.app-settings-modal-shell, .server-settings-modal-shell) .ui-settings-section-heading {
+  color: var(--openbot-text-muted);
   font-size: var(--openbot-text-md);
   line-height: var(--openbot-leading-md);
 }

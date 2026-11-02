@@ -373,6 +373,9 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "Déconnecter cette session ?",
   "settings.profile.sessions.disconnectConfirm.description":
     "Cet appareil est déconnecté de votre compte. Il doit se connecter à nouveau pour accéder au compte.",
+  "settings.profile.signOutConfirm.title": "Se déconnecter d’OpenBot ?",
+  "settings.profile.signOutConfirm.description":
+    "Vous devrez vous reconnecter pour utiliser OpenBot sur cet ordinateur.",
   "settings.updates.title": "Mises à jour d’OpenBot",
   "settings.updates.track.title": "Canal de mise à jour",
   "settings.updates.track.description": "Le canal Stable reçoit les versions testées d’OpenBot.",

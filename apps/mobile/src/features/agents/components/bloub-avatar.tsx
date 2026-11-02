@@ -1,11 +1,14 @@
 import { bloubAvatarProfile } from "@openbot/brand/bloub-avatar";
-import { type AvatarMood, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
+import { type AvatarMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
 import { CUTE_FACE_EYE, CUTE_FACE_EYES, cuteFaceBody, cuteFaceClosedEyes } from "@openbot/brand/cute-face";
 import type { AvatarHue } from "@openbot/contracts/ipc";
-import { memo, useEffect } from "react";
+import { memo, useEffect, useMemo } from "react";
 import Animated, {
+  cancelAnimation,
   convertToRGBA,
   type DerivedValue,
+  Easing,
+  ReduceMotion,
   type SharedValue,
   useAnimatedProps,
   useAnimatedStyle,
@@ -20,6 +23,15 @@ import Svg, { Ellipse, Path } from "react-native-svg";
 import { useAgentColorTransition } from "@/features/agents/components/agent-color-glow";
 import { AgentOrbitRings } from "@/features/agents/components/agent-orbit-rings";
 import { getBloubAvatarColor } from "@/features/agents/model/bloub-activity";
+import {
+  BLINK_MS,
+  blinkOpenness,
+  type FacePose,
+  faceRhythm,
+  GAZE_JUMP_MS,
+  POSE_MS,
+  SWAY_CYCLE_MS,
+} from "@/features/agents/model/face-motion";
 import { useAgentActivity } from "@/features/workspace/components/use-agent-activity";
 import {
   DISCONNECTED_APPEARANCE,
@@ -28,6 +40,7 @@ import {
 import { useMobileWorkspaceSelector } from "@/features/workspace/context/mobile-workspace-context";
 import { agentActivityMood } from "@/features/workspace/model/agent-activity";
 import { showsOnline } from "@/features/workspace/model/server-status";
+import { useReducedMotion } from "@/shared/lib/motion";
 import { AgentPhoto, type AgentPhotoProps } from "./agent-photo";
 
 interface BloubAvatarProps extends AgentPhotoProps {
@@ -42,15 +55,12 @@ interface BloubAvatarProps extends AgentPhotoProps {
 
 // HoleA.I: the Grok Bot style face (see @openbot/brand/cute-face), the same drawing as the desktop.
 const FACE_EYE = "#f9f9f9";
-// Where the eyes glance, in face units: they hold each spot and jump to the next, like the desktop face.
-const GLANCES = [
-  [0, 0],
-  [-5, -1],
-  [4, 1],
-  [-2, 3],
-  [3, -2],
-  [0, 0],
-] as const;
+// The face is drawn in a 140-unit box, and the body's bottom edge is about 45 units under its centre.
+const FACE_BOX = 140;
+const FACE_SEAT = 45;
+// A shut eye keeps a thin line, so the face never loses its eyes mid-blink.
+const EYE_SHUT = 0.1;
+const POSE_EASING = Easing.bezier(0.42, 0, 0.58, 1);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 
@@ -125,50 +135,31 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
   const bodyColor = useDerivedValue(() =>
     saturateColor(animatedColor ? animatedColor.get() : color, appearance.get().saturation),
   );
-  const thinking = !disconnected && (mood === "working" || mood === "connecting");
-  const animate = (animateIdle || thinking) && !disconnected;
-  const blink = useSharedValue(1);
-  const bob = useSharedValue(0);
-  const wander = useSharedValue(0);
-  const glance = useSharedValue(0);
-  useEffect(() => {
-    if (!animate) {
-      blink.set(1);
-      bob.set(0);
-      return;
-    }
-    blink.set(
-      withRepeat(
-        withSequence(withDelay(2800, withTiming(0.1, { duration: 90 })), withTiming(1, { duration: 120 })),
-        -1,
-      ),
-    );
-    bob.set(withRepeat(withSequence(withTiming(1, { duration: 800 }), withTiming(0, { duration: 800 })), -1));
-  }, [animate, blink, bob]);
-  useEffect(() => {
-    if (!animate) {
-      glance.set(0);
-      return;
-    }
-    const hold = thinking ? 220 : 850;
-    glance.set(
-      withRepeat(
-        withSequence(...GLANCES.slice(1).map((_, index) => withDelay(hold, withTiming(index + 1, { duration: 110 })))),
-        -1,
-      ),
-    );
-  }, [animate, thinking, glance]);
-  // Thinking: the face wanders around its spot, in place of orbit rings.
-  useEffect(() => {
-    wander.set(thinking ? withRepeat(withTiming(Math.PI * 2, { duration: 2400 }), -1) : withTiming(0));
-  }, [thinking, wander]);
-  const bobStyle = useAnimatedStyle(() => {
-    const turn = wander.get();
+  const reducedMotion = useReducedMotion();
+  const busy = !disconnected && avatarMoodIsBusy(mood);
+  const animate = (animateIdle || busy) && !disconnected && !reducedMotion;
+  const face = useFaceMotion(seed, disconnected ? "idle" : mood, animate);
+  const unit = size / FACE_BOX;
+  const bodyStyle = useAnimatedStyle(() => {
+    const [rot = 0, tx = 0, ty = 0, squash = 1, swayRot = 0, swayTx = 0, swayTy = 0, swaySquash = 0, hop = 0] =
+      face.pose.get();
+    const turn = face.clock.get();
+    const mix = face.swayMix.get();
+    const from = face.swayFrom.get();
+    const to = face.swayTo.get();
+    // Each part of the sway runs at its own speed and phase, so the body never moves on one line.
+    const wave = (speed: number, shift: number) =>
+      Math.sin(from * speed * turn + shift) * (1 - mix) + Math.sin(to * speed * turn + shift) * mix;
+    const stretch = squash + swaySquash * wave(2, 0);
+    const lift = ty + swayTy * wave(2, 0.6) - hop * Math.abs(wave(1, 0));
     return {
       transform: [
-        { translateX: Math.sin(turn) * size * 0.06 },
-        { translateY: -bob.get() * size * 0.03 - Math.abs(Math.sin(turn)) * size * 0.05 },
-        { rotate: `${Math.sin(turn) * 6}deg` },
+        { translateX: (tx + swayTx * wave(1, 1.3)) * unit },
+        // The body squashes on its seat, so its bottom edge stays where it is.
+        { translateY: (lift + (1 - stretch) * FACE_SEAT) * unit },
+        { rotate: `${rot + swayRot * wave(1, 0)}deg` },
+        { scaleX: 2 - stretch },
+        { scaleY: stretch },
       ],
     };
   });
@@ -176,27 +167,135 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
   // The opacity stays on the native view: react-native-svg on Android crashes with
   // "Underflow in restore" when a filtered <G> has an opacity other than 1.
   return (
-    <Animated.View pointerEvents="none" style={[{ width: size, height: size }, appearanceStyle, bobStyle]}>
-      <CuteFaceSvg seed={seed} mood={mood} size={size} color={bodyColor} blink={blink} glance={glance} />
+    <Animated.View pointerEvents="none" style={[{ width: size, height: size }, appearanceStyle, bodyStyle]}>
+      <CuteFaceSvg seed={seed} mood={mood} size={size} color={bodyColor} eyes={face.eyes} />
     </Animated.View>
   );
 });
+
+interface FaceEyes {
+  x: number;
+  y: number;
+  /** 1 is open, 0 shut; a little over 1 as the eye pops open after a blink. */
+  open: number;
+}
+
+/**
+ * Plays the face's own motion for a mood: blinks on the agent's own seeded rhythm, glances that stay
+ * inside the body, and the mood's lean and sway. A still face holds the mood's lean with its eyes open
+ * and centred. Each loop is a round of animations that repeats on the UI thread, so a list of faces
+ * runs no JavaScript timers.
+ */
+function useFaceMotion(seed: string, mood: AvatarMood, animate: boolean) {
+  const rhythm = useMemo(() => faceRhythm(seed, mood), [seed, mood]);
+  const blink = useSharedValue(0);
+  const glance = useSharedValue(0);
+  const gazePoints = useSharedValue<number[]>(rhythm.gazePoints);
+  const clock = useSharedValue(0);
+  const pose = useSharedValue<number[]>(poseValues(rhythm.pose, animate));
+  const swayFrom = useSharedValue(rhythm.sways);
+  const swayTo = useSharedValue(rhythm.sways);
+  const swayMix = useSharedValue(1);
+  useEffect(() => {
+    cancelAnimation(blink);
+    blink.set(0);
+    if (!animate || rhythm.blinkWaits.length === 0) return;
+    // One value counts the blinks of a round: each whole number is one blink.
+    blink.set(
+      withRepeat(
+        withSequence(
+          ...rhythm.blinkWaits.map((wait, index) =>
+            withDelay(wait, withTiming(index + 1, { duration: BLINK_MS, easing: Easing.linear })),
+          ),
+        ),
+        -1,
+      ),
+    );
+  }, [animate, rhythm, blink]);
+  useEffect(() => {
+    cancelAnimation(glance);
+    gazePoints.set(rhythm.gazePoints);
+    glance.set(0);
+    if (!animate || rhythm.gazeHolds.length === 0) return;
+    glance.set(
+      withRepeat(
+        withSequence(
+          ...rhythm.gazeHolds.map((hold, index) =>
+            withDelay(hold, withTiming(index + 1, { duration: GAZE_JUMP_MS, easing: Easing.out(Easing.quad) })),
+          ),
+        ),
+        -1,
+      ),
+    );
+  }, [animate, rhythm, glance, gazePoints]);
+  useEffect(() => {
+    // The sway speed eases from the last mood's to this one's, so the body does not jump.
+    swayFrom.set(swayTo.get());
+    swayTo.set(rhythm.sways);
+    swayMix.set(0);
+    swayMix.set(withTiming(1, { duration: POSE_MS, easing: POSE_EASING }));
+    pose.set(
+      withTiming(poseValues(rhythm.pose, animate), {
+        duration: POSE_MS,
+        easing: POSE_EASING,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
+  }, [animate, rhythm, pose, swayFrom, swayTo, swayMix]);
+  useEffect(() => {
+    cancelAnimation(clock);
+    if (!animate) return;
+    clock.set(0);
+    clock.set(withRepeat(withTiming(Math.PI * 2, { duration: SWAY_CYCLE_MS, easing: Easing.linear }), -1));
+  }, [animate, clock]);
+  const eyes = useDerivedValue<FaceEyes>(() => {
+    const points = gazePoints.get();
+    const last = Math.max(0, points.length / 2 - 1);
+    const at = Math.min(glance.get(), last);
+    const index = Math.min(Math.floor(at), Math.max(0, last - 1));
+    const step = at - index;
+    const fromX = points[index * 2] ?? 0;
+    const fromY = points[index * 2 + 1] ?? 0;
+    const toX = points[index * 2 + 2] ?? fromX;
+    const toY = points[index * 2 + 3] ?? fromY;
+    return {
+      x: fromX + (toX - fromX) * step,
+      y: fromY + (toY - fromY) * step,
+      open: Math.max(EYE_SHUT, blinkOpenness(blink.get())),
+    };
+  });
+  return { eyes, clock, pose, swayFrom, swayTo, swayMix };
+}
+
+/** The pose as the flat list the body style reads. A still face keeps the lean but not the sway. */
+function poseValues(pose: FacePose, moving: boolean): number[] {
+  const sway = moving ? 1 : 0;
+  return [
+    pose.rot,
+    pose.tx,
+    pose.ty,
+    pose.squash,
+    pose.swayRot * sway,
+    pose.swayTx * sway,
+    pose.swayTy * sway,
+    pose.swaySquash * sway,
+    pose.hop * sway,
+  ];
+}
 
 function CuteFaceSvg({
   seed,
   mood,
   size,
   color,
-  blink,
-  glance,
+  eyes,
   opacity = 1,
 }: {
   seed: string;
   mood: AvatarMood;
   size: number;
   color: DerivedValue<string> | string;
-  blink?: SharedValue<number>;
-  glance?: SharedValue<number>;
+  eyes?: DerivedValue<FaceEyes>;
   opacity?: number;
 }) {
   const body = cuteFaceBody(bloubAvatarProfile(seed, null).shape);
@@ -215,7 +314,7 @@ function CuteFaceSvg({
       {closedEyes ? (
         <Path d={closedEyes} fill="none" stroke={FACE_EYE} strokeWidth={4.5} strokeLinecap="round" />
       ) : (
-        CUTE_FACE_EYES.map((x) => <FaceEye key={x} x={x} up={mood === "waiting"} blink={blink} glance={glance} />)
+        CUTE_FACE_EYES.map((x) => <FaceEye key={x} x={x} up={mood === "waiting"} eyes={eyes} />)
       )}
       {mood === "asleep" ? (
         <Path d="M 30 -36 h 9 l -9 10 h 9" fill="none" stroke={FACE_EYE} strokeWidth={2.6} opacity={0.7} />
@@ -229,28 +328,14 @@ function FaceBody({ d, color }: { d: string; color: DerivedValue<string> | strin
   return <AnimatedPath d={d} animatedProps={props} />;
 }
 
-function FaceEye({
-  x,
-  up,
-  blink,
-  glance,
-}: {
-  x: number;
-  up: boolean;
-  blink?: SharedValue<number> | undefined;
-  glance?: SharedValue<number> | undefined;
-}) {
+function FaceEye({ x, up, eyes }: { x: number; up: boolean; eyes?: DerivedValue<FaceEyes> | undefined }) {
   const cy = CUTE_FACE_EYE.cy - (up ? 3 : 0);
   const eyeProps = useAnimatedProps(() => {
-    const at = glance ? glance.get() : 0;
-    const index = Math.min(Math.floor(at), GLANCES.length - 2);
-    const step = at - index;
-    const from = GLANCES[index] ?? GLANCES[0];
-    const to = GLANCES[index + 1] ?? GLANCES[0];
+    const at = eyes?.get();
     return {
-      cx: x + from[0] + (to[0] - from[0]) * step,
-      cy: cy + from[1] + (to[1] - from[1]) * step,
-      ry: CUTE_FACE_EYE.ry * (blink ? blink.get() : 1),
+      cx: x + (at?.x ?? 0),
+      cy: cy + (at?.y ?? 0),
+      ry: CUTE_FACE_EYE.ry * (at?.open ?? 1),
     };
   });
   return <AnimatedEllipse rx={CUTE_FACE_EYE.rx} fill={FACE_EYE} animatedProps={eyeProps} />;

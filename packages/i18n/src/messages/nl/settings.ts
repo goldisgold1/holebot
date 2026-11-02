@@ -375,6 +375,8 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "Deze sessie verbreken?",
   "settings.profile.sessions.disconnectConfirm.description":
     "Dit apparaat wordt uitgelogd van je account. Het moet opnieuw inloggen om te verbinden.",
+  "settings.profile.signOutConfirm.title": "Uitloggen bij OpenBot?",
+  "settings.profile.signOutConfirm.description": "Je moet opnieuw inloggen om OpenBot op deze computer te gebruiken.",
   "settings.updates.title": "OpenBot-updates",
   "settings.updates.track.title": "Updatekanaal",
   "settings.updates.track.description": "Stabiel ontvangt geteste releases van OpenBot.",

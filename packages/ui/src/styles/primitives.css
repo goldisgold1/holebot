@@ -964,9 +964,8 @@ html.ui-textarea-resizing {
   border-radius: var(--openbot-radius-pill);
   outline: none;
   background: var(--openbot-bg-control);
-  box-shadow:
-    inset 0 0 0 1px var(--openbot-border-strong),
-    0 1px 2px var(--openbot-shadow-ring);
+  /* Off, the track keeps a hairline edge so it reads on a card; on, the fill alone carries it. */
+  box-shadow: inset 0 0 0 0.5px var(--openbot-border-strong);
   transition:
     background-color var(--openbot-duration-hover) ease,
     box-shadow var(--openbot-duration-hover) ease,
@@ -983,6 +982,7 @@ html.ui-textarea-resizing {
 
 .ui-switch[data-checked] {
   background: var(--openbot-surface-light);
+  box-shadow: none;
 }
 
 .ui-switch[data-invalid] {

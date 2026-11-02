@@ -355,6 +355,9 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "Bu oturumun bağlantısı kesilsin mi?",
   "settings.profile.sessions.disconnectConfirm.description":
     "Bu cihazın hesabınızdaki oturumu kapatılır. Bağlanmak için yeniden oturum açması gerekir.",
+  "settings.profile.signOutConfirm.title": "OpenBot oturumu kapatılsın mı?",
+  "settings.profile.signOutConfirm.description":
+    "Bu bilgisayarda OpenBot'u kullanmak için yeniden oturum açmanız gerekecek.",
   "settings.updates.title": "OpenBot güncellemeleri",
   "settings.updates.track.title": "Güncelleme kanalı",
   "settings.updates.track.description": "Kararlı kanal test edilmiş OpenBot sürümlerini alır.",

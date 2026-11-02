@@ -263,7 +263,6 @@ export const messages = {
   "chat.unread.marking": "표시 중…",
   "chat.unread.markRead": "읽음으로 표시",
   "chat.unread.dividerLabel": "새 메시지",
-  "chat.unread.dividerBadge": "NEW",
   "chat.table.comparison": "비교 표",
   "chat.table.data": "데이터 표",
   "chat.table.copyMarkdown": "Markdown으로 복사",

@@ -335,5 +335,8 @@ export const messages = {
   "routine.settings.discardTitle": "Wijzigingen verwerpen?",
   "routine.settings.discardDescription": "Je niet-opgeslagen wijzigingen aan deze routine gaan verloren.",
   "routine.settings.discardConfirm": "Wijzigingen verwerpen",
+  "routine.settings.deleteConfirm.title": "Deze routine verwijderen?",
+  "routine.settings.deleteConfirm.description":
+    "De routine wordt niet meer uitgevoerd en de instellingen worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
   "routine.settings.keepEditing": "Verder bewerken",
 } as const satisfies PartialTranslation<typeof source>;

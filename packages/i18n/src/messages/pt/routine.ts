@@ -315,5 +315,8 @@ export const messages = {
   "routine.settings.discardTitle": "Descartar alterações?",
   "routine.settings.discardDescription": "As alterações não salvas nesta rotina serão perdidas.",
   "routine.settings.discardConfirm": "Descartar alterações",
+  "routine.settings.deleteConfirm.title": "Excluir esta rotina?",
+  "routine.settings.deleteConfirm.description":
+    "Ela não será mais executada e as configurações serão removidas. Não é possível desfazer.",
   "routine.settings.keepEditing": "Continuar editando",
 } as const satisfies PartialTranslation<typeof source>;

@@ -376,5 +376,8 @@ export const messages = {
   "routine.settings.discardTitle": "Odrzucić zmiany?",
   "routine.settings.discardDescription": "Niezapisane zmiany w tej rutynie zostaną utracone.",
   "routine.settings.discardConfirm": "Odrzuć zmiany",
+  "routine.settings.deleteConfirm.title": "Usunąć tę rutynę?",
+  "routine.settings.deleteConfirm.description":
+    "Nie będzie już uruchamiana, a jej ustawienia zostaną usunięte. Tej operacji nie można cofnąć.",
   "routine.settings.keepEditing": "Edytuj dalej",
 } as const satisfies PartialTranslation<typeof source>;

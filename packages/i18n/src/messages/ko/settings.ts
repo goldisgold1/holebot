@@ -364,6 +364,8 @@ export const messages = {
   "settings.profile.sessions.disconnectConfirm.title": "이 세션의 연결을 해제할까요?",
   "settings.profile.sessions.disconnectConfirm.description":
     "이 기기가 내 계정에서 로그아웃돼요. 연결하려면 다시 로그인해야 해요.",
+  "settings.profile.signOutConfirm.title": "OpenBot에서 로그아웃할까요?",
+  "settings.profile.signOutConfirm.description": "이 컴퓨터에서 OpenBot을 사용하려면 다시 로그인해야 해요.",
   "settings.updates.title": "OpenBot 업데이트",
   "settings.updates.track.title": "업데이트 채널",
   "settings.updates.track.description": "안정 채널은 테스트를 거친 OpenBot 릴리스를 받아요.",
