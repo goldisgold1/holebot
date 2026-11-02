@@ -34,7 +34,14 @@ import { useText } from "@openbot/ui/text";
 export function ConversationHeader() {
   const { t } = useText();
   const planLimitRows = usePlanLimitRows();
-  const windowPage = useWindowPage();
+  // HoleA.I: the web app has no window pages, and shows no meters to open them from.
+  const windowPage = (() => {
+    try {
+      return useWindowPage();
+    } catch {
+      return undefined;
+    }
+  })();
   const {
     actingBrowserControl,
     agentActivity,
@@ -138,7 +145,7 @@ export function ConversationHeader() {
         const row = planLimitRows().find(
           (candidate) => candidate.provider === provider && candidate.reportsUsage && candidate.ringWindows.length > 0,
         );
-        return row ? { row, onOpen: () => windowPage.openUsage(null) } : undefined;
+        return row && windowPage ? { row, onOpen: () => windowPage.openUsage(null) } : undefined;
       })()}
       modelPicker={{
         provider: settingsProvider(),
