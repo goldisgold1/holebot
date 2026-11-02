@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
+import { readFileSync, writeFileSync } from "node:fs";
 import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import type { HostKeyHandover } from "@openbot/contracts/host-key-handover";
 import { parseHostedServerClaim } from "@openbot/contracts/hosted-servers";
 import type {
@@ -1979,10 +1980,51 @@ export class CentralAuthManager extends EventEmitter<CentralAuthEvents> {
     this.#mobileConnectLink = restoreMobileConnectLink(stored.mobileConnectLink);
   }
 
+  /**
+   * HoleA.I: the last account signed in on this computer, kept as a plain profile (no token) beside
+   * the session file. The team uses the app internally, so with nobody signed in this computer's own
+   * server acts as that person and the window opens without the sign-in. Account calls still need
+   * a real session.
+   */
+  #localUser: CentralAuthUser | null | undefined;
+
+  get #localUserPath(): string {
+    return join(dirname(this.#options.storagePath), "holeai-local-user-v1.json");
+  }
+
+  /** The signed-in account, or else the last one this computer remembers; null when it has none. */
+  getLocalUser(): CentralAuthUser | null {
+    if (this.#state.status === "signed_in") return structuredClone(this.#state.user);
+    if (this.#localUser === undefined) {
+      try {
+        this.#localUser = decodeCentralAuthUser(JSON.parse(readFileSync(this.#localUserPath, "utf8")));
+      } catch {
+        this.#localUser = null;
+      }
+    }
+    return this.#localUser ? structuredClone(this.#localUser) : null;
+  }
+
+  #rememberLocalUser(user: CentralAuthUser): void {
+    this.#localUser = structuredClone(user);
+    try {
+      writeFileSync(this.#localUserPath, JSON.stringify(user), "utf8");
+    } catch (error) {
+      logger.warn("The local profile could not be saved.", { error: String(error) });
+    }
+  }
+
   #setState(state: CentralAuthState): CentralAuthState {
     // Held apart from the state, which passes through `code_sent` on the way to another
     // account: this is whose credentials the store is holding, until they are cleared.
-    if (state.status === "signed_in") this.#sessionAccountId = state.user.id;
+    if (state.status === "signed_in") {
+      this.#sessionAccountId = state.user.id;
+      this.#rememberLocalUser(state.user);
+    }
+    if (state.status === "signed_out" && !state.localUser) {
+      const localUser = this.getLocalUser();
+      if (localUser) state = { status: "signed_out", localUser };
+    }
     this.#state = state;
     const copy = this.getState();
     this.emit("changed", copy);

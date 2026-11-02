@@ -2580,9 +2580,10 @@ export async function createApplicationServices({
         },
         catch: (cause) => new RemoteWorkflowError({ cause }),
       }),
-    // Still a function, and still throws when nobody is signed in: the account is a lifetime
-    // state of the running app, not a startup-ordering artifact.
-    getSignedInUser: () => centralAuth.getSignedInUser(),
+    // Still a function: the account is a lifetime state of the running app, not a startup-ordering
+    // artifact. HoleA.I: with nobody signed in, this computer's own server acts as the last account
+    // signed in here, so the team uses it without the sign-in. It still throws when there is none.
+    getSignedInUser: () => centralAuth.getLocalUser() ?? centralAuth.getSignedInUser(),
     redeemCentralTicket: (ticket, serverId) =>
       centralAuth.redeemTeamAuthTicket(ticket, serverId).pipe(toRemoteWorkflowError),
     sendTeamInviteEmail: (input) => centralAuth.sendTeamInviteEmail(input).pipe(toRemoteWorkflowError),

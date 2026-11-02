@@ -224,7 +224,11 @@ export interface CentralAuthIssue {
 
 export type CentralAuthState =
   | { status: "loading" }
-  | { status: "signed_out" }
+  /**
+   * HoleA.I: `localUser` is the last account signed in on this computer. With it, the window opens
+   * the workspace as that person instead of the sign-in screen.
+   */
+  | { status: "signed_out"; localUser?: CentralAuthUser }
   | { status: "signing_in" }
   | {
       status: "code_sent";

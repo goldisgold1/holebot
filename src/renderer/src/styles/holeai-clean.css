@@ -152,39 +152,48 @@
 }
 
 /*
- * With a mouse, the copy/reply buttons and the time float on the bubble's lower corner while hovered instead
- * of taking a row under every message. Touch keeps upstream's row, since there is no hover there.
+ * The copy/reply buttons and the time float on the bubble's lower corner while hovered instead of taking a
+ * row under every message. On a touch screen a tap on the message shows them (it hovers and focuses it).
+ * The team's phones use the phone app, which has its own layout.
  */
-@media (hover: hover) and (pointer: fine) {
-  .message-entry .ui-message-content {
-    position: relative;
-  }
+.message-entry .ui-message-content {
+  position: relative;
+}
 
-  .message-entry .message-action-row {
-    position: absolute;
-    z-index: 5;
-    bottom: -14px;
-    border-radius: var(--holeai-radius-pill);
-    padding: 1px 4px;
-    background: var(--openbot-bg-surface-raised);
-    box-shadow: var(--holeai-shadow-composer);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--openbot-duration-hover) ease;
-  }
+/* The row as a whole shows and hides; its buttons and time stay visible inside it. */
+.message-entry .message-action-row .message-actions,
+.message-entry .message-action-row .message-time {
+  opacity: 1;
+  pointer-events: auto;
+}
 
-  .message-entry-agent .message-action-row {
-    left: 12px;
-  }
+.message-entry .message-action-row {
+  position: absolute;
+  z-index: 5;
+  bottom: -14px;
+  border-radius: var(--holeai-radius-pill);
+  padding: 1px 4px;
+  background: var(--openbot-bg-surface-raised);
+  box-shadow: var(--holeai-shadow-composer);
+  opacity: 0;
+  /* Hidden, not only see-through: its buttons stay clickable otherwise. */
+  visibility: hidden;
+  transition:
+    opacity var(--openbot-duration-hover) ease,
+    visibility var(--openbot-duration-hover);
+}
 
-  .message-entry-user .message-action-row {
-    right: 12px;
-  }
+.message-entry-agent .message-action-row {
+  left: 12px;
+}
 
-  .message-entry:hover .message-action-row,
-  .message-entry:focus-within .message-action-row,
-  .message-entry:has(.message-actions-open) .message-action-row {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.message-entry-user .message-action-row {
+  right: 12px;
+}
+
+.message-entry:hover .message-action-row,
+.message-entry:focus-within .message-action-row,
+.message-entry:has(.message-actions-open) .message-action-row {
+  opacity: 1;
+  visibility: visible;
 }

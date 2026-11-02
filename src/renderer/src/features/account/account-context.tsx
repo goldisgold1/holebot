@@ -1,4 +1,10 @@
-import type { AccountUsage, AccountUsageLimit, AvatarImageInput, CentralAuthState } from "@openbot/contracts/ipc";
+import type {
+  AccountUsage,
+  AccountUsageLimit,
+  AvatarImageInput,
+  CentralAuthState,
+  CentralAuthUser,
+} from "@openbot/contracts/ipc";
 import { currentText } from "@openbot/ui/text";
 import { createMemo, createSignal, createStore, flush, onCleanup, onSettled } from "solid-js";
 import { type DesktopAnalyticsProperties, desktopAnalytics } from "../../analytics";
@@ -9,6 +15,14 @@ type MobileConnectAction = DesktopAnalyticsProperties<"mobile_connect_action">["
 
 /** How long the sign-in success animation holds the account out of the view. */
 const AUTH_SUCCESS_HOLD_MS = 600;
+/** HoleA.I: who the workspace shows on a computer with no account. See `visibleSignedInAccount`. */
+const LOCAL_PROFILE: CentralAuthUser = {
+  id: "holeai-local",
+  email: "team@holeacquisition.com",
+  name: "HoleA.I",
+  avatarUrl: null,
+  analyticsEnabled: false,
+};
 
 /**
  * Analytics only carries codes the account service is known to send, so an
@@ -291,8 +305,19 @@ const Auth = createSimpleContext({
       const state = centralAuth();
       return state.status === "signed_in" ? state.user : null;
     });
-    /** Null while the success animation holds, so the workspace mounts after it. */
-    const visibleSignedInAccount = createMemo(() => (authSuccessVisible() ? null : signedInAccount()));
+    /**
+     * Null while the success animation holds, so the workspace mounts after it. HoleA.I: the team uses
+     * the app internally, so a computer with no account opens the workspace as the last person signed
+     * in here (or a plain local profile) instead of the sign-in screen. Account features (remote servers, phone pairing) still need a
+     * sign-in, from Settings.
+     */
+    const visibleSignedInAccount = createMemo(() => {
+      if (authSuccessVisible()) return null;
+      const state = centralAuth();
+      if (state.status === "signed_out") return state.localUser ?? LOCAL_PROFILE;
+      if (state.status === "error") return LOCAL_PROFILE;
+      return signedInAccount();
+    });
 
     return {
       centralAuth,

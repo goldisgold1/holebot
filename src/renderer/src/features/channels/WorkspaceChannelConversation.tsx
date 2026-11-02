@@ -62,7 +62,12 @@ function DesktopChannelConversation(props: { channelId: string; account: () => C
     const state = auth.centralAuth();
     return isReaderAuthor(senderId, {
       memberId: currentTeamMember()?.id ?? null,
-      accountUserId: state.status === "signed_in" ? state.user.id : null,
+      accountUserId:
+        state.status === "signed_in"
+          ? state.user.id
+          : state.status === "signed_out"
+            ? (state.localUser?.id ?? null)
+            : null,
       onOwnComputer: activeServer()?.kind === "local",
     });
   };

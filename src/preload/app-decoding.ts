@@ -232,9 +232,13 @@ export function decodeCentralAuthState(value: unknown): CentralAuthState {
   const state = decodeRecord(value, "account state");
   switch (state.status) {
     case "loading":
-    case "signed_out":
     case "signing_in":
       return { status: state.status };
+    case "signed_out":
+      // HoleA.I: the last account signed in on this computer, which the window opens as.
+      return state.localUser === undefined
+        ? { status: "signed_out" }
+        : { status: "signed_out", localUser: decodeCentralAuthUser(state.localUser) };
     case "code_sent": {
       const { developmentCode, issue } = state;
       if (developmentCode !== undefined && !isString(developmentCode)) throw new Error("Invalid developmentCode.");
