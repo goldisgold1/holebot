@@ -44,8 +44,9 @@ module.exports = (config) =>
   withAppBuildGradle(config, (config) => {
     if (config.modResults.contents.includes(MARKER)) return config;
     const { projectRoot, platformProjectRoot } = config.modRequest;
+    // Groovy reads `\` in a string as an escape, so a Windows path is written with `/`.
     const dirs = workspaceSources(projectRoot)
-      .map((dir) => `    "${relative(platformProjectRoot, dir)}",`)
+      .map((dir) => `    "${relative(platformProjectRoot, dir).replaceAll("\\", "/")}",`)
       .join("\n");
     config.modResults.contents += `
 ${MARKER}
