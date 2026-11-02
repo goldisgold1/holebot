@@ -42,6 +42,15 @@ interface BloubAvatarProps extends AgentPhotoProps {
 
 // HoleA.I: the Grok Bot style face (see @openbot/brand/cute-face), the same drawing as the desktop.
 const FACE_EYE = "#f9f9f9";
+// Where the eyes glance, in face units: they hold each spot and jump to the next, like the desktop face.
+const GLANCES = [
+  [0, 0],
+  [-5, -1],
+  [4, 1],
+  [-2, 3],
+  [3, -2],
+  [0, 0],
+] as const;
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 
@@ -121,6 +130,7 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
   const blink = useSharedValue(1);
   const bob = useSharedValue(0);
   const wander = useSharedValue(0);
+  const glance = useSharedValue(0);
   useEffect(() => {
     if (!animate) {
       blink.set(1);
@@ -135,6 +145,19 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
     );
     bob.set(withRepeat(withSequence(withTiming(1, { duration: 800 }), withTiming(0, { duration: 800 })), -1));
   }, [animate, blink, bob]);
+  useEffect(() => {
+    if (!animate) {
+      glance.set(0);
+      return;
+    }
+    const hold = thinking ? 220 : 850;
+    glance.set(
+      withRepeat(
+        withSequence(...GLANCES.slice(1).map((_, index) => withDelay(hold, withTiming(index + 1, { duration: 110 })))),
+        -1,
+      ),
+    );
+  }, [animate, thinking, glance]);
   // Thinking: the face wanders around its spot, in place of orbit rings.
   useEffect(() => {
     wander.set(thinking ? withRepeat(withTiming(Math.PI * 2, { duration: 2400 }), -1) : withTiming(0));
@@ -154,7 +177,7 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
   // "Underflow in restore" when a filtered <G> has an opacity other than 1.
   return (
     <Animated.View pointerEvents="none" style={[{ width: size, height: size }, appearanceStyle, bobStyle]}>
-      <CuteFaceSvg seed={seed} mood={mood} size={size} color={bodyColor} blink={blink} />
+      <CuteFaceSvg seed={seed} mood={mood} size={size} color={bodyColor} blink={blink} glance={glance} />
     </Animated.View>
   );
 });
@@ -165,6 +188,7 @@ function CuteFaceSvg({
   size,
   color,
   blink,
+  glance,
   opacity = 1,
 }: {
   seed: string;
@@ -172,6 +196,7 @@ function CuteFaceSvg({
   size: number;
   color: DerivedValue<string> | string;
   blink?: SharedValue<number>;
+  glance?: SharedValue<number>;
   opacity?: number;
 }) {
   const body = cuteFaceBody(bloubAvatarProfile(seed, null).shape);
@@ -190,7 +215,7 @@ function CuteFaceSvg({
       {closedEyes ? (
         <Path d={closedEyes} fill="none" stroke={FACE_EYE} strokeWidth={4.5} strokeLinecap="round" />
       ) : (
-        CUTE_FACE_EYES.map((x) => <FaceEye key={x} x={x} up={mood === "waiting"} blink={blink} />)
+        CUTE_FACE_EYES.map((x) => <FaceEye key={x} x={x} up={mood === "waiting"} blink={blink} glance={glance} />)
       )}
       {mood === "asleep" ? (
         <Path d="M 30 -36 h 9 l -9 10 h 9" fill="none" stroke={FACE_EYE} strokeWidth={2.6} opacity={0.7} />
@@ -204,10 +229,31 @@ function FaceBody({ d, color }: { d: string; color: DerivedValue<string> | strin
   return <AnimatedPath d={d} animatedProps={props} />;
 }
 
-function FaceEye({ x, up, blink }: { x: number; up: boolean; blink?: SharedValue<number> | undefined }) {
+function FaceEye({
+  x,
+  up,
+  blink,
+  glance,
+}: {
+  x: number;
+  up: boolean;
+  blink?: SharedValue<number> | undefined;
+  glance?: SharedValue<number> | undefined;
+}) {
   const cy = CUTE_FACE_EYE.cy - (up ? 3 : 0);
-  const eyeProps = useAnimatedProps(() => ({ ry: CUTE_FACE_EYE.ry * (blink ? blink.get() : 1) }));
-  return <AnimatedEllipse cx={x} cy={cy} rx={CUTE_FACE_EYE.rx} fill={FACE_EYE} animatedProps={eyeProps} />;
+  const eyeProps = useAnimatedProps(() => {
+    const at = glance ? glance.get() : 0;
+    const index = Math.min(Math.floor(at), GLANCES.length - 2);
+    const step = at - index;
+    const from = GLANCES[index] ?? GLANCES[0];
+    const to = GLANCES[index + 1] ?? GLANCES[0];
+    return {
+      cx: x + from[0] + (to[0] - from[0]) * step,
+      cy: cy + from[1] + (to[1] - from[1]) * step,
+      ry: CUTE_FACE_EYE.ry * (blink ? blink.get() : 1),
+    };
+  });
+  return <AnimatedEllipse rx={CUTE_FACE_EYE.rx} fill={FACE_EYE} animatedProps={eyeProps} />;
 }
 
 // Choices show the same idle pose without mounting animation clocks, worklets,

@@ -290,23 +290,29 @@
   transform-origin: center 80%;
 }
 
+/* Resting motion, learned from watching messenger faces: the eyes do the work. They glance to a spot, hold,
+   and jump to the next, with a blink between; the body leans a little toward where they look. */
 .cute-face[data-animated] .cute-face-eyes {
-  animation: cute-face-blink 3.2s ease-in-out infinite;
+  animation:
+    cute-face-glance 4.8s steps(1, end) infinite,
+    cute-face-blink 3.2s ease-in-out infinite;
   animation-delay: var(--cute-face-delay, 0s);
 }
 
 .cute-face[data-animated] .cute-face-bob {
-  animation: cute-face-bob 1.6s ease-in-out infinite;
+  animation: cute-face-lean 4.8s ease-in-out infinite;
   animation-delay: var(--cute-face-delay, 0s);
 }
 
-/* Thinking: the face wanders around its spot and the eyes glance side to side, in place of orbit rings. */
+/* Thinking: the same glances, faster, while the face wanders around its spot. Replaces the orbit rings. */
 .cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-bob {
   animation: cute-face-wander 2.4s ease-in-out infinite;
 }
 
 .cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-eyes {
-  animation: cute-face-glance 2.4s ease-in-out infinite;
+  animation:
+    cute-face-glance 1.6s steps(1, end) infinite,
+    cute-face-blink 3.2s ease-in-out infinite;
 }
 
 .cute-face[data-mood="responded"] .cute-face-bob {
@@ -331,16 +337,53 @@
   }
 }
 
-@keyframes cute-face-bob {
+@keyframes cute-face-glance {
+  0% {
+    translate: 0 0;
+  }
+
+  20% {
+    translate: -5px -1px;
+  }
+
+  40% {
+    translate: 4px 1px;
+  }
+
+  60% {
+    translate: -2px 3px;
+  }
+
+  80% {
+    translate: 3px -2px;
+  }
+}
+
+@keyframes cute-face-lean {
   0%,
   100% {
     translate: 0 0;
-    scale: 1 1;
+    rotate: 0deg;
   }
 
-  50% {
-    translate: 0 -3px;
-    scale: 1.02 0.98;
+  20% {
+    translate: -1.5px 0;
+    rotate: -3deg;
+  }
+
+  40% {
+    translate: 1.5px 0;
+    rotate: 3deg;
+  }
+
+  60% {
+    translate: 0 1px;
+    rotate: 0deg;
+  }
+
+  80% {
+    translate: 1px -1px;
+    rotate: 2deg;
   }
 }
 
@@ -364,21 +407,6 @@
   75% {
     translate: 4px -3px;
     rotate: 6deg;
-  }
-}
-
-@keyframes cute-face-glance {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-
-  25% {
-    translate: -4px -1px;
-  }
-
-  75% {
-    translate: 4px -1px;
   }
 }
 
