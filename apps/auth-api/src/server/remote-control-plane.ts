@@ -82,7 +82,7 @@ const MEMBER_SEAT_AVAILABLE_SQL = `(
   EXISTS(SELECT 1 FROM remote_memberships WHERE host_id = ? AND user_id = ? AND status = 'active')
   OR (SELECT COUNT(*) FROM remote_memberships WHERE host_id = ? AND status = 'active') < ?
 )`;
-// The commercial license of the host's owner counts people across all the owner's servers: the owner,
+// Upstream's per-owner seat count. HoleA.I sells nothing, so `#ownerLicense` is always null and this never runs: the owner,
 // and each other account with an active membership. A person who is already counted joins another
 // server of the owner freely; anyone else needs a free license user. Binds: owner, user, owner, owner,
 // license users.
