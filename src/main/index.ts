@@ -244,7 +244,9 @@ if (commandLineUserDataDirectory) {
   // Electron put it under the old product name (HOLEAI-FORK.md, "HoleBot name").
   app.setPath("userData", join(app.getPath("appData"), "OpenBot"));
 }
-app.setName("HoleBot");
+// HoleA.I: on Linux, Chromium files the Secret Service key that encrypts the sign-ins under the app
+// name, so the VPS keeps "OpenBot" or it can no longer read the sign-ins it saved before the rename.
+app.setName(process.platform === "linux" ? "OpenBot" : "HoleBot");
 app.enableSandbox();
 // HoleA.I: Windows draws the taskbar button from the Start menu shortcut with this id. A shortcut to
 // node_modules' electron.exe with the release id gave the installed HoleBot the Electron icon, so a
