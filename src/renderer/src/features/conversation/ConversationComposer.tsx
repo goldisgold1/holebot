@@ -1041,6 +1041,7 @@ export function ConversationComposer() {
                         : undefined
                     }
                     compact={props.onCompactAgentContext}
+                    autoCompact={props.autoCompact}
                     usage={usage()}
                   />
                 )}

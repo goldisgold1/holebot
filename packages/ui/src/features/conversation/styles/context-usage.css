@@ -371,3 +371,26 @@
 .context-compaction-detail {
   white-space: normal;
 }
+
+/* The auto-compact threshold picker, under the note it changes. */
+.context-meter-auto-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--openbot-space-2);
+}
+
+.context-meter-auto-compact-label {
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
+}
+
+.auto-compact-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--openbot-space-1-5);
+}
+
+.auto-compact-percent {
+  width: 4.5rem;
+}

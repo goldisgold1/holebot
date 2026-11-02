@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { INPUT_LIMITS } from "@openbot/contracts/input-limits";
-import type { AgentContextCategoryUsage, AgentContextState } from "@openbot/contracts/ipc";
+import {
+  type AgentContextCategoryUsage,
+  type AgentContextState,
+  type AutoCompactThreshold,
+  DEFAULT_AUTO_COMPACT_THRESHOLD,
+} from "@openbot/contracts/ipc";
 import { Effect, Schema } from "effect";
 import type { AgentClient } from "../agent-client";
 import type { AgentStore } from "../agent-store";
@@ -20,7 +25,6 @@ interface ThreadContextBudget {
   lastCompactedTokens: number | null;
 }
 
-const CONTEXT_COMPACTION_THRESHOLD = 0.8;
 const CONTEXT_COMPACTION_TIMEOUT_MS = 120_000;
 /**
  * A started compaction of a long thread can take minutes (#3466). Its deadline is this many times
@@ -36,6 +40,11 @@ export interface ContextCompactionOptions {
    * runs `CONTEXT_COMPACTION_RUN_FACTOR` times as long. Tests make it short.
    */
   timeoutMs?: number | undefined;
+  /**
+   * The share of the window at which a thread compacts on its own, or null when the user turned it
+   * off. The main process owns the preference. Omitted, 80%, the only threshold before the setting.
+   */
+  threshold?: (() => AutoCompactThreshold) | undefined;
   store: AgentStore;
   providers: ProviderPort;
   emitError(code: string, error: unknown, agentId?: string): void;
@@ -53,6 +62,15 @@ export interface ContextCompactionOptions {
   changed?(): void;
   /** A provider session finished a compaction: its summary replaces what it read before. */
   compacted?(threadId: string): void;
+}
+
+/** Whether a thread with this usage compacts on its own. Off (`null`) never does. */
+export function reachesAutoCompact(
+  usedTokens: number,
+  contextWindow: number,
+  threshold: AutoCompactThreshold,
+): boolean {
+  return threshold !== null && contextWindow > 0 && usedTokens / contextWindow >= threshold;
 }
 
 /** Whether OpenBot can ask for a compaction of this client, automatically or for the user. */
@@ -89,6 +107,7 @@ export class ContextCompaction {
   readonly #rotateSession: ContextCompactionOptions["rotateSession"];
   readonly #rotatesSession: ContextCompactionOptions["rotatesSession"];
   readonly #isStopping: () => boolean;
+  readonly #threshold: () => AutoCompactThreshold;
   readonly #budgets = new Map<string, ThreadContextBudget>();
   /** The agent of each provider thread that compacts, and the client that runs it once `request` sends it. */
   readonly #compacting = new Map<string, { agentId: string; client: AgentClient | null }>();
@@ -119,6 +138,35 @@ export class ContextCompaction {
     this.#rotateSession = options.rotateSession;
     this.#rotatesSession = options.rotatesSession;
     this.#isStopping = options.isStopping;
+    this.#threshold = options.threshold ?? (() => DEFAULT_AUTO_COMPACT_THRESHOLD);
+  }
+
+  /** The share at which a thread compacts on its own now, or null when automatic compaction is off. */
+  threshold(): AutoCompactThreshold {
+    return this.#threshold();
+  }
+
+  /**
+   * The user changed the threshold. The ring of each thread that OpenBot compacts moves its mark now,
+   * and the next usage report of a thread decides whether it compacts at the new value.
+   */
+  thresholdChanged(): void {
+    const threshold = this.#threshold();
+    let changed = false;
+    for (const display of this.#display.values()) {
+      const usage = display.usage;
+      if (!usage || (usage.autoCompactAt === null && !usage.autoCompactOff)) continue;
+      usage.autoCompactAt = threshold;
+      if (threshold === null) usage.autoCompactOff = true;
+      else delete usage.autoCompactOff;
+      changed = true;
+    }
+    for (const budget of this.#budgets.values()) {
+      if (budget.phase !== "idle") continue;
+      budget.pending = false;
+      budget.lastCompactedTokens = null;
+    }
+    if (changed) this.#emitChanged();
   }
 
   /** Only personal sessions appear in the desktop snapshot; execution threads remain separate. */
@@ -159,6 +207,7 @@ export class ContextCompaction {
     autoCompactAt: number | null,
     estimated = false,
     categories?: AgentContextCategoryUsage[],
+    autoCompactOff = false,
   ): void {
     if (!Number.isFinite(usedTokens) || usedTokens < 0 || !Number.isFinite(windowTokens) || windowTokens <= 0) return;
     const display = this.#display.get(threadId) ?? { usage: null, compaction: null };
@@ -168,6 +217,7 @@ export class ContextCompaction {
       windowTokens,
       nativeManaged,
       autoCompactAt,
+      ...(autoCompactOff ? { autoCompactOff } : {}),
       estimated,
       ...(categories ? { categories } : {}),
     };
@@ -273,7 +323,7 @@ export class ContextCompaction {
     budget.contextWindow = contextWindow;
     this.#budgets.set(threadId, budget);
 
-    const pressured = usedTokens / contextWindow >= CONTEXT_COMPACTION_THRESHOLD;
+    const pressured = reachesAutoCompact(usedTokens, contextWindow, this.#threshold());
     if (!pressured) {
       budget.pending = false;
       budget.lastCompactedTokens = null;

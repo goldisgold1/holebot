@@ -4,6 +4,7 @@ import type {
   AgentMemoryLimitPreference,
   AgentProviderId,
   AppBehaviorPreferenceChange,
+  AutoCompactPreference,
   BrowserDockAction,
   BrowserDockFrame,
   BrowserDockPresentation,
@@ -55,6 +56,7 @@ import {
   isAppInterfaceSize,
   isAppLanguage,
   isAppLogoColor,
+  isAutoCompactThreshold,
   isBrowserDockAction,
   isBrowserDockFrame,
   isBrowserDockPresentation,
@@ -100,6 +102,12 @@ export function parseAnalyticsPreference(input: unknown): SetAnalyticsPreference
   if (!isDynamicRecord(input) || !isBoolean(input.enabled)) throw new Error("Analytics preference is required.");
   if (input.chosen !== undefined && !isBoolean(input.chosen)) throw new Error("Analytics choice is not valid.");
   return { enabled: input.enabled, ...(input.chosen ? { chosen: true } : {}) };
+}
+
+export function parseAutoCompactPreference(input: unknown): AutoCompactPreference {
+  if (!isDynamicRecord(input) || !isAutoCompactThreshold(input.threshold))
+    throw new Error("Auto-compact threshold is required.");
+  return { threshold: input.threshold };
 }
 
 export function parseBusyMessageModePreference(input: unknown): BusyMessageModePreference {

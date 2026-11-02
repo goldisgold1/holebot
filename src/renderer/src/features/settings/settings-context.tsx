@@ -153,6 +153,7 @@ const Settings = createSimpleContext({
     let autoInstallUpdatesChanged = false;
     let notificationPreferenceChanged = false;
     let busyMessageModeChanged = false;
+    let autoCompactChanged = false;
     let agentDefaultsChanged = false;
     let agentMemoryLimitChanged = false;
     let keepRemoteSessionsChanged = false;
@@ -300,6 +301,14 @@ const Settings = createSimpleContext({
           "busyMessageMode",
           settingsPort().setBusyMessageModePreference({ mode: value.busyMessageMode }),
           (preference) => preference.mode,
+        );
+      }
+      if (previous.autoCompactThreshold !== value.autoCompactThreshold) {
+        autoCompactChanged = true;
+        persistField(
+          "autoCompactThreshold",
+          settingsPort().setAutoCompactPreference({ threshold: value.autoCompactThreshold }),
+          (preference) => preference.threshold,
         );
       }
       if (AGENT_DEFAULT_KEYS.some((key) => previous.agentDefaults[key] !== value.agentDefaults[key])) {
@@ -544,6 +553,12 @@ const Settings = createSimpleContext({
           .then((preference) => {
             if (busyMessageModeChanged) return;
             setGeneralSettings((current) => ({ ...current, busyMessageMode: preference.mode }));
+          }),
+        settingsPort()
+          .getAutoCompactPreference()
+          .then((preference) => {
+            if (autoCompactChanged) return;
+            setGeneralSettings((current) => ({ ...current, autoCompactThreshold: preference.threshold }));
           }),
         settingsPort()
           .getAgentDefaults()

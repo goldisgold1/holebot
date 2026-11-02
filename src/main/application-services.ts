@@ -151,6 +151,7 @@ import { providerAuthKind } from "./analytics-provider-auth";
 import { AppBehaviorService } from "./app-behavior-service";
 import { AppearanceService } from "./appearance-service";
 import { ApprovalAutomation, readApprovalAutomation } from "./approval-automation-store";
+import { AutoCompactPreferenceStore } from "./auto-compact-preference-store";
 import { AutomationServer } from "./automation-server";
 import { BillingDesktopService } from "./billing-service";
 import { managedBitwardenCli } from "./bitwarden-cli-installer";
@@ -358,6 +359,7 @@ const UPDATE_PREFERENCE_FILE = "openbot-update-preference-v1.json";
 const NOTIFICATION_PREFERENCE_FILE = "openbot-notification-preference-v1.json";
 const PUSH_NOTIFICATION_FILE = "openbot-push-notifications-v1.json";
 const BUSY_MESSAGE_MODE_PREFERENCE_FILE = "openbot-busy-message-mode-v1.json";
+const AUTO_COMPACT_PREFERENCE_FILE = "openbot-auto-compact-v1.json";
 const PROVIDER_CLI_APP_VERSION_FILE = "openbot-provider-cli-app-version-v1.json";
 const AGENT_DEFAULTS_PREFERENCE_FILE = "openbot-agent-defaults-v1.json";
 const AGENT_MEMORY_LIMIT_PREFERENCE_FILE = "openbot-agent-memory-limit-v1.json";
@@ -578,6 +580,7 @@ export interface ApplicationServices {
   interfaceSize: InterfaceSizeService;
   notificationPreference: NotificationPreferenceStore;
   busyMessageMode: BusyMessageModePreferenceStore;
+  autoCompact: AutoCompactPreferenceStore;
   agentDefaults: AgentDefaultsPreferenceStore;
   agentMemoryLimit: AgentMemoryLimitSetting;
   memoryReview: MemoryReviewPreferenceStore;
@@ -1195,6 +1198,8 @@ export async function createApplicationServices({
     join(app.getPath("userData"), BUSY_MESSAGE_MODE_PREFERENCE_FILE),
   );
   await runCauseEffect(busyMessageMode.load());
+  const autoCompact = new AutoCompactPreferenceStore(join(app.getPath("userData"), AUTO_COMPACT_PREFERENCE_FILE));
+  await runCauseEffect(autoCompact.load());
   const agentMemoryLimit = new AgentMemoryLimitPreferenceStore(
     join(app.getPath("userData"), AGENT_MEMORY_LIMIT_PREFERENCE_FILE),
   );
@@ -1793,6 +1798,7 @@ export async function createApplicationServices({
     webhookRoutines: () => agentWebhookRoutineWriter(events),
     approvalAutomation,
     busyMessageMode: () => busyMessageMode.get().mode,
+    autoCompactThreshold: () => autoCompact.get().threshold,
     agentMemoryLimit: () => agentMemoryLimit.get().limit,
     memoryReviewInterval: () => memoryReview.get().interval,
     timezone: () => serverTimezone.effective(),
@@ -1819,6 +1825,7 @@ export async function createApplicationServices({
   });
   teardown.push(TEARDOWN_ORDER.service, "the agent service", () => runCauseEffect(service.stop()));
   const agentMemoryLimitSetting = reloadingAgentMemoryLimit(agentMemoryLimit, service);
+  autoCompact.subscribe(() => service.autoCompactThresholdChanged());
   /** The answer an agent gave in one turn, for routine flows, routine results and local scripts. */
   const turnAnswer = (agentId: string, turnId: string): string | null => {
     const threadId = store.list().find((agent) => agent.id === agentId)?.threadId;
@@ -3316,6 +3323,7 @@ export async function createApplicationServices({
     interfaceSize,
     notificationPreference,
     busyMessageMode,
+    autoCompact,
     agentDefaults,
     agentMemoryLimit: agentMemoryLimitSetting,
     memoryReview,

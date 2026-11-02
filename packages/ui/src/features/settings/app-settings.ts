@@ -1,9 +1,11 @@
 import {
   type AgentDefaults,
   type AgentMemoryLimit,
+  type AutoCompactThreshold,
   type BusyMessageMode,
   DEFAULT_AGENT_DEFAULTS,
   DEFAULT_AGENT_MEMORY_LIMIT,
+  DEFAULT_AUTO_COMPACT_THRESHOLD,
   DEFAULT_EXTERNAL_LINK_PREFERENCE,
   type ExternalLinkTarget,
 } from "@openbot/contracts/ipc";
@@ -54,6 +56,8 @@ export interface GeneralSettingsValue {
   showAgentSteps: boolean;
   /** What a message sent to a busy agent does, unless the agent or the message sets its own. */
   busyMessageMode: BusyMessageMode;
+  /** The share of the context window at which a chat compacts on its own, or null for Off. */
+  autoCompactThreshold: AutoCompactThreshold;
   /** What an agent of this computer does when it has no value of its own for the setting. */
   agentDefaults: AgentDefaults;
   /** How many memories one agent on this computer can hold. Read only here: Server settings set it. */
@@ -92,6 +96,7 @@ export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsValue = {
   sendShortcut: "enter",
   showAgentSteps: false,
   busyMessageMode: "queue",
+  autoCompactThreshold: DEFAULT_AUTO_COMPACT_THRESHOLD,
   agentDefaults: DEFAULT_AGENT_DEFAULTS,
   agentMemoryLimit: DEFAULT_AGENT_MEMORY_LIMIT,
   keepRemoteSessions: true,

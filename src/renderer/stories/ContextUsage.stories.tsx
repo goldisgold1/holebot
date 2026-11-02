@@ -1,3 +1,4 @@
+import type { AutoCompactThreshold } from "@openbot/contracts/ipc";
 import { ArrowUp, Button, Mic, Plus } from "@openbot/ui";
 import type { AgentMessage } from "@openbot/ui/data";
 import { ChatMessageRow } from "@openbot/ui/features/conversation/ChatMessageRow";
@@ -74,6 +75,7 @@ function ComposerToolbar(props: {
   usage: ContextUsageView;
   onStartNewChat?: (() => Promise<void>) | undefined;
   onCompact?: (() => Promise<void>) | undefined;
+  autoCompact?: { value: AutoCompactThreshold; change: (value: AutoCompactThreshold) => void } | undefined;
 }) {
   return (
     <div class="composer-toolbar">
@@ -85,6 +87,7 @@ function ComposerToolbar(props: {
           usage={props.usage}
           newChat={props.onStartNewChat ? { agent: STORY_AGENT, start: props.onStartNewChat } : undefined}
           compact={props.onCompact}
+          autoCompact={props.autoCompact}
         />
         <Button type="button" variant="ghost" class="dictation-button" aria-label="Dictate">
           <Mic aria-hidden="true" />
@@ -103,6 +106,7 @@ function Composer(props: {
   width?: string;
   onStartNewChat?: (() => Promise<void>) | undefined;
   onCompact?: (() => Promise<void>) | undefined;
+  autoCompact?: { value: AutoCompactThreshold; change: (value: AutoCompactThreshold) => void } | undefined;
 }) {
   const [draft, setDraft] = createSignal("");
   return (
@@ -121,7 +125,12 @@ function Composer(props: {
             onValueChange={setDraft}
           />
         </div>
-        <ComposerToolbar usage={props.usage} onStartNewChat={props.onStartNewChat} onCompact={props.onCompact} />
+        <ComposerToolbar
+          usage={props.usage}
+          onStartNewChat={props.onStartNewChat}
+          onCompact={props.onCompact}
+          autoCompact={props.autoCompact}
+        />
       </form>
     </div>
   );
@@ -222,6 +231,24 @@ export const CompactNow: Story = {
       </Row>
     </div>
   ),
+};
+
+/**
+ * The auto-compact picker in the popover: Off, a preset, or Custom… for any whole percent. The ring's
+ * tick and note follow the choice; Off keeps Compact now.
+ */
+export const AutoCompactThresholdPicker: Story = {
+  args: { usage: CODEX },
+  render: (args) => {
+    const [threshold, setThreshold] = createSignal<AutoCompactThreshold>(0.8);
+    return (
+      <Composer
+        usage={{ ...args.usage, autoCompactAt: threshold(), autoCompactOff: threshold() === null }}
+        onCompact={() => new Promise((resolve) => setTimeout(resolve, 1500))}
+        autoCompact={{ value: threshold(), change: setThreshold }}
+      />
+    );
+  },
 };
 
 /** An ACP agent that reports usage but cannot compact: the ring turns red near full. */

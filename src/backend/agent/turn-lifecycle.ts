@@ -735,16 +735,20 @@ export class TurnLifecycle {
         this.#compaction.updateBudget(threadId, params);
         const usage = getRecord(params, "tokenUsage");
         const last = getRecord(usage, "last");
-        if (typeof last?.totalTokens === "number" && typeof usage?.modelContextWindow === "number")
+        if (typeof last?.totalTokens === "number" && typeof usage?.modelContextWindow === "number") {
+          const compacts = compactsOnRequest(source.contextCompaction);
+          const threshold = this.#compaction.threshold();
           this.#compaction.observeUsage(
             threadId,
             last.totalTokens,
             usage.modelContextWindow,
             source.contextCompaction === "native",
-            compactsOnRequest(source.contextCompaction) ? 0.8 : null,
+            compacts ? threshold : null,
             usage.estimated === true,
             isAgentContextCategories(usage.categories) ? usage.categories : undefined,
+            compacts && threshold === null,
           );
+        }
         return;
       }
       case "openbot/context-compaction": {

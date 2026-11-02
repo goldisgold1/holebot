@@ -1,4 +1,9 @@
-import { AGENT_CONTEXT_CATEGORIES, type AgentContextCategory, type AgentContextState } from "@openbot/contracts/ipc";
+import {
+  AGENT_CONTEXT_CATEGORIES,
+  type AgentContextCategory,
+  type AgentContextState,
+  type AutoCompactThreshold,
+} from "@openbot/contracts/ipc";
 import type { AppTextKey } from "@openbot/i18n";
 import {
   Button,
@@ -17,6 +22,7 @@ import { ContentExitMotion } from "@openbot/ui/menu-motion";
 import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
 import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
+import { AutoCompactSelect } from "../settings/AutoCompactSelect";
 import { AgentNewChatDialog } from "./AgentNewChatDialog";
 import { CloseIcon } from "./ConversationIcons";
 import { formatChatTimestamp } from "./chat-timestamp";
@@ -29,6 +35,8 @@ export interface ContextUsageView {
    * Null when nothing compacts this thread on its own.
    */
   autoCompactAt: number | null;
+  /** The user turned automatic compaction off; the thread still compacts when asked. */
+  autoCompactOff?: boolean;
   nativeManaged?: boolean;
   estimated?: boolean;
   compacting: boolean;
@@ -91,7 +99,8 @@ function meterLevel(usage: ContextUsageView): "quiet" | "normal" | RadialProgres
 /**
  * The composer's context ring and the popover it opens. It shows how full the agent's provider
  * thread is and when it compacts. `newChat` adds the New chat action, which asks first. `compact`
- * adds the Compact action, for a thread that OpenBot compacts (`autoCompactAt` is set).
+ * adds the Compact action, for a thread that OpenBot compacts (`autoCompactAt` is set, or the user
+ * turned it off). `autoCompact` adds the threshold picker for such a thread.
  */
 export function ContextUsageMeter(props: {
   usage: ContextUsageView;
@@ -102,13 +111,17 @@ export function ContextUsageMeter(props: {
       }
     | undefined;
   compact?: (() => Promise<void>) | undefined;
+  autoCompact?: { value: AutoCompactThreshold; change: (value: AutoCompactThreshold) => void } | undefined;
 }) {
   const { t, format, errorMessage } = useText();
   const [open, setOpen] = createSignal(false);
   const [compaction, setCompaction] = createSignal<
     { phase: "idle" } | { phase: "requesting" } | { phase: "refused"; message: string }
   >({ phase: "idle" });
-  const compact = () => (props.usage.autoCompactAt === null ? undefined : props.compact);
+  /** OpenBot compacts this thread: on its own at a threshold, or only when asked because the user turned that off. */
+  const openbotCompacts = () => props.usage.autoCompactAt !== null || props.usage.autoCompactOff === true;
+  const compact = () => (openbotCompacts() ? props.compact : undefined);
+  const autoCompact = () => (openbotCompacts() ? props.autoCompact : undefined);
   const compactError = () => {
     const current = compaction();
     return current.phase === "refused" ? current.message : null;
@@ -203,7 +216,13 @@ export function ContextUsageMeter(props: {
             <Popover.Description class="context-meter-note">
               <Show
                 when={props.usage.autoCompactAt}
-                fallback={t(props.usage.nativeManaged ? "composer.context.nativeAuto" : "composer.context.noAuto")}
+                fallback={t(
+                  props.usage.autoCompactOff
+                    ? "composer.context.autoOff"
+                    : props.usage.nativeManaged
+                      ? "composer.context.nativeAuto"
+                      : "composer.context.noAuto",
+                )}
               >
                 {(at) => (
                   <>{t("composer.context.autoAt", { percent: format.percent(at(), { maximumFractionDigits: 0 }) })}</>
@@ -221,6 +240,14 @@ export function ContextUsageMeter(props: {
                 )}
               </Show>
             </Popover.Description>
+            <Show when={autoCompact()}>
+              {(control) => (
+                <div class="context-meter-auto-compact">
+                  <span class="context-meter-auto-compact-label">{t("settings.autoCompact.title")}</span>
+                  <AutoCompactSelect value={control().value} onChange={control().change} mount={popover} />
+                </div>
+              )}
+            </Show>
             <Show when={compactError()}>
               {(message) => (
                 <p class="context-meter-note" role="alert">

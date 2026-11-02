@@ -27,6 +27,7 @@ import type { AnalyticsPreferenceService } from "../analytics-preference-service
 import type { AppBehaviorService } from "../app-behavior-service";
 import type { AppearanceService } from "../appearance-service";
 import type { ApprovalAutomation } from "../approval-automation-store";
+import type { AutoCompactPreferenceStore } from "../auto-compact-preference-store";
 import type { BusyMessageModePreferenceStore } from "../busy-message-mode-preference-store";
 import type { ExternalLinkOpener, ExternalLinkPreferenceStore } from "../external-link-opener";
 import type { InterfaceSizeService } from "../interface-size-service";
@@ -48,6 +49,7 @@ import {
   parseAppInterfaceSizePreference,
   parseAppLanguagePreference,
   parseAppLogoColorPreference,
+  parseAutoCompactPreference,
   parseBusyMessageModePreference,
   parseChatWindowTarget,
   parseExternalDestination,
@@ -100,6 +102,7 @@ export interface AppIpcDependencies {
   analyticsPreferences: AnalyticsPreferenceService;
   approvalAutomation: ApprovalAutomation;
   busyMessageMode: BusyMessageModePreferenceStore;
+  autoCompact: AutoCompactPreferenceStore;
   agentDefaults: AgentDefaultsPreferenceStore;
   agentMemoryLimit: AgentMemoryLimitSetting;
   remoteSessionReuse: RemoteSessionReusePreferenceStore;
@@ -135,6 +138,7 @@ export function appIpcHandlers({
   analyticsPreferences,
   approvalAutomation,
   busyMessageMode,
+  autoCompact,
   agentDefaults,
   agentMemoryLimit,
   remoteSessionReuse,
@@ -196,6 +200,10 @@ export function appIpcHandlers({
       getBusyMessageModePreference: handler(() => busyMessageMode.get()),
       setBusyMessageModePreference: payloadHandler(parseBusyMessageModePreference, (parsed) =>
         runCauseEffect(busyMessageMode.set(parsed)),
+      ),
+      getAutoCompactPreference: handler(() => autoCompact.get()),
+      setAutoCompactPreference: payloadHandler(parseAutoCompactPreference, (parsed) =>
+        runCauseEffect(autoCompact.set(parsed)),
       ),
       getAgentDefaults: handler(() => agentDefaults.get()),
       // The agents that follow a changed default get it at once: see `AgentService.agentDefaultsChanged`.

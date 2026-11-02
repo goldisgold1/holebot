@@ -166,6 +166,8 @@ export interface AgentContextState {
     usedTokens: number;
     windowTokens: number;
     autoCompactAt: number | null;
+    /** The user turned automatic compaction off; the chat still compacts when asked. */
+    autoCompactOff?: boolean;
     nativeManaged: boolean;
     estimated?: boolean;
     /** The provider's estimate of what fills `usedTokens`. Absent when the provider gives only a total. */
@@ -209,6 +211,7 @@ function isAgentContextState(value: unknown): value is AgentContextState {
         usage.windowTokens > 0 &&
         isBoolean(usage.nativeManaged) &&
         (usage.estimated === undefined || isBoolean(usage.estimated)) &&
+        (usage.autoCompactOff === undefined || isBoolean(usage.autoCompactOff)) &&
         (usage.categories === undefined || isAgentContextCategories(usage.categories)) &&
         (usage.autoCompactAt === null || (isContextCount(usage.autoCompactAt) && usage.autoCompactAt <= 1)))) &&
     (compaction === null ||

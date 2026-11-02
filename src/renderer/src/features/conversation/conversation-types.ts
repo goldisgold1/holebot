@@ -10,6 +10,7 @@ import type {
   AgentTask,
   AgentWait,
   AttachmentSummary,
+  AutoCompactThreshold,
   AvatarImageInput,
   BrowserControlState,
   BrowserTab,
@@ -338,6 +339,8 @@ export interface ConversationProps {
   onClearAgentContext?: (() => Promise<void>) | undefined;
   /** Compacts the agent's context now. The context ring offers it only where OpenBot compacts. */
   onCompactAgentContext?: (() => Promise<void>) | undefined;
+  /** When chats compact on their own, which the context ring can change. Local agents only. */
+  autoCompact?: { value: AutoCompactThreshold; change: (value: AutoCompactThreshold) => void } | undefined;
   /** Answers `browserTakeover`. */
   onRespondToBrowserTakeover: (decision: "complete" | "cancel", options?: PromptAnswerOptions) => Promise<boolean>;
   onCancelQueuedMessage: (deliveryId: string) => void;

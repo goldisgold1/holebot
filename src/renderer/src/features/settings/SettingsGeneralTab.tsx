@@ -15,6 +15,7 @@ import {
   SwitchField,
 } from "@openbot/ui";
 import { AppearanceSelect } from "@openbot/ui/features/settings/AppearanceSelect";
+import { AutoCompactSelect } from "@openbot/ui/features/settings/AutoCompactSelect";
 import type { GeneralSettingsValue } from "@openbot/ui/features/settings/app-settings";
 import { LanguageSelect } from "@openbot/ui/features/settings/LanguageSelect";
 import { LogoColorPicker } from "@openbot/ui/features/settings/LogoColorPicker";
@@ -143,6 +144,19 @@ export function SettingsGeneralTab(props: SettingsGeneralTabProps) {
             label={i18n.t("settings.showAgentSteps.title")}
             description={i18n.t("settings.showAgentSteps.description")}
           />
+          <Item data-settings-row="settings.autoCompact.title" class="settings-modal-row">
+            <ItemContent>
+              <ItemTitle>{i18n.t("settings.autoCompact.title")}</ItemTitle>
+              <ItemDescription>{i18n.t("settings.autoCompact.description")}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <AutoCompactSelect
+                value={props.value.autoCompactThreshold}
+                onChange={(value) => props.onUpdateSetting("autoCompactThreshold", value)}
+                mount={props.selectMount}
+              />
+            </ItemActions>
+          </Item>
           <Item data-settings-row="settings.externalLinks.title" class="settings-modal-row">
             <ItemContent>
               <ItemTitle>{i18n.t("settings.externalLinks.title")}</ItemTitle>

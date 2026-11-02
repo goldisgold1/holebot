@@ -246,7 +246,11 @@ if (commandLineUserDataDirectory) {
 }
 app.setName("HoleBot");
 app.enableSandbox();
-if (process.platform === "win32") app.setAppUserModelId("app.openbot.desktop");
+// HoleA.I: Windows draws the taskbar button from the Start menu shortcut with this id. A shortcut to
+// node_modules' electron.exe with the release id gave the installed HoleBot the Electron icon, so a
+// development run uses its own id.
+if (process.platform === "win32")
+  app.setAppUserModelId(app.isPackaged ? "app.openbot.desktop" : "app.openbot.desktop.dev");
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 // A second launch exits at once and must not write into the files of the instance that runs.
 if (hasSingleInstanceLock) {
@@ -591,6 +595,7 @@ function registerIpcHandlers({
   interfaceSize,
   notificationPreference,
   busyMessageMode,
+  autoCompact,
   agentDefaults,
   agentMemoryLimit,
   memoryReview,
@@ -666,6 +671,7 @@ function registerIpcHandlers({
       analyticsPreferences,
       approvalAutomation,
       busyMessageMode,
+      autoCompact,
       agentDefaults,
       agentMemoryLimit,
       remoteSessionReuse,

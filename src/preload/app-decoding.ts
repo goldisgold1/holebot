@@ -29,6 +29,7 @@ import {
   type AppLogoColorPreference,
   type ApprovalAutomationPreference,
   type AppSetupState,
+  type AutoCompactPreference,
   type BitwardenConnectorStatus,
   type BusyMessageModePreference,
   type CentralAuthIssue,
@@ -67,6 +68,7 @@ import {
   isAppLanguage,
   isAppLogoColor,
   isApprovalAutomationPreference,
+  isAutoCompactThreshold,
   isBusyMessageMode,
   isCustomAgentCheckResult,
   isCustomAgentResult,
@@ -179,6 +181,12 @@ export function decodeBusyMessageModePreference(value: unknown): BusyMessageMode
   const preference = decodeRecord(value, "busy message mode preference");
   if (!isBusyMessageMode(preference.mode)) throw new Error("Invalid busy message mode.");
   return { mode: preference.mode };
+}
+
+export function decodeAutoCompactPreference(value: unknown): AutoCompactPreference {
+  const preference = decodeRecord(value, "auto-compact preference");
+  if (!isAutoCompactThreshold(preference.threshold)) throw new Error("Invalid auto-compact threshold.");
+  return { threshold: preference.threshold };
 }
 
 export function decodeAgentDefaults(value: unknown): AgentDefaults {

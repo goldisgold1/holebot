@@ -226,6 +226,7 @@
     "./features/settings/SlackIntegrationPanel": "./src/features/settings/SlackIntegrationPanel.tsx",
     "./features/settings/TelegramIntegrationPanel": "./src/features/settings/TelegramIntegrationPanel.tsx",
     "./features/settings/AppearanceSelect": "./src/features/settings/AppearanceSelect.tsx",
+    "./features/settings/AutoCompactSelect": "./src/features/settings/AutoCompactSelect.tsx",
     "./features/settings/LanguageSelect": "./src/features/settings/LanguageSelect.tsx",
     "./features/marketplace/Marketplace": "./src/features/marketplace/Marketplace.tsx",
     "./features/marketplace/MarketplaceAgentsDialog": "./src/features/marketplace/MarketplaceAgentsDialog.tsx",

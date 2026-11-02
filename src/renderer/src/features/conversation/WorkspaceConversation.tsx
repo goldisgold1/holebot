@@ -86,6 +86,7 @@ export function WorkspaceConversation(props: { account: () => CentralAuthUser })
     setPendingPluginConnect,
     agentAutoApproves,
     generalSettings,
+    updateGeneralSettings,
     openNotificationLevels,
   } = useSettings();
   const {
@@ -639,6 +640,14 @@ export function WorkspaceConversation(props: { account: () => CentralAuthUser })
         agentMemoryLimit={generalSettings().agentMemoryLimit}
         onClearAgentContext={clearActiveAgentContext()}
         onCompactAgentContext={compactActiveAgentContext()}
+        autoCompact={
+          activeServer()?.kind === "local"
+            ? {
+                value: generalSettings().autoCompactThreshold,
+                change: (value) => updateGeneralSettings({ ...generalSettings(), autoCompactThreshold: value }),
+              }
+            : undefined
+        }
         onRespondToBrowserTakeover={(decision, options) => respondToBrowserTakeover(decision, openThreadId(), options)}
         onCancelQueuedMessage={cancelQueuedMessage}
         waits={activeWaits()}

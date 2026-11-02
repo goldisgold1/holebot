@@ -70,6 +70,13 @@ export const messages = defineMessages("settings", {
   "settings.busyMessage.title": "Steer agents while they work",
   "settings.busyMessage.description":
     "New messages join the agent’s current work, not the queue. Works with ChatGPT and Claude.",
+  // When a chat compacts on its own, General tab and the composer's context ring.
+  "settings.autoCompact.title": "Auto-compact",
+  "settings.autoCompact.description":
+    "Summarize a chat when it fills this share of the model’s context window. Off keeps the full history until you compact it yourself.",
+  "settings.autoCompact.off": "Off",
+  "settings.autoCompact.custom": "Custom…",
+  "settings.autoCompact.customLabel": "Auto-compact percent",
   // The Agents tab: the defaults of the agents on this computer.
   "settings.agentDefaults.title": "Defaults",
   "settings.agentDefaults.description": "Agents follow these defaults, unless you change them for an agent.",
