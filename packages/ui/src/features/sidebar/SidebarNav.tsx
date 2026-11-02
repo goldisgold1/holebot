@@ -21,6 +21,7 @@ export function SidebarNav() {
     draggingKind,
     dropSidebarNativeDrag,
     filteredChats,
+    groupChats,
     orderedPeople,
     handleListDragLeave,
     layoutMutable,
@@ -33,6 +34,7 @@ export function SidebarNav() {
     startCreateSection,
     updateSidebarNativeDrag,
     userHiddenAgentList,
+    userHiddenChannelList,
     waitingChats,
   } = useSidebarScope();
   const { t } = useText();
@@ -59,7 +61,9 @@ export function SidebarNav() {
             resolvedPinnedItems().length === 0 &&
             waitingChats().length === 0 &&
             filteredChats().length === 0 &&
+            groupChats().length === 0 &&
             userHiddenAgentList().length === 0 &&
+            userHiddenChannelList().length === 0 &&
             (props.showPeople === false || orderedPeople().length === 0) &&
             pending.sectionEditor?.target.kind !== "create"
           }

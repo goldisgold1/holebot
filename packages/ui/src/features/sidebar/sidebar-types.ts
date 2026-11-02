@@ -24,8 +24,7 @@ import type { SidebarPinnedItem } from "./sidebar-pins";
  * What the main area shows for the chat picked in the list: its conversation, or its routines. The
  * list itself is the same in both.
  */
-/** HoleA.I: "team" lists only the group chats and people; "agents" lists agents and the pinned group chats. */
-export type SidebarView = "team" | "agents" | "routines";
+export type SidebarView = "agents" | "routines";
 
 /**
  * The "Hidden" group is not a section of the layout, and it is collapsed by default. Its id in
@@ -33,6 +32,8 @@ export type SidebarView = "team" | "agents" | "routines";
  * The colon keeps it apart from the section ids that the layout makes.
  */
 export const SIDEBAR_HIDDEN_GROUP_OPEN_ID = "hidden-agents:open";
+/** HoleA.I: the collapsed state of "Group chats", in the same storage as the sections. */
+export const SIDEBAR_GROUP_CHATS_ID = "group-chats";
 
 export interface SidebarProps {
   /** The switch over the list is shown only when the caller handles `onViewChange`. */
@@ -110,6 +111,10 @@ export interface SidebarProps {
    * one keeps its section and its pin for a restore.
    */
   userHiddenAgents?: HiddenAgent[] | undefined;
+  /** HoleA.I: the group chats this device hides. A pin still shows one. */
+  hiddenChannelIds?: string[] | undefined;
+  /** Hides or shows a group chat. Without it, the channel menu shows no hide item. */
+  onSetChannelHidden?: ((channelId: string, hidden: boolean) => void) | undefined;
   /** Hides an agent. Without it, the agent menu shows no hide item. */
   onHideAgent?: ((agentId: string) => void) | undefined;
   /** Puts a hidden agent back in its section. Without it, a hidden agent's menu shows no restore item. */

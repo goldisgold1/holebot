@@ -1,7 +1,7 @@
 /** The right-click menu on a channel, in the pinned strip and in a section alike. */
 
 import type { ChannelSummary } from "@openbot/contracts/ipc";
-import { ContextMenu, Hash, Pin, PinOff, RotateCcw } from "@openbot/ui";
+import { ContextMenu, EyeOff, Hash, Pin, PinOff, RotateCcw } from "@openbot/ui";
 import { Show } from "solid-js";
 import { useText } from "../../text";
 import { DeleteIcon, EditIcon } from "./SidebarIcons";
@@ -9,7 +9,7 @@ import { SidebarMoveToSubmenu } from "./SidebarMoveToSubmenu";
 import type { SidebarPinnedItem } from "./sidebar-pins";
 import { useSidebarScope } from "./sidebar-scope";
 
-export function SidebarChannelContextMenu(menuProps: { channel: ChannelSummary; pinned: boolean }) {
+export function SidebarChannelContextMenu(menuProps: { channel: ChannelSummary; pinned: boolean; userHidden?: boolean | undefined }) {
   const { openDelete, props } = useSidebarScope();
   const { t } = useText();
   const ref = (): SidebarPinnedItem => ({ kind: "channel", id: menuProps.channel.id });
@@ -31,6 +31,16 @@ export function SidebarChannelContextMenu(menuProps: { channel: ChannelSummary; 
           </Show>
           <span>{menuProps.pinned ? t("sidebar.unpin") : t("sidebar.pin")}</span>
         </ContextMenu.Item>
+        <Show when={props.onSetChannelHidden && !menuProps.pinned}>
+          <ContextMenu.Item
+            onSelectAfterClose={() => props.onSetChannelHidden?.(menuProps.channel.id, !menuProps.userHidden)}
+          >
+            <Show when={menuProps.userHidden} fallback={<EyeOff class="agent-context-icon size-4" aria-hidden="true" />}>
+              <RotateCcw class="agent-context-icon size-4" aria-hidden="true" />
+            </Show>
+            <span>{menuProps.userHidden ? t("sidebar.channelMenu.show") : t("sidebar.channelMenu.hide")}</span>
+          </ContextMenu.Item>
+        </Show>
         <SidebarMoveToSubmenu chatId={menuProps.channel.id} />
         <ContextMenu.Item onSelect={() => props.onEditChannel?.(menuProps.channel.id)}>
           <EditIcon />

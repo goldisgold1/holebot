@@ -9,15 +9,16 @@ import { Button, ChevronDown } from "@openbot/ui";
 import { For, Show } from "solid-js";
 import { useText } from "../../text";
 import { SidebarAgentRow } from "./SidebarAgentRow";
+import { SidebarChannelRow } from "./SidebarChannelRow";
 import { useSidebarScope } from "./sidebar-scope";
 import { SIDEBAR_HIDDEN_GROUP_OPEN_ID } from "./sidebar-types";
 
 const BODY_ID = "sidebar-hidden-agents-body";
 
 export function SidebarHiddenGroup() {
-  const { props, sectionIsCollapsed, userHiddenAgentList } = useSidebarScope();
+  const { props, sectionIsCollapsed, userHiddenAgentList, userHiddenChannelList } = useSidebarScope();
   const { t } = useText();
-  const count = () => userHiddenAgentList().length;
+  const count = () => userHiddenAgentList().length + userHiddenChannelList().length;
   const open = () => sectionIsCollapsed(SIDEBAR_HIDDEN_GROUP_OPEN_ID);
   return (
     <Show when={count() > 0}>
@@ -56,6 +57,7 @@ export function SidebarHiddenGroup() {
         >
           <div id={BODY_ID} class="sidebar-section-body">
             <For each={userHiddenAgentList()}>{(agent) => <SidebarAgentRow agent={agent} userHidden />}</For>
+            <For each={userHiddenChannelList()}>{(channel) => <SidebarChannelRow channel={channel} userHidden />}</For>
           </div>
         </div>
       </section>

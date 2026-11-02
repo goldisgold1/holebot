@@ -26,7 +26,7 @@ export function SidebarAgentSection(sectionProps: { sectionId: string }) {
   const headed = () => Boolean(custom()) || props.layout.sections.length > 0;
   const collapsed = () => headed() && sectionIsCollapsed(sectionId());
   return (
-    <Show when={name() && (chats().length > 0 || (custom() && props.view !== "team"))}>
+    <Show when={name() && (chats().length > 0 || custom())}>
       <section
         class={["sidebar-chat-group sidebar-section", sectionDragClasses(sectionId())]}
         style={`--sidebar-drag-y: ${dragOffset(sectionId()).y}px;`}

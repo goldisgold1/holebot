@@ -107,10 +107,7 @@ const Layout = createSimpleContext({
       window.localStorage.getItem(SERVER_VIEW_STORAGE_KEY) === "rail" ? "rail" : "menu",
     );
     const [sidebarView, setSidebarViewSignal] = createSignal<SidebarView>(
-      (() => {
-        const stored = window.localStorage.getItem(SIDEBAR_VIEW_STORAGE_KEY);
-        return stored === "routines" || stored === "team" ? stored : "agents";
-      })(),
+      window.localStorage.getItem(SIDEBAR_VIEW_STORAGE_KEY) === "routines" ? "routines" : "agents",
     );
     const [railPinChoices, setRailPinChoices] = createSignal<RailPinChoices>(readRailPinChoices());
     const railPinned = createMemo(() => {

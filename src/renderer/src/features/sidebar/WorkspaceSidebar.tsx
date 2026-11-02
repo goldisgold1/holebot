@@ -55,7 +55,31 @@ const MOBILE_APP_DISMISSED_STORAGE_KEY = "openbot:mobile-app-card-dismissed";
  * decide which pane renders. Deriving it a second time here would let the two
  * answers disagree for a frame.
  */
+/** HoleA.I: the group chats this device hides from the sidebar, by channel id. */
+const HIDDEN_CHANNELS_KEY = "holeai.sidebar.hiddenChannels";
+
+function readHiddenChannels(): string[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(HIDDEN_CHANNELS_KEY) ?? "[]");
+    return Array.isArray(value) ? value.filter((id) => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
+  const [hiddenChannelIds, setHiddenChannelIds] = createSignal(readHiddenChannels());
+  const setChannelHidden = (channelId: string, hidden: boolean) => {
+    const next = hidden
+      ? [...new Set([...hiddenChannelIds(), channelId])]
+      : hiddenChannelIds().filter((id) => id !== channelId);
+    setHiddenChannelIds(next);
+    try {
+      localStorage.setItem(HIDDEN_CHANNELS_KEY, JSON.stringify(next));
+    } catch {
+      // The list still holds for this run.
+    }
+  };
   const { t } = useText();
   const layout = useLayout();
   const platform = usePlatform();
@@ -271,8 +295,6 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
         channels.hasUnread()
       }
       view={layout.sidebarView()}
-      // HoleA.I: the Team | Agents | Routines switch over the list.
-      onViewChange={layout.setSidebarView}
       serverName={activeServer()?.name ?? t("sidebar.topbar.localServer")}
       onOpenServerSettings={(trigger) => {
         const server = activeServer();
@@ -344,6 +366,8 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       onDuplicateAgent={duplicateAgent}
       onDeleteAgent={deleteAgent}
       userHiddenAgents={userHiddenAgents()}
+      hiddenChannelIds={hiddenChannelIds()}
+      onSetChannelHidden={setChannelHidden}
       onHideAgent={hideAllowed() ? (agentId) => void setAgentHiddenByUser(agentId, true) : undefined}
       onRestoreAgent={hideAllowed() ? (agentId) => void setAgentHiddenByUser(agentId, false) : undefined}
       onNewAgentThread={newAgentThread()}

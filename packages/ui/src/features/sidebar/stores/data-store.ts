@@ -54,11 +54,9 @@ export function createSidebarDataStore(deps: {
       nextCache.set(key, { source, item: resolved });
       return resolved;
     };
-    // HoleA.I: the Team view pins only group chats. The Agents view draws the pinned agents first and
-    // the pinned group chats under them.
-    const refs = chatPinnedItems().filter((ref) => props.view !== "team" || ref.kind === "channel");
-    const ordered = [...refs.filter((ref) => ref.kind === "agent"), ...refs.filter((ref) => ref.kind !== "agent")];
-    for (const ref of ordered) {
+    // HoleA.I: the pinned group chats sit under the pinned agents.
+    const pins = chatPinnedItems();
+    for (const ref of [...pins.filter((pin) => pin.kind === "agent"), ...pins.filter((pin) => pin.kind !== "agent")]) {
       if (ref.kind === "agent") {
         const agent = agentById().get(ref.id);
         // A hidden agent keeps its pin, so a restore puts it back in the strip.
@@ -73,14 +71,11 @@ export function createSidebarDataStore(deps: {
     pinnedItemCache = nextCache;
     return items;
   });
-  // HoleA.I: the Team view is the group chats and the people, with no agents.
   const listedAgents = createMemo(() =>
-    props.view === "team"
-      ? []
-      : props.agents.filter(
-          (agent) =>
-            !agentIsUserHidden(agent.id) && !pinnedKeys().has(sidebarPinnedItemKey({ kind: "agent", id: agent.id })),
-        ),
+    props.agents.filter(
+      (agent) =>
+        !agentIsUserHidden(agent.id) && !pinnedKeys().has(sidebarPinnedItemKey({ kind: "agent", id: agent.id })),
+    ),
   );
   /**
    * Agents and channels that wait for the user leave their section for the "Needs you" group, the
@@ -112,11 +107,17 @@ export function createSidebarDataStore(deps: {
   const userHiddenAgentList = createMemo(() =>
     sortByLayoutOrder(props.agents.filter((agent) => agentIsUserHidden(agent.id))),
   );
-  // HoleA.I: the Agents view shows a group chat only when it is pinned there.
+  // HoleA.I: a group chat the user hid leaves the list for "Hidden"; a pin still shows it.
+  const hiddenChannelIds = createMemo(() => new Set(props.hiddenChannelIds ?? []));
   const listedChannels = createMemo(() =>
-    props.view === "agents"
-      ? []
-      : channels().filter((channel) => !pinnedKeys().has(sidebarPinnedItemKey({ kind: "channel", id: channel.id }))),
+    channels().filter(
+      (channel) =>
+        !hiddenChannelIds().has(channel.id) &&
+        !pinnedKeys().has(sidebarPinnedItemKey({ kind: "channel", id: channel.id })),
+    ),
+  );
+  const userHiddenChannelList = createMemo(() =>
+    sortByLayoutOrder(channels().filter((channel) => hiddenChannelIds().has(channel.id))),
   );
   const filteredChannels = createMemo(() => listedChannels().filter((channel) => !chatWaits(channel.id)));
   function sortByLayoutOrder<T extends { id: string }>(items: T[]): T[] {
@@ -157,7 +158,10 @@ export function createSidebarDataStore(deps: {
       return items;
     });
   }
-  const filteredChats = createChatItems(() => ({ channels: filteredChannels(), agents: filteredAgents() }));
+  // HoleA.I: the agents are always first. The folders hold agents only, and the group chats that are
+  // not pinned or hidden follow every folder in "Group chats".
+  const filteredChats = createChatItems(() => ({ channels: [], agents: filteredAgents() }));
+  const groupChats = createChatItems(() => ({ channels: filteredChannels(), agents: [] }));
   /** The "Needs you" group, in the order the chats have in the layout. */
   const waitingChats = createChatItems(() => ({
     channels: listedChannels().filter((channel) => chatWaits(channel.id)),
@@ -204,11 +208,8 @@ export function createSidebarDataStore(deps: {
   });
   const visibleSectionIds = createMemo(() =>
     props.layout.order.filter((sectionId) => {
-      if (sectionId === SIDEBAR_PEOPLE_SECTION_ID)
-        return props.showPeople !== false && props.view !== "agents" && orderedPeople().length > 0;
-      // HoleA.I: the Team view leaves out the folders that hold only agents.
-      if (customSectionById().has(sectionId))
-        return props.view !== "team" || (filteredChatsBySection().get(sectionId)?.length ?? 0) > 0;
+      if (sectionId === SIDEBAR_PEOPLE_SECTION_ID) return props.showPeople !== false && orderedPeople().length > 0;
+      if (customSectionById().has(sectionId)) return true;
       if (sectionId !== SIDEBAR_UNASSIGNED_SECTION_ID) return false;
       return (filteredChatsBySection().get(sectionId)?.length ?? 0) > 0;
     }),
@@ -278,6 +279,7 @@ export function createSidebarDataStore(deps: {
     filteredAgents,
     filteredChannels,
     filteredChats,
+    groupChats,
     filteredChatsBySection,
     orderedPeople,
     personById,
@@ -288,6 +290,7 @@ export function createSidebarDataStore(deps: {
     sectionPosition,
     visiblePinnedKeys,
     userHiddenAgentList,
+    userHiddenChannelList,
     userHiddenSince,
     visibleSectionIds,
     waitingChats,

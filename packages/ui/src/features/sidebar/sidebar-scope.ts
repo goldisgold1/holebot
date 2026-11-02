@@ -34,6 +34,7 @@ export function createSidebarScope(props: SidebarProps) {
     directThreadByMember,
     filteredAgents,
     filteredChats,
+    groupChats,
     filteredChatsBySection,
     orderedPeople,
     personById,
@@ -43,6 +44,7 @@ export function createSidebarScope(props: SidebarProps) {
     sectionLabel,
     sectionPosition,
     userHiddenAgentList,
+    userHiddenChannelList,
     userHiddenSince,
     visiblePinnedKeys,
     visibleSectionIds,
@@ -123,7 +125,7 @@ export function createSidebarScope(props: SidebarProps) {
   });
 
   createEffect(
-    () => [resolvedPinnedItems(), waitingChats(), filteredChats(), orderedPeople(), userHiddenAgentList()],
+    () => [resolvedPinnedItems(), waitingChats(), filteredChats(), groupChats(), orderedPeople(), userHiddenAgentList(), userHiddenChannelList()],
     () => {
       scrollFades.remeasure();
     },
@@ -163,6 +165,7 @@ export function createSidebarScope(props: SidebarProps) {
     endChatDragging,
     filteredAgents,
     filteredChats,
+    groupChats,
     filteredChatsBySection,
     handleListDragLeave,
     layoutMutable,
@@ -196,6 +199,7 @@ export function createSidebarScope(props: SidebarProps) {
     updateSectionEditorName,
     updateSidebarNativeDrag,
     userHiddenAgentList,
+    userHiddenChannelList,
     userHiddenSince,
     visibleSectionIds,
     waitingChats,
