@@ -48,7 +48,7 @@ import {
   PERSON_REQUEST_REQUIRED,
 } from "./channel-management";
 import { ChannelMemoryStore } from "./channel-memory-store";
-import { type ChannelAssignment, type ChannelContext, ChannelStore } from "./channel-store";
+import { CHANNEL_TYPING_TTL_MS, type ChannelAssignment, type ChannelContext, ChannelStore } from "./channel-store";
 import type { DeliveryContext, MailboxStore } from "./mailbox-store";
 import type { OpenBotDatabase } from "./openbot-database";
 import { extractJsonObject, StructuredOutputError } from "./structured-output";
@@ -408,6 +408,17 @@ export class ChannelService {
     const channel = yield* channelSync(() => this.store.get(command.channelId));
     // HoleA.I: a reaction changes only the message's reactions. It wakes nobody, and the agents'
     // context packets stay as they are.
+    if (command.type === "typing") {
+      const now = Date.now();
+      if (this.store.setTyping(channel.id, actor, command.typing, now)) this.publish(channel.id);
+      // The typing ends by itself after the TTL; the next read leaves the member out, so publish then.
+      if (command.typing)
+        setTimeout(() => {
+          if (!this.store.typingMembers(channel.id).some((member) => member.memberId === actor.id))
+            this.publish(channel.id);
+        }, CHANNEL_TYPING_TTL_MS + 100).unref?.();
+      return channel;
+    }
     if (command.type === "react") {
       const target = yield* channelSync(() => this.store.message(channel.id, command.messageId));
       if (!target) return yield* channelFailure(new Error(sourceText("error.backend.channelReferenceUnavailable")));

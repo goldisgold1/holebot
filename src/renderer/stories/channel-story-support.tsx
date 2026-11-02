@@ -119,6 +119,7 @@ export function StoryChannelConversation(props: ChannelStoryProps) {
     awaitingReplies: () => props.awaiting ?? [],
     reactions: () => [],
     react: () => {},
+    typing: () => {},
     HeaderTitle: () => (
       <Button variant="ghost" size="sm" class="conversation-title channel-title no-drag" aria-label="Channel settings">
         <ChannelAvatar members={members} agents={STORY_AGENTS} />

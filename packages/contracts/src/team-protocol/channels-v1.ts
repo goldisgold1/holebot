@@ -278,7 +278,19 @@ export function channelRequest(path: string, value: unknown): TeamProtocolV2Json
   // `cancel` belongs to `channel-task-cancel-v1`: a host takes it only from a peer that advertises
   // that capability, and it has the task fields of `stop`.
   const common = record(value, {
-    type: oneOf("save", "archive", "restore", "read", "react", "send", "stop", "resume", "reassign", "cancel"),
+    type: oneOf(
+      "save",
+      "archive",
+      "restore",
+      "read",
+      "react",
+      "typing",
+      "send",
+      "stop",
+      "resume",
+      "reassign",
+      "cancel",
+    ),
     operationId: identifier,
     channelId: identifier,
   });
@@ -288,6 +300,7 @@ export function channelRequest(path: string, value: unknown): TeamProtocolV2Json
     return { ...common, draft: draft(value.draft), ...(value.update === true ? { update: true } : {}) };
   if (value.type === "archive" || value.type === "restore") return common;
   if (value.type === "read") return { ...common, throughSequence: sequence(value.throughSequence) };
+  if (value.type === "typing") return { ...common, typing: boolean(value.typing) };
   if (value.type === "react")
     return { ...common, ...record(value, { messageId: identifier, emoji: nullable(string(64)) }) };
   if (value.type === "send") {
@@ -396,13 +409,18 @@ export function channelResponse(path: string, status: number, value: unknown): T
       }),
     }))(value);
   if (pathname === CHANNEL_ROUTES.read)
-    return record(value, {
-      channel,
-      messages: list(message, 100),
-      tasks: list(task),
-      olderCursor: nullable(sequence),
-      throughSequence: sequence,
-    });
+    return {
+      ...(isDynamicRecord(value) && value.typing !== undefined
+        ? { typing: list((item) => record(item, { memberId: identifier, name: string(120) }), 100)(value.typing) }
+        : {}),
+      ...record(value, {
+        channel,
+        messages: list(message, 100),
+        tasks: list(task),
+        olderCursor: nullable(sequence),
+        throughSequence: sequence,
+      }),
+    };
   if (pathname === CHANNEL_ROUTES.command) return channel(value);
   throw new Error("Unknown channel route.");
 }

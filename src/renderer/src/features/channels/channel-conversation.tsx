@@ -10,7 +10,7 @@ import { groupChannelReactions } from "@openbot/contracts/signal-port/reactions"
 import type { AgentMessage } from "@openbot/ui/data";
 import { unloadedHistory } from "@openbot/ui/features/conversation/ChatScrollRail";
 import { useText } from "@openbot/ui/text";
-import { createEffect, createMemo } from "solid-js";
+import { createEffect, createMemo, onCleanup } from "solid-js";
 import { agentMessagesEqual } from "../../app-message-projection";
 import { channelAwaitingReplies } from "../../awaiting-replies";
 import type {
@@ -25,6 +25,7 @@ import {
   ChannelHeaderTitle,
   type ChannelRoutineHost,
   ChannelSettingsPane,
+  ChannelTypingLine,
 } from "./ChannelConversationParts";
 import {
   activeChannelRuns,
@@ -215,6 +216,24 @@ export function createChannelConversation(env: ChannelConversationEnvironment) {
     }
   }
 
+  let typingSentAt = 0;
+  let typingIdle: ReturnType<typeof setTimeout> | undefined;
+  function sendTyping(typing: boolean) {
+    if (!typing && !typingSentAt) return;
+    typingSentAt = typing ? Date.now() : 0;
+    void channels
+      .port()
+      .agent.channelCommand({ type: "typing", operationId: crypto.randomUUID(), channelId, typing })
+      .catch(() => undefined);
+  }
+  onCleanup(() => {
+    if (typingIdle) clearTimeout(typingIdle);
+    sendTyping(false);
+  });
+  /** The other people typing here now. */
+  const typingNames = () =>
+    (page()?.typing ?? []).filter((member) => !env.isOwnSender(member.memberId)).map((member) => member.name);
+
   const source: ConversationChannelSource = {
     id: channelId,
     name: () => page()?.channel.name ?? summary()?.name ?? "",
@@ -258,7 +277,12 @@ export function createChannelConversation(env: ChannelConversationEnvironment) {
         onClose={props.onClose}
       />
     ),
-    AboveComposer: () => <ChannelAboveComposer channelId={channelId} />,
+    AboveComposer: () => (
+      <>
+        <ChannelTypingLine names={typingNames()} />
+        <ChannelAboveComposer channelId={channelId} />
+      </>
+    ),
     EmptyState: () => <ChannelEmptyState channelId={channelId} />,
     reactions: (messageId) => {
       const entry = entries().find((candidate) => candidate.id === messageId);
@@ -267,7 +291,22 @@ export function createChannelConversation(env: ChannelConversationEnvironment) {
     },
     react: (messageId, emoji) => {
       if (!env.connectionReady() || readOnly()) return;
-      void channels.command({ type: "react", operationId: crypto.randomUUID(), channelId, messageId, emoji });
+      // Straight to the host: a reaction must not wait behind, or block, a message being sent.
+      void channels
+        .port()
+        .agent.channelCommand({ type: "react", operationId: crypto.randomUUID(), channelId, messageId, emoji })
+        .catch(() => undefined);
+    },
+    typing: (text) => {
+      if (!env.connectionReady() || readOnly()) return;
+      if (typingIdle) clearTimeout(typingIdle);
+      if (!text.trim()) {
+        sendTyping(false);
+        return;
+      }
+      // Signal: "started" again every 10 s while the keys move, "stopped" after 3 s without one.
+      if (!typingSentAt || Date.now() - typingSentAt > 10_000) sendTyping(true);
+      typingIdle = setTimeout(() => sendTyping(false), 3_000);
     },
   };
 

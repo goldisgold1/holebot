@@ -283,3 +283,31 @@ export function ChannelSettingsPane(
     </SettingsPanel>
   );
 }
+
+/**
+ * HoleA.I: who else types in the group chat, above the composer, after Signal's typing bubble: the
+ * dots and up to three names, then "+N".
+ */
+export function ChannelTypingLine(props: { names: readonly string[] }) {
+  const { t } = useText();
+  const shown = () => props.names.slice(0, 3).join(", ");
+  const more = () => Math.max(0, props.names.length - 3);
+  return (
+    <Show when={props.names.length > 0}>
+      <div class="channel-typing-line" role="status" aria-live="polite">
+        <span class="channel-typing-dots" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
+        <span>
+          {more() > 0
+            ? t("channel.typing.many", { names: shown(), count: more() })
+            : props.names.length === 1
+              ? t("channel.typing.one", { name: shown() })
+              : t("channel.typing.some", { names: shown() })}
+        </span>
+      </div>
+    </Show>
+  );
+}

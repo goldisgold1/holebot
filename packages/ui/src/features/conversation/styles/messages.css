@@ -1527,3 +1527,53 @@ button.chat-action-target:active,
   padding-inline: 2px;
   font-weight: 600;
 }
+
+/* HoleA.I: "Alice is typing…" above a group chat's composer (Signal's typing bubble). */
+.channel-typing-line {
+  display: flex;
+  align-items: center;
+  gap: var(--openbot-space-2);
+  padding: 2px var(--openbot-space-3);
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-xs);
+}
+
+.channel-typing-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.channel-typing-dots > span {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--openbot-radius-pill);
+  background: currentColor;
+  animation: channel-typing-dot 1.2s ease-in-out infinite;
+}
+
+.channel-typing-dots > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.channel-typing-dots > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes channel-typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .channel-typing-dots > span {
+    animation: none;
+  }
+}

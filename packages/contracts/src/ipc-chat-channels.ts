@@ -113,6 +113,14 @@ export interface ChannelPage {
   /** As in `ConversationPageInfo`: the unloaded length, for the scroll rail. Absent from a remote host. */
   olderCount?: number;
   oldestAt?: string;
+  /** HoleA.I: the people typing in the channel now (Signal's typing bubble). Absent when nobody is. */
+  typing?: ChannelTypingMember[];
+}
+
+/** One person typing in a group chat. */
+export interface ChannelTypingMember {
+  memberId: string;
+  name: string;
 }
 
 export type ChannelCommand =
@@ -164,7 +172,9 @@ export type ChannelCommand =
     }
   | { type: "read"; operationId: string; channelId: string; throughSequence: number }
   /** HoleA.I: sets the sender's reaction on a message, or removes it with `null`. */
-  | { type: "react"; operationId: string; channelId: string; messageId: string; emoji: string | null };
+  | { type: "react"; operationId: string; channelId: string; messageId: string; emoji: string | null }
+  /** HoleA.I: the sender started or stopped typing. Kept in memory for 15 s; nothing is stored. */
+  | { type: "typing"; operationId: string; channelId: string; typing: boolean };
 
 export interface ChannelReadInput {
   channelId: string;
@@ -371,6 +381,8 @@ export function parseChannelCommand(value: unknown): ChannelCommand {
     (value.emoji === null || isMessageReaction(value.emoji))
   )
     return { ...common, type: value.type, messageId: value.messageId, emoji: value.emoji };
+  if (value.type === "typing" && typeof value.typing === "boolean")
+    return { ...common, type: value.type, typing: value.typing };
   if (value.type === "read" && sequence(value.throughSequence))
     return { ...common, type: value.type, throughSequence: value.throughSequence };
   if (

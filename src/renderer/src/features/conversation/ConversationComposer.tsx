@@ -983,6 +983,7 @@ export function ConversationComposer() {
               onValueChange={(text) => {
                 updateCurrentDraft({ text });
                 updateTeamTyping(text);
+                channel?.typing(text);
               }}
               onSubmit={submitComposer}
               onSteer={steerOnTab()}

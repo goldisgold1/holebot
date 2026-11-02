@@ -10,6 +10,7 @@ import {
   type ChannelSummary,
   type ChannelTask,
   type ChannelThread,
+  type ChannelTypingMember,
   decodeChannel,
   isChannelMessage,
   isChannelTask,
@@ -80,6 +81,9 @@ interface ChannelChange {
 /**
  * Owns durable channel records. Every change and its retry receipt commit together.
  */
+/** How long a "typing" lasts without a refresh, as in Signal (the client refreshes it every 10 s). */
+export const CHANNEL_TYPING_TTL_MS = 15_000;
+
 export class ChannelStore {
   /** By channel: how many times a message changed in place after it was complete, in this process. */
   readonly #completedMessageChanges = new Map<string, number>();
@@ -374,6 +378,34 @@ export class ChannelStore {
     return row ? decodeAssignment(JSON.parse(requiredStringColumn(row, "assignment_json"))) : null;
   }
 
+  /** HoleA.I: who types in each channel, until when (ms). Memory only, like Signal's typing state. */
+  readonly #typing = new Map<string, Map<string, { name: string; until: number }>>();
+
+  /** Records a start or stop of typing. Whether the people typing changed, so the caller publishes. */
+  setTyping(channelId: string, member: { id: string; name: string }, typing: boolean, now = Date.now()): boolean {
+    const before = this.typingMembers(channelId, now)
+      .map((entry) => entry.memberId)
+      .join(",");
+    const members = this.#typing.get(channelId) ?? new Map<string, { name: string; until: number }>();
+    if (typing) members.set(member.id, { name: member.name, until: now + CHANNEL_TYPING_TTL_MS });
+    else members.delete(member.id);
+    if (members.size > 0) this.#typing.set(channelId, members);
+    else this.#typing.delete(channelId);
+    return (
+      before !==
+      this.typingMembers(channelId, now)
+        .map((entry) => entry.memberId)
+        .join(",")
+    );
+  }
+
+  typingMembers(channelId: string, now = Date.now()): ChannelTypingMember[] {
+    const members = this.#typing.get(channelId);
+    if (!members) return [];
+    for (const [memberId, entry] of members) if (entry.until <= now) members.delete(memberId);
+    return [...members].map(([memberId, entry]) => ({ memberId, name: entry.name }));
+  }
+
   page(channelId: string, before?: number): ChannelPage {
     const messages = this.messages(channelId, before, 101);
     const hasOlder = messages.length > 100;
@@ -386,6 +418,7 @@ export class ChannelStore {
       olderCursor,
       throughSequence: this.messages(channelId, undefined, 1)[0]?.sequence ?? 0,
       ...(olderCursor === null ? {} : this.olderExtent(channelId, olderCursor)),
+      ...(this.typingMembers(channelId).length > 0 ? { typing: this.typingMembers(channelId) } : {}),
     };
   }
 

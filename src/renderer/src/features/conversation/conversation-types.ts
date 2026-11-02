@@ -125,6 +125,8 @@ export interface ConversationChannelSource {
   reactions: (messageId: string) => ChannelReactionGroup[];
   /** Sets the reader's reaction on a message, or removes it with `null`. */
   react: (messageId: string, emoji: string | null) => void;
+  /** HoleA.I: the composer text changed; tells the others that the reader types (Signal's timings). */
+  typing: (text: string) => void;
 }
 
 export interface ConversationChannelSettingsPaneProps {
