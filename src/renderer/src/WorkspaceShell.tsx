@@ -225,7 +225,6 @@ export function WorkspaceShell(props: { account: () => CentralAuthUser }) {
       <div class="app-window">
         {/* HoleA.I: the clean look has no page rail; the foot of the sidebar opens the other pages. */}
         <WorkspacePageRail hidden />
-        <PageBackButton />
         <WorkspaceFrame
           class={chatWindow ? "app-frame-chat-window" : undefined}
           compact={layout.leftPanelCompact()}
@@ -333,6 +332,9 @@ export function WorkspaceShell(props: { account: () => CentralAuthUser }) {
             <WorkspaceChannelConversation account={props.account} />
           </Show>
         </WorkspaceFrame>
+        {/* After the frame: Windows applies the pages' drag areas in page order, so the button must come
+            after the page header it sits on, or the header's drag area takes its clicks. */}
+        <PageBackButton />
       </div>
     </ConnectorsProvider>
   );
