@@ -1,0 +1,54 @@
+/*
+ * HoleA.I: the clean look of the desktop (packages/brand/src/tokens-holeai.css and
+ * src/renderer/src/styles/holeai-clean.css) on the phone. Loaded after tokens-native.css, so each value here
+ * wins over the base one. Dark moves to the darker Grok Bot surfaces; both themes get neutral bubbles: the
+ * reader's a soft grey pill, an agent's the plain bubble grey (a tint of 0 keeps the agent hue out).
+ *
+ * Only names that tokens-native.css already declares in both variants go here: uniwind resolves a name per
+ * theme only when every @variant block has it. Delete the import in global.css to go back to the base look.
+ */
+
+:root {
+  @variant dark {
+    --openbot-bg-canvas: #121212;
+    --openbot-bg-native-canvas: #121212;
+    --openbot-bg-native-sidebar: #0e0e0e;
+    --openbot-bg-sidebar: #0e0e0e;
+    --openbot-bg-surface: #1f1f1f;
+    --openbot-bg-surface-raised: #202020;
+    --openbot-bg-control: #1c1c1c;
+    --openbot-bg-control-active: #2a2a2a;
+    --openbot-bg-overlay: rgba(14, 14, 14, 0.94);
+    --openbot-text-muted: #9a9a9a;
+    --openbot-bg-sheet: #121212;
+    --openbot-bg-grouped: #1a1a1a;
+    --openbot-text-grouped-secondary: #9a9a9a;
+    --openbot-border-grouped: rgba(255, 255, 255, 0.08);
+    --openbot-radius-grouped: 18px;
+    --openbot-bg-chrome-glass: rgba(24, 24, 24, 0.96);
+    --openbot-border-chrome-glass: rgba(255, 255, 255, 0.08);
+    --openbot-bg-chrome-blur: rgba(18, 18, 18, 0.62);
+    --openbot-scroll-edge-overlay: rgba(18, 18, 18, 0.8);
+    --openbot-bubble-user: #303030;
+    --openbot-bubble-user-text: #ffffff;
+    --openbot-bubble-agent-base: #202020;
+    --openbot-bubble-agent-tint: 0;
+  }
+
+  @variant light {
+    /* biome-ignore lint/suspicious/noDuplicateCustomProperties: Theme variants intentionally share semantic token names. */
+    --openbot-bg-canvas: #ffffff;
+    --openbot-bg-native-canvas: #ffffff;
+    --openbot-bg-native-sidebar: #f7f7f8;
+    --openbot-bg-sidebar: #f7f7f8;
+    --openbot-bg-sheet: #ffffff;
+    --openbot-bg-grouped: #f4f4f5;
+    --openbot-border-grouped: rgba(20, 20, 20, 0.06);
+    --openbot-radius-grouped: 18px;
+    --openbot-scroll-edge-overlay: rgba(255, 255, 255, 0.6);
+    --openbot-bubble-user: #e6e6e9;
+    --openbot-bubble-user-text: #141414;
+    --openbot-bubble-agent-base: #f0f0f2;
+    --openbot-bubble-agent-tint: 0;
+  }
+}

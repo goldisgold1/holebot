@@ -1,8 +1,8 @@
 import type { ChatMessage } from "./chat-messages";
 
 /** The corner radius of a bubble, and of the corners where it joins the next bubble of its run. */
-export const BUBBLE_RADIUS = 20;
-export const BUBBLE_TUCKED_RADIUS = 8;
+export const BUBBLE_RADIUS = 18;
+export const BUBBLE_TUCKED_RADIUS = 6;
 /** A bubble is at most this part of the list width, and always leaves this gap on the far side. */
 export const BUBBLE_MAX_FRACTION = 0.9;
 export const BUBBLE_FAR_GUTTER = 44;

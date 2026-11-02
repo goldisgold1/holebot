@@ -3,9 +3,11 @@ import { Uniwind } from "uniwind";
 import { create } from "zustand";
 
 export type Appearance = "system" | "light" | "dark";
+/** HoleA.I: dark until the user picks, as the Grok Bot apps open. */
+const DEFAULT_APPEARANCE: Appearance = "dark";
 const key = "openbot.mobile.appearance.v1";
 export const useAppearance = create<{ value: Appearance; ready: boolean; saving: boolean }>(() => ({
-  value: "system",
+  value: DEFAULT_APPEARANCE,
   ready: false,
   saving: false,
 }));
@@ -13,7 +15,7 @@ export const useAppearance = create<{ value: Appearance; ready: boolean; saving:
 export async function loadAppearance(): Promise<void> {
   try {
     const stored = await SecureStore.getItemAsync(key);
-    const value = stored === "light" || stored === "dark" ? stored : "system";
+    const value = stored === "light" || stored === "dark" || stored === "system" ? stored : DEFAULT_APPEARANCE;
     Uniwind.setTheme(value);
     useAppearance.setState({ value });
   } finally {

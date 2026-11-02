@@ -25,7 +25,6 @@ import { canToggleAgentPin } from "@/features/workspace/model/agent-pins";
 import { showsOnline } from "@/features/workspace/model/server-status";
 import type { MobileAgent } from "@/features/workspace/model/workspace-types";
 import { type MenuAction, type MenuComponentRef, MenuView } from "@/shared/components/menu-view";
-import { formatUpdatedAt } from "@/shared/lib/format-updated-at";
 import { haptics } from "@/shared/lib/haptics";
 import { isAndroid, longPressDelay } from "@/shared/lib/platform";
 import { currentText, useText } from "@/shared/lib/text";
@@ -248,7 +247,7 @@ export const ChannelListRow = memo(function ChannelListRow({
   leftInset?: number;
   rightInset?: number;
 }) {
-  const { t, format } = useText();
+  const { t } = useText();
   const [background, accent] = useThemeColor(["background", "accent"]);
   const rowBackground = useChatRowBackground(channel.id);
   const { toggleChannelPinAnimated } = useAgentPinTransition();
@@ -271,7 +270,8 @@ export const ChannelListRow = memo(function ChannelListRow({
   const openLabel = title
     ? t("mobile.channel.list.openWithTitle", { name: channel.name, title })
     : t("mobile.channel.list.open", { name: channel.name });
-  const size = pinned ? 64 : 54;
+  // HoleA.I: the same 48 pt face as an agent row.
+  const size = pinned ? 64 : 48;
   const avatar = (
     <ChatZoomSource>
       <AgentPinAvatar agentId={channel.id} location={pinned ? "pinned" : "row"} size={size}>
@@ -337,7 +337,7 @@ export const ChannelListRow = memo(function ChannelListRow({
       ) : (
         ({ pressed }) => (
           <View
-            className="min-h-20 w-full flex-row items-center gap-3 py-1"
+            className="min-h-[68px] w-full flex-row items-center gap-3 py-1"
             style={{
               backgroundColor: rowBackground,
               opacity: pressed ? 0.58 : 1,
@@ -350,22 +350,14 @@ export const ChannelListRow = memo(function ChannelListRow({
               <View className="flex-row items-center gap-2">
                 {unread ? <View className="size-2 rounded-full bg-accent" /> : null}
                 <Typography.Paragraph
-                  className="font-semibold min-w-0 flex-1"
+                  className="font-medium min-w-0 flex-1"
                   numberOfLines={1}
                   style={typeScale.rowTitle}
                 >
                   {channel.name}
                 </Typography.Paragraph>
-                <Typography.Paragraph className="text-muted" style={typeScale.caption}>
-                  {formatUpdatedAt(channel.lastMessage?.at ?? channel.createdAt, format)}
-                </Typography.Paragraph>
               </View>
-              {title ? (
-                <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.caption}>
-                  {title}
-                </Typography.Paragraph>
-              ) : null}
-              <Typography.Paragraph className="text-text-secondary" numberOfLines={1} style={typeScale.preview}>
+              <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.preview}>
                 {previewLine}
               </Typography.Paragraph>
             </View>
