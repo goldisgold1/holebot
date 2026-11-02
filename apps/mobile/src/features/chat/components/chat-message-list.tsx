@@ -50,6 +50,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import { BloubAvatarThumbnail } from "@/features/agents/components/bloub-avatar";
 import { getBloubAvatarColor } from "@/features/agents/model/bloub-activity";
@@ -62,6 +63,7 @@ import { ChatQuestionPrompt } from "@/features/chat/components/chat-question-pro
 import { ChatTurnStepsRow } from "@/features/chat/components/chat-turn-steps-row";
 import { useActivityPresence } from "@/features/chat/components/use-activity-presence";
 import { CHAT_ROW_GAP, type ChatMotion } from "@/features/chat/components/use-chat-motion";
+import { useFoldScrollAnchor } from "@/features/chat/components/use-fold-scroll-anchor";
 import { useMessageArrivals } from "@/features/chat/components/use-message-arrivals";
 import type { QuestionPromptController } from "@/features/chat/components/use-question-prompt";
 import {
@@ -75,10 +77,12 @@ import {
 } from "@/features/chat/model/chat-messages";
 import type { TurnStepsSummary } from "@/features/chat/model/turn-thinking";
 import { useAgentColorMessages } from "@/features/settings/model/message-color";
+import { canReadAloud, stopReadAloud } from "@/features/voice/model/message-reading";
 import { useConnectionAppearance } from "@/features/workspace/components/use-connection-appearance";
 import type { MobileAgent } from "@/features/workspace/context/mobile-workspace-context";
 import { agentActivityMood, type MobileAgentActivity } from "@/features/workspace/model/agent-activity";
 import type { PendingApproval } from "@/features/workspace/model/pending-approvals";
+import { useColumnWidth } from "@/shared/components/adaptive-split";
 import { haptics } from "@/shared/lib/haptics";
 import { useMotionPreference, useReducedMotion } from "@/shared/lib/motion";
 import { isAndroid } from "@/shared/lib/platform";
@@ -118,8 +122,8 @@ const OPENING_ROWS_TO_USER = 12;
 const ROW_STYLE = { paddingBottom: CHAT_ROW_GAP };
 /** The side padding of the list. */
 const LIST_PADDING = 16;
-/** A user's message is at most this part of the list width, as `max-w-[88%]` on its row. */
-const USER_BUBBLE_WIDTH = 0.88;
+/** A user's message is at most this part of the list width, as `max-w-[92%]` on its row. */
+const USER_BUBBLE_WIDTH = 0.92;
 
 /** The list keeps the sizes it measured by message, so rows that stay keep their place when the data changes. */
 function rowKey(message: VisibleMessage): string {
@@ -565,6 +569,7 @@ const MessageRow = memo(function MessageRow({
       <ChatQuestionPrompt
         key={message.id}
         prompt={message.prompt}
+        uiBlock={message.uiBlock}
         controller={questionForm}
         canSend={canSend}
         onActivate={shared.canSelectQuestion ? () => actions.selectQuestion(message.id) : undefined}
@@ -644,7 +649,7 @@ const MessageRow = memo(function MessageRow({
             animateSize={shared.textReveal}
             className={
               message.author === "user"
-                ? `self-end rounded-[30px] px-4 py-3 ${userBubbleStyle || memberColor ? "" : "bg-control/60"} ${message.attachments?.length ? "max-w-[88%]" : "max-w-full"}`
+                ? `self-end rounded-[30px] px-4 py-3 ${userBubbleStyle || memberColor ? "" : "bg-control/60"} ${message.attachments?.length ? "max-w-[92%]" : "max-w-full"}`
                 : `max-w-full self-start rounded-[30px] ${waiting ? "" : "px-4 py-3"}`
             }
             style={[
@@ -708,7 +713,7 @@ const MessageRow = memo(function MessageRow({
           ? "max-w-full self-start gap-1"
           : message.attachments?.length
             ? "max-w-full self-end gap-1"
-            : "max-w-[88%] self-end gap-1"
+            : "max-w-[92%] self-end gap-1"
       }
     >
       {message.replyToMessageId ? (
@@ -755,6 +760,7 @@ const MessageRow = memo(function MessageRow({
           onReply={shared.canReply ? () => actions.reply(message) : undefined}
           onSelectText={selectable ? () => actions.selectText(message) : undefined}
           selecting={selecting}
+          readAloudId={canReadAloud && message.author === "agent" ? message.id : undefined}
         />
       ) : null}
     </View>
@@ -962,6 +968,8 @@ export const ChatMessageList = memo(function ChatMessageList({
     [messages, messageAliases, referenceMessages],
   );
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+  // A message that reads aloud stops when its chat closes.
+  useEffect(() => stopReadAloud, []);
   useEffect(() => {
     let active = true;
     void AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
@@ -1070,6 +1078,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   const tailIndex = rows.findLastIndex((message) => message.kind === "message" && message.author === "user");
   const focusIndex = focusMessageId ? chatRowIndex(rows, focusMessageId) : -1;
   const canLoadOlder = online && hasOlder && !olderLoading;
+  useFoldScrollAnchor(motion.listRef);
   // The chat opens at the row of a message from search after the list has its rows in place.
   const placedFocus = useRef<string | null>(null);
   const focusId = historyState === "ready" && rowsShown && focusIndex >= 0 ? (rows[focusIndex]?.id ?? null) : null;
@@ -1091,9 +1100,11 @@ export const ChatMessageList = memo(function ChatMessageList({
   );
   const sharedValues = useMemo(() => ({ scrollOffset: motion.scrollOffset }), [motion.scrollOffset]);
   const screen = useWindowDimensions();
+  const columnWidth = useColumnWidth();
+  const insets = useSafeAreaInsets();
   const estimatedListSize = useMemo(
-    () => ({ width: screen.width, height: screen.height }),
-    [screen.width, screen.height],
+    () => ({ width: columnWidth, height: screen.height }),
+    [columnWidth, screen.height],
   );
   const onListReady = motion.onListReady;
   const hasRows = rows.length > 0;
@@ -1155,7 +1166,8 @@ export const ChatMessageList = memo(function ChatMessageList({
   const canReact = Boolean(onReact);
   const canSelectText = Boolean(onSelectText);
   const canSelectQuestion = Boolean(onSelectQuestion);
-  const listWidth = screen.width - LIST_PADDING * 2;
+  // The rows keep clear of the side insets: the rail of iPhone Duo and the edges in landscape.
+  const listWidth = columnWidth - insets.left - insets.right - LIST_PADDING * 2;
   const shared = useMemo<MessageRowShared>(
     () => ({
       agents,
@@ -1384,7 +1396,11 @@ export const ChatMessageList = memo(function ChatMessageList({
               }}
               onStartReachedThreshold={0.5}
               style={{ flex: 1 }}
-              contentContainerStyle={{ paddingHorizontal: LIST_PADDING, paddingTop: header }}
+              contentContainerStyle={{
+                paddingLeft: insets.left + LIST_PADDING,
+                paddingRight: insets.right + LIST_PADDING,
+                paddingTop: header,
+              }}
               contentInsetAdjustmentBehavior="never"
               keyboardDismissMode="interactive"
               keyboardShouldPersistTaps="handled"

@@ -38,6 +38,7 @@ export function createHostedBilling(
     clientSecret: bindings.OPENPANEL_CLIENT_SECRET,
     fetch: (input, init) => fetch(input, init),
     schedule: options.schedule,
+    database: bindings.DB,
   });
   const secretKey = bindings.STRIPE_SECRET_KEY?.trim();
   const sales =
@@ -49,7 +50,7 @@ export function createHostedBilling(
           fetch: (input, init) => fetch(input, init),
         })
       : undefined;
-  const billing = secretKey
+  const billing: BillingService | null = secretKey
     ? new BillingService({
         database: bindings.DB,
         secretKey,
@@ -62,7 +63,7 @@ export function createHostedBilling(
           hosting.onSubscriptionSynced(sync).pipe(Effect.andThen(() => options.planChanged(sync.serverId))),
       })
     : null;
-  const hosting = new HostedServerService(bindings, {
+  const hosting: HostedServerService = new HostedServerService(bindings, {
     removeHost: options.removeHost,
     developerKey: options.developerKey ?? null,
     billing,

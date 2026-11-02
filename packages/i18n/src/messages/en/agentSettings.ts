@@ -46,6 +46,20 @@ export const messages = defineMessages("agentSettings", {
     other: "You can add at most {count} folders",
   },
   "agentSettings.folders.failed": "Could not change the folders",
+  "agentSettings.folders.excluded": "Excluded",
+  "agentSettings.folders.exclude": "Exclude folder…",
+  "agentSettings.folders.excludedIn": "In {folder}",
+  "agentSettings.folders.include": "Stop excluding {folder}",
+  "agentSettings.folders.toastExcluded": "{agent} can no longer change files in {folder}",
+  "agentSettings.folders.toastIncluded": "{agent} can change files in {folder} again",
+  "agentSettings.folders.alreadyExcluded": "{folder} is already excluded",
+  "agentSettings.folders.inExcluded": "{folder} is in {parent}, which is already excluded",
+  "agentSettings.folders.excludeOutside": "{folder} is not in a folder that {agent} can change",
+  "agentSettings.folders.excludeRoot": "You cannot exclude {folder}. Exclude a folder in it",
+  "agentSettings.folders.excludeLimit": {
+    one: "You can exclude at most {count} folder",
+    other: "You can exclude at most {count} folders",
+  },
   "agentSettings.advanced.title": "Advanced",
   "agentSettings.backupModels.title": "Backup models",
   "agentSettings.backupModels.valueAsk": "Ask first",
@@ -79,9 +93,16 @@ export const messages = defineMessages("agentSettings", {
   "agentSettings.agentTitle": "Title",
   "agentSettings.agentTitleLabel": "Agent title",
   "agentSettings.agentTitlePlaceholder": "Describe what your agent does",
+  "agentSettings.description": "Description",
+  "agentSettings.descriptionLabel": "Agent description",
+  "agentSettings.descriptionResize": "Resize description",
+  "agentSettings.descriptionPlaceholder": "What this agent is for",
   "agentSettings.instructions": "Instructions",
   "agentSettings.instructionsLabel": "Agent instructions",
-  "agentSettings.instructionsPlaceholder": "What this agent is for",
+  "agentSettings.instructionsEdit": "Edit instructions",
+  "agentSettings.instructionsChangedWhileEditing":
+    "The agent changed its instructions while you edited them. Save again to replace its version.",
+  "agentSettings.instructionsPlaceholder": "Rules this agent always follows",
 
   "agentSettings.avatar.edit": "Edit agent avatar",
   "agentSettings.avatar.editor": "Avatar editor",
@@ -129,6 +150,8 @@ export const messages = defineMessages("agentSettings", {
   "agentSettings.access.full": "Full access",
   "agentSettings.busyMessage.appDefaultQueue": "App default (Queue)",
   "agentSettings.busyMessage.appDefaultSteer": "App default (Steer)",
+  "agentSettings.busyMessage.hostDefaultQueue": "Host default (Queue)",
+  "agentSettings.busyMessage.hostDefaultSteer": "Host default (Steer)",
   "agentSettings.busyMessage.queue": "Queue",
   "agentSettings.busyMessage.steer": "Steer",
   "agentSettings.busyMessage.steerUnsupported":
@@ -137,7 +160,10 @@ export const messages = defineMessages("agentSettings", {
   "agentSettings.taskLimit.oneTurn":
     "{provider} runs one turn at a time. The threads of this agent wait for each other.",
 
-  "agentSettings.notifications.title": "Notifications",
+  "agentSettings.notificationLevel.title": "Notify me",
+  "agentSettings.notificationLevel.server": "Server default ({level})",
+  "agentSettings.notificationLevel.note":
+    "This choice is only for you and applies on all your devices. When the server is muted or set to Nothing, this agent stays silent too.",
 
   "agentSettings.newChat.title": "New chat",
   "agentSettings.newChat.description": "The agent forgets this chat. Its setup stays.",

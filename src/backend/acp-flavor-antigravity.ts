@@ -76,12 +76,23 @@ function geminiRequestFailure(error: unknown, detail: string): string {
   return key ? sourceText(key, { detail: shownFailureDetail(reason) }) : detail;
 }
 
+/**
+ * Not on Windows: there each process start unpacks about 310 MB (`antigravityTemp`), which every
+ * new or reopened session would wait for.
+ */
+const SESSION_PROCESSES: Pick<AcpFlavor, "sessionProcesses"> =
+  process.platform === "win32" ? {} : { sessionProcesses: true };
+
 export const ANTIGRAVITY_ACP_FLAVOR: AcpFlavor = {
   // Antigravity 1.4.3 offers its Claude and GPT models only to a client named `zed`, `xcode`,
   // `jetbrains.*` or `android studio*` (`supports_third_party_models`). Any other client gets the
   // Gemini models only, also when the plan includes the others. The server also sends the name and
   // version to Google in its User-Agent (`_surface`), so Google sees these requests as `zed/0.1.0`.
   clientInfo: { name: "zed", title: "OpenBot", version: "0.1.0" },
+  // Antigravity 1.4.5 declares these built-ins in each request, about 2.4k tokens. OpenBot has its own
+  // routines, and a workflow runs agents that OpenBot does not show. Antigravity keeps the filter with
+  // the session; a load or resume sends it again, so a session from an earlier release gets it too.
+  sessionMeta: { antigravity: { disabledTools: ["schedule", "run_workflow"] } },
   // Antigravity 1.3.0 has three exact forms: a load or resume puts the ID in data.sessionId, a
   // configuration change uses the SDK's resource URI `session <id>`, and a prompt raises a plain
   // error that the SDK wraps as an internal error.
@@ -119,4 +130,8 @@ export const ANTIGRAVITY_ACP_FLAVOR: AcpFlavor = {
   promptOpenForBackgroundTasks: true,
   // Antigravity 1.3.0 sends `usage_update` but has no ACP method or command that compacts.
   contextCompaction: "handoff",
+  // Antigravity 1.4.4 starts a `localharness_external` of about 100 MB for each session and keeps it
+  // after `session/close`, which it does not advertise, until its process ends (#3925).
+  closeKeepsSession: true,
+  ...SESSION_PROCESSES,
 };

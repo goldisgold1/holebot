@@ -285,7 +285,19 @@ a Claude subscription on a server, read [provider terms](provider-terms.md#claud
 ## Members
 
 The plan sets the number of active members, owner included: Starter 1, Standard 5 and Pro 10
-(`BILLING_PLANS`). A host with no plan has 3 (`DEFAULT_TEAM_MEMBER_LIMIT`). A server made before
+(`BILLING_PLANS`). A host with no plan, such as a self-hosted server, takes the users of its owner's
+license (`ownerLicenseForHost`): Starter 1, Team 2 to 10. Only a license that is `active`, `trialing`, or
+`past_due` until the end of its period gives these seats. A host with no plan and no such license has 3
+(`DEFAULT_TEAM_MEMBER_LIMIT`). The Worker reads the limit in this order: a `server_member_limits` row,
+a hosted plan, the license, the default. A self-hosted host can keep a plan from before the license; it
+takes the larger of that plan and the license users. When an account has two open licenses, an
+entitled one comes first. When the limit comes from the license, a full server refuses a
+join with `409 license_users_full`. When a license ends, its servers go back to 3; members who are
+active stay. Any open license, also an `unpaid` one, refuses a join after its users, so the host list
+shows the lower of the limit and those users. When a license opens or closes, changes its users, or
+starts or stops giving them, the Worker sends `account-servers-changed` to each active member of the
+owner's servers, so their devices read the new limit. A renewal sends nothing. A `past_due` license that
+passes its period end sends it when the lapse sweep reads the license. A server made before
 these limits keeps the old limits of `LEGACY_MEMBER_LIMITS`: Starter 3, Standard 10 and Pro 25.
 Migration `0041` sets `hosted_servers.legacy_member_limits` to 1 for each existing row, and the
 Worker writes 0 for a new server. A self-hosted host with a plan has no hosted row, so it also keeps
@@ -689,8 +701,8 @@ routine runs and teammate messages, and the oldest first in each group. No turn 
 that another turn holds, because a message to a teammate ends the turn that sends it. A queued
 message counts as use, so the server does not stop while messages wait.
 
-An agent's browser tab that nobody uses for 30 minutes unloads its page and keeps a blank page, as a
-restored tab does. The tab stays in the list with its URL, title and last preview. The next use by the agent or
+An agent's browser tab that nobody uses for 30 minutes unloads its page and ends its renderer
+process. A tab restored at start has no renderer process until it is used. The tab stays in the list with its URL, title and last preview. The next use by the agent or
 a person loads the page again, without its history and page state. When memory is `low`, a tab
 unloads after 5 minutes. The active tab, a popup and its opener, and a tab with a
 takeover, a secret, a recording, a live view, staged uploads or sound do not unload. This also

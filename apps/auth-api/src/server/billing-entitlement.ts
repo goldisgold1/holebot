@@ -10,6 +10,10 @@ import {
   memberLimitForPlan,
 } from "@openbot/contracts/billing";
 
+/** The statuses of a subscription that gives its plan or license now. */
+const ENTITLED_STATUSES: readonly BillingSubscriptionStatus[] = ["active", "trialing", "past_due"];
+const ENTITLED_STATUSES_SQL = `(${ENTITLED_STATUSES.map((status) => `'${status}'`).join(", ")})`;
+
 export interface BillingEntitlement {
   plan: BillingPlanId;
   storageGb: number;
@@ -18,6 +22,8 @@ export interface BillingEntitlement {
   status: BillingSubscriptionStatus;
   /** Milliseconds since the epoch. */
   currentPeriodEnd: number | null;
+  /** True for a hosted server. A self-hosted host can keep a plan from before the license. */
+  hosted: boolean;
 }
 
 /**
@@ -39,10 +45,11 @@ export const getServerEntitlement = Effect.fn("Billing.getServerEntitlement")(fu
     try: () =>
       database
         .prepare(
-          `SELECT s.plan, s.status, s.current_period_end, hs.legacy_member_limits FROM billing_subscriptions s
+          `SELECT s.plan, s.status, s.current_period_end, hs.legacy_member_limits, hs.server_id IS NOT NULL AS hosted
+         FROM billing_subscriptions s
        LEFT JOIN remote_hosts h ON h.host_id = s.server_id AND h.owner_user_id = s.user_id
        LEFT JOIN hosted_servers hs ON hs.server_id = s.server_id AND hs.owner_user_id = s.user_id
-       WHERE s.server_id = ? AND s.status IN ('active', 'trialing', 'past_due')
+       WHERE s.server_id = ? AND s.status IN ${ENTITLED_STATUSES_SQL}
          AND (h.host_id IS NOT NULL OR hs.server_id IS NOT NULL)
        ORDER BY s.updated_at DESC`,
         )
@@ -52,6 +59,7 @@ export const getServerEntitlement = Effect.fn("Billing.getServerEntitlement")(fu
           status: BillingSubscriptionStatus;
           current_period_end: number | null;
           legacy_member_limits: number | null;
+          hosted: number;
         }>(),
     catch: () => new BillingEntitlementError({}),
   });
@@ -65,6 +73,7 @@ export const getServerEntitlement = Effect.fn("Billing.getServerEntitlement")(fu
       memberLimit: memberLimit(plan.id, row.legacy_member_limits),
       status: row.status,
       currentPeriodEnd: row.current_period_end,
+      hosted: row.hosted === 1,
     };
   }
   return null;

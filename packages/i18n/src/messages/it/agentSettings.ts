@@ -48,6 +48,20 @@ export const messages = {
     other: "Puoi aggiungere al massimo {count} cartelle",
   },
   "agentSettings.folders.failed": "Impossibile modificare le cartelle",
+  "agentSettings.folders.excluded": "Esclusi",
+  "agentSettings.folders.exclude": "Escludi cartella…",
+  "agentSettings.folders.excludedIn": "In {folder}",
+  "agentSettings.folders.include": "Non escludere più {folder}",
+  "agentSettings.folders.toastExcluded": "{agent} non può più modificare i file in {folder}",
+  "agentSettings.folders.toastIncluded": "{agent} può di nuovo modificare i file in {folder}",
+  "agentSettings.folders.alreadyExcluded": "{folder} è già esclusa",
+  "agentSettings.folders.inExcluded": "{folder} è in {parent}, che è già esclusa",
+  "agentSettings.folders.excludeOutside": "{folder} non è in una cartella che {agent} può modificare",
+  "agentSettings.folders.excludeRoot": "Non puoi escludere {folder}. Escludi una cartella al suo interno",
+  "agentSettings.folders.excludeLimit": {
+    one: "Puoi escludere al massimo {count} cartella",
+    other: "Puoi escludere al massimo {count} cartelle",
+  },
   "agentSettings.advanced.title": "Avanzate",
   "agentSettings.backupModels.title": "Modelli di riserva",
   "agentSettings.backupModels.valueAsk": "Chiedi prima",
@@ -81,9 +95,16 @@ export const messages = {
   "agentSettings.agentTitle": "Titolo",
   "agentSettings.agentTitleLabel": "Titolo dell'agente",
   "agentSettings.agentTitlePlaceholder": "Descrivi cosa fa il tuo agente",
+  "agentSettings.description": "Descrizione",
+  "agentSettings.descriptionLabel": "Descrizione dell'agente",
+  "agentSettings.descriptionResize": "Ridimensiona la descrizione",
+  "agentSettings.descriptionPlaceholder": "A cosa serve questo agente",
   "agentSettings.instructions": "Istruzioni",
   "agentSettings.instructionsLabel": "Istruzioni dell'agente",
-  "agentSettings.instructionsPlaceholder": "A cosa serve questo agente",
+  "agentSettings.instructionsEdit": "Modifica istruzioni",
+  "agentSettings.instructionsChangedWhileEditing":
+    "L'agente ha cambiato le sue istruzioni mentre le modificavi. Salva di nuovo per sostituire la sua versione.",
+  "agentSettings.instructionsPlaceholder": "Regole che questo agente segue sempre",
 
   "agentSettings.avatar.edit": "Modifica l'avatar dell'agente",
   "agentSettings.avatar.editor": "Editor dell'avatar",
@@ -131,6 +152,8 @@ export const messages = {
   "agentSettings.access.full": "Accesso completo",
   "agentSettings.busyMessage.appDefaultQueue": "Predefinito dell'app (Coda)",
   "agentSettings.busyMessage.appDefaultSteer": "Predefinito dell'app (Indirizza)",
+  "agentSettings.busyMessage.hostDefaultQueue": "Predefinita dell'host (Coda)",
+  "agentSettings.busyMessage.hostDefaultSteer": "Predefinita dell'host (Indirizza)",
   "agentSettings.busyMessage.queue": "Coda",
   "agentSettings.busyMessage.steer": "Indirizza",
   "agentSettings.busyMessage.steerUnsupported":
@@ -139,7 +162,10 @@ export const messages = {
   "agentSettings.taskLimit.oneTurn":
     "{provider} esegue un turno alla volta. I thread di questo agente si aspettano a vicenda.",
 
-  "agentSettings.notifications.title": "Notifiche",
+  "agentSettings.notificationLevel.title": "Avvisami",
+  "agentSettings.notificationLevel.server": "Predefinita del server ({level})",
+  "agentSettings.notificationLevel.note":
+    "Questa scelta vale solo per te, su tutti i tuoi dispositivi. Se il server è silenziato o impostato su «Niente», anche questo agente resta in silenzio.",
 
   "agentSettings.newChat.title": "Nuova chat",
   "agentSettings.newChat.description": "L'agente dimentica questa chat. La sua configurazione resta.",

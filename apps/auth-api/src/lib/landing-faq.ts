@@ -16,7 +16,7 @@ export const LANDING_FAQ: readonly LandingQuestion[] = [
       "Yes. OpenBot costs $0, with no locked features. You pay only your AI provider, through the plan or API key you already have.",
   },
   {
-    question: "Is OpenBot open source?",
+    question: "Is OpenBot's source code open?",
     answer:
       "Yes. All of the source code is public on GitHub under the MIT License, so you can check what OpenBot does, and change and run it for free, also for commercial use.",
     link: { label: "See the source code on GitHub", href: "https://github.com/nightly-labs/openbot" },

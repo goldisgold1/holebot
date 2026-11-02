@@ -53,6 +53,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 export const Working: Story = { args: { working: true } };
+/** The user's own level of the agent. The row opens the notification settings, the one place that changes it. */
+export const NotificationLevel: Story = {
+  args: { notificationLevel: { current: null, serverLevel: "needs-me", onOpen: fn() } },
+};
 export const WorkspaceOnly: Story = { args: { agent: { ...STORY_AGENT, access: "workspace" } } };
 
 const STORY_FOLDERS: AgentFolderList = {
@@ -62,6 +66,7 @@ const STORY_FOLDERS: AgentFolderList = {
     { path: "/Users/sam/Projects/Leads", found: true },
     { path: "/Users/sam/Documents/Contracts 2026", found: false },
   ],
+  excluded: ["/Users/sam/Projects/Leads/Clients/Private", "/Users/sam/OpenBot/Agents/Chief/archive"],
 };
 
 function storyFolderCalls(): AgentFolderCalls {
@@ -72,10 +77,16 @@ function storyFolderCalls(): AgentFolderCalls {
     add: change,
     remove: change,
     drop: change,
+    exclude: change,
+    addExclusion: change,
+    include: change,
   };
 }
 
-/** Two added folders; one was moved, so the row and the Folders page say that it is not found. */
+/**
+ * Two added folders; one was moved, so the row and the Folders page say that it is not found. Two
+ * folders in them are excluded.
+ */
 export const WorkspaceOnlyFolders: Story = {
   args: {
     agent: {

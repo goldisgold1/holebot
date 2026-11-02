@@ -55,6 +55,7 @@ export interface HostedServerPlan {
   diskGb: number;
   /** The most active members of the server, the owner included. */
   memberLimit: number;
+  /** The most active hosted sites. The catalog does not send it, so it comes from the plan. */
   /** The speed compared with the smallest plan. 1 is the base speed. */
   relativeSpeed: number;
   /** No new server can take this plan. */
