@@ -2,7 +2,7 @@
   "fill-specializations": [
     {
       "value": {
-        "linear-gradient": ["display-p3:0.86726,0.73451,1.00000,1.00000", "display-p3:0.66522,0.56340,0.76704,1.00000"],
+        "linear-gradient": ["display-p3:0.14510,0.13333,0.16863,1.00000", "display-p3:0.03529,0.03137,0.04314,1.00000"],
         "orientation": {
           "start": {
             "x": 0.5,
@@ -18,7 +18,7 @@
     {
       "appearance": "dark",
       "value": {
-        "linear-gradient": ["display-p3:0.11699,0.11737,0.11850,1.00000", "display-p3:0.07498,0.07395,0.07647,1.00000"],
+        "linear-gradient": ["display-p3:0.14510,0.13333,0.16863,1.00000", "display-p3:0.03529,0.03137,0.04314,1.00000"],
         "orientation": {
           "start": {
             "x": 0.5,
@@ -40,12 +40,6 @@
           "fill-specializations": [
             {
               "value": "automatic"
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "solid": "extended-gray:1.00000,1.00000"
-              }
             }
           ],
           "glass-specializations": [
@@ -62,12 +56,12 @@
             }
           ],
           "hidden": false,
-          "image-name": "eyes.png",
-          "name": "eyes",
+          "image-name": "token.png",
+          "name": "token",
           "opacity": 1,
           "position": {
-            "scale": 0.21,
-            "translation-in-points": [0, 0]
+            "scale": 0.62,
+            "translation-in-points": [0, -6]
           }
         }
       ],

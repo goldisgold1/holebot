@@ -2,13 +2,39 @@
   "fill-specializations": [
     {
       "value": {
-        "solid": "display-p3:0.81396,0.68457,0.93115,1.00000"
+        "linear-gradient": [
+          "display-p3:0.14510,0.13333,0.16863,1.00000",
+          "display-p3:0.03529,0.03137,0.04314,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 0.7
+          }
+        }
       }
     },
     {
       "appearance": "dark",
       "value": {
-        "solid": "srgb:0.00000,0.00000,0.00000,1.00000"
+        "linear-gradient": [
+          "display-p3:0.14510,0.13333,0.16863,1.00000",
+          "display-p3:0.03529,0.03137,0.04314,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 0.7
+          }
+        }
       }
     }
   ],
@@ -16,17 +42,19 @@
     {
       "layers": [
         {
+          "blend-mode": "normal",
           "fill-specializations": [
             {
-              "appearance": "dark",
-              "value": {
-                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
-              }
+              "value": "automatic"
             }
           ],
           "glass-specializations": [
             {
-              "value": false
+              "value": true
+            },
+            {
+              "appearance": "dark",
+              "value": true
             },
             {
               "appearance": "tinted",
@@ -34,14 +62,14 @@
             }
           ],
           "hidden": false,
-          "image-name": "eyes.png",
-          "name": "eyes",
+          "image-name": "token.png",
+          "name": "token",
           "opacity": 1,
           "position": {
-            "scale": 0.206,
+            "scale": 0.62,
             "translation-in-points": [
               0,
-              -14
+              -6
             ]
           }
         }
@@ -57,6 +85,9 @@
     }
   ],
   "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
     "squares": "shared"
   }
 }

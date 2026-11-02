@@ -79,6 +79,8 @@ for (const [path, text] of [
   ["apps/mobile/app.json", '"name": "HoleBot"'],
   ["apps/auth-api/public/site.webmanifest", '"short_name": "HoleBot"'],
   ["apps/auth-api/src/routes/app.tsx", '"HoleBot web"'],
+  // An upstream icon would bring back the OpenBot art: keep ours or run holeai-icons.ts.
+  ["build/icon.svg", "<title>HoleBot</title>"],
 ] as const) {
   if (!fileContains(path, text)) problems.push(`${path}: lost the HoleBot name (${text})`);
 }

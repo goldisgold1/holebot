@@ -86,4 +86,18 @@ above); the script renames it again.
   stories and preview fixtures, macOS host scripts (`/Applications/OpenBot.app`), podspecs, docs,
   READMEs and changelogs, and the removed website's leftover copy (`landing-faq.ts`,
   `landing-links.ts`).
-- Icons: there is no HoleBot icon yet, so the build icons are unchanged.
+
+**Icons.** `bun scripts/holeai-icons.ts` draws every icon from one drawing: a dark hole.fm tile with
+a soft bot token turned a little, like Grok Bot's, with two dark pill eyes like the agent faces. The
+token takes the logo color, so the dev (gold) and preview (green) builds and each logo color are the
+same drawing. It writes `build/icon*.png|ico|icns|svg` (Windows icons hold 16 to 256 px, with a
+bolder drawing up to 48 px), `build/logo-colors/`, the `build/icon-production.icon` and
+`apps/mobile/assets/icons/app-icon.icon` layers, the phone app and notification icons, and the web
+favicons. The window and tray icons read `build/icon-<variant>.png`. On a Mac, run
+`bun scripts/compile-macos-icon.ts` to remake `build/macos/Assets.car` (macOS 26 still shows the old
+icon until then). When upstream changes an icon, keep ours or run the script again.
+
+A development run (`app.isPackaged` false) uses the Windows AppUserModelId
+`app.openbot.desktop.dev` (`src/main/index.ts`). Windows draws a taskbar button from the Start menu
+shortcut with the app's id, and a dev `Electron.lnk` with the release id gave the installed app the
+Electron icon.
