@@ -195,6 +195,8 @@ export function ConversationTimeline() {
     sideThreadOpen,
   } = useConversationViewScope();
   const { t, format, sourceText } = useText();
+  /** The mentions the @ button already went to, so each press goes to the next one. */
+  const [visitedMentions, setVisitedMentions] = createSignal<ReadonlySet<string>>(new Set());
   // A named function, not a ternary in the prop: the compiler wraps a ternary prop in a memo, and
   // the avatar reads it in a tracked effect, where a new memo halts the reactive system.
   const waitingProviderName = () => {
@@ -627,6 +629,27 @@ export function ConversationTimeline() {
         }}
       >
         <ChatScrollRail {...rail.props} />
+        {/* HoleA.I: Signal's "@" button: each press goes to the next unread message that mentions the reader. */}
+        <Show when={channel && channel.unreadMentionIds().filter((id) => !visitedMentions().has(id)).length > 0}>
+          <div class="channel-mention-jump">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              class="channel-mention-jump-button"
+              aria-label={t("channel.mention.jump")}
+              title={t("channel.mention.jump")}
+              onClick={() => {
+                const next = channel?.unreadMentionIds().find((id) => !visitedMentions().has(id));
+                if (!next) return;
+                setVisitedMentions((current) => new Set([...current, next]));
+                void replyJump.jumpToMessage(next);
+              }}
+            >
+              @
+            </Button>
+          </div>
+        </Show>
         <Show
           when={replyJump.returnReplyId()}
           fallback={

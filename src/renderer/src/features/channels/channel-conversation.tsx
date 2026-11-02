@@ -4,7 +4,7 @@
  * host from its own contexts.
  */
 
-import { leadingAddress } from "@openbot/contracts/chat-tag-references";
+import { chatTagReferences, leadingAddress } from "@openbot/contracts/chat-tag-references";
 import type { AgentApproval, AgentEvent, BrowserTakeoverRequest } from "@openbot/contracts/ipc";
 import { groupChannelReactions } from "@openbot/contracts/signal-port/reactions";
 import type { AgentMessage } from "@openbot/ui/data";
@@ -296,6 +296,19 @@ export function createChannelConversation(env: ChannelConversationEnvironment) {
         .port()
         .agent.channelCommand({ type: "react", operationId: crypto.randomUUID(), channelId, messageId, emoji })
         .catch(() => undefined);
+    },
+    unreadMentionIds: () => {
+      const firstUnread = firstUnreadChannelMessageId(entries(), unreadCount(), env.isOwnSender);
+      const start = entries().findIndex((entry) => entry.id === firstUnread);
+      if (start < 0) return [];
+      return entries()
+        .slice(start)
+        .filter((entry) =>
+          chatTagReferences(entry.message.text ?? "").some(
+            (reference) => reference.kind === "member" && env.isOwnSender(reference.id),
+          ),
+        )
+        .map((entry) => entry.id);
     },
     typing: (text) => {
       if (!env.connectionReady() || readOnly()) return;

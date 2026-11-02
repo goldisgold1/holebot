@@ -13,6 +13,7 @@ export const messages = defineMessages("channel", {
   "channel.composer.label": "Message to channel",
   "channel.composer.placeholder": "Message {name}",
   "channel.typing.one": "{name} is typing…",
+  "channel.mention.jump": "Go to the next message that mentions you",
   "channel.typing.some": "{names} are typing…",
   "channel.typing.many": "{names} and {count} more are typing…",
   "channel.panel.label": "Channel panel",

@@ -435,3 +435,19 @@
   line-height: 16px;
   text-align: center;
 }
+
+/* HoleA.I: Signal's "@" jump, above the scroll-to-latest button, on the right. */
+.channel-mention-jump {
+  position: sticky;
+  z-index: 3;
+  top: calc(100% - 108px);
+  display: flex;
+  justify-content: flex-end;
+  height: 0;
+  padding-right: var(--openbot-space-4);
+}
+
+.channel-mention-jump-button {
+  border-radius: var(--openbot-radius-pill);
+  font-weight: 700;
+}

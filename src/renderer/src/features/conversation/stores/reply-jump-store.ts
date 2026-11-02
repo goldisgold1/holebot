@@ -197,6 +197,18 @@ export function createReplyJumpStore(deps: ReplyJumpStoreDeps) {
     updateReturnVisibility();
   }
 
+  /** HoleA.I: scrolls to a message and flashes it, as Signal's jump to a mention does. */
+  async function jumpToMessage(id: string): Promise<void> {
+    if (jumping) return;
+    jumping = true;
+    try {
+      const row = await reveal(id, undefined, deps.props.agent?.id);
+      if (row) flash(row);
+    } finally {
+      jumping = false;
+    }
+  }
+
   async function returnToReply(): Promise<void> {
     const replyId = returnReplyId();
     if (!replyId || jumping) return;
@@ -248,6 +260,7 @@ export function createReplyJumpStore(deps: ReplyJumpStoreDeps) {
     returnReplyId,
     reveal,
     openReference,
+    jumpToMessage,
     returnToReply,
     stayHere,
     updateReturnVisibility,
