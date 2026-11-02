@@ -406,6 +406,8 @@ export class MobileChannelStore {
       decodeTeamProtocolV2Json(command),
       serverId,
     );
+    // HoleA.I: typing changes nothing the phone stores. The host's channel event brings it to the others.
+    if (command.type === "typing") return result;
     if (entry.valid && command.type === "read") {
       // A read receipt changes unread state, not channel history or its revision.
       const channels = entry.state.channels.map((channel) =>

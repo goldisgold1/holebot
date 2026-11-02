@@ -1,6 +1,7 @@
 import { isString } from "@openbot/contracts/runtime-values";
 import * as Notifications from "expo-notifications";
 import { useEffect, useRef } from "react";
+import { isThreadMuted } from "../channels/model/channel-mutes";
 import { type NotificationTarget, SOUND_PREVIEW_KEY } from "./push-notifications-native.types";
 
 /**
@@ -35,8 +36,12 @@ export function useNotificationTaps(open: (target: NotificationTarget) => void, 
         if (notification.request.content.data?.[SOUND_PREVIEW_KEY] === true) {
           return { shouldShowBanner: false, shouldShowList: false, shouldPlaySound: true, shouldSetBadge: false };
         }
-        const agentId = notificationTarget(notification)?.agentId ?? null;
-        const shown = agentId !== null && agentId === openChatRef.current();
+        const target = notificationTarget(notification);
+        const agentId = target?.agentId ?? null;
+        // HoleA.I: a push about the work of a group chat that the reader muted stays quiet.
+        const shown =
+          (agentId !== null && agentId === openChatRef.current()) ||
+          isThreadMuted(target?.serverId ?? null, target?.threadId ?? null);
         return { shouldShowBanner: !shown, shouldShowList: !shown, shouldPlaySound: !shown, shouldSetBadge: false };
       },
     });

@@ -23,6 +23,7 @@ import {
   routineConversationEvent,
   routineRunConversationEvent,
 } from "@openbot/contracts/ipc";
+import type { ChannelReaction } from "@openbot/contracts/signal-port/reactions";
 import type { ConversationUiBlock } from "@openbot/contracts/ui-blocks";
 import type { MobileTextKey } from "@openbot/i18n/mobile";
 
@@ -84,6 +85,8 @@ export type ChatMessage =
       createdAt?: string;
       /** The reactions on the message: the reader's own and the agents'. */
       reactions?: readonly ConversationReaction[];
+      /** HoleA.I: the people's reactions on a group chat message, one each (Signal's rule). */
+      channelReactions?: readonly ChannelReaction[];
     }
   /** The task list of an agent plan. The header is `heading` when set, else a catalog title. */
   | {
@@ -593,6 +596,7 @@ function projectChannelMessage(
     ...visualReply(entry.message),
     imageGeneration: entry.message.imageGeneration,
     createdAt: entry.message.createdAt,
+    ...(entry.reactions?.length ? { channelReactions: entry.reactions } : {}),
   };
 }
 

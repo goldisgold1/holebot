@@ -1,11 +1,12 @@
 import type { RespondToPromptInput } from "@openbot/contracts/ipc";
 import * as Crypto from "expo-crypto";
 import { useLocalSearchParams } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatView } from "@/features/chat/components/chat-view";
 import { useLeaveChat } from "@/features/chat/components/use-leave-chat";
 import { useQuestionPrompt } from "@/features/chat/components/use-question-prompt";
 import { projectChannelMessages } from "@/features/chat/model/chat-messages";
+import { useServerMembers } from "@/features/servers/model/use-server-members";
 import { useApprovalRequests, useBrowserRequests } from "@/features/workspace/components/use-live-workspace";
 import { useMobileWorkspaceSelector } from "@/features/workspace/context/mobile-workspace-context";
 import type { MobileAgentActivity, MobileAgentWaitReason } from "@/features/workspace/model/agent-activity";
@@ -147,6 +148,106 @@ function ChannelChat({ channelId, serverId }: { channelId: string; serverId: str
     () => ({ messages: page?.messages ?? [], tasks: page?.tasks ?? [], leadAgentId: channel?.leadAgentId ?? null }),
     [page?.messages, page?.tasks, channel?.leadAgentId],
   );
+  // HoleA.I: the group chat features after Signal, as on the desktop.
+  const memberId = server?.membershipId ?? null;
+  const people = useServerMembers(serverId).members.data;
+  const mentionPeople = useMemo(
+    () =>
+      (people ?? [])
+        .filter((person) => person.status === "active" && person.membershipId !== memberId)
+        .map((person) => ({ id: person.membershipId, name: person.name?.trim() || person.email.split("@")[0] || "" }))
+        .filter((person) => person.name),
+    [people, memberId],
+  );
+  const viewerName = (people ?? []).find((person) => person.membershipId === memberId)?.name?.trim() || "You";
+  const viewer = useMemo(() => (memberId ? { id: memberId, name: viewerName } : null), [memberId, viewerName]);
+  const reactInChannel = useCallback(
+    async (messageId: string, emoji: string | null) => {
+      await store.command(serverId, { type: "react", operationId: Crypto.randomUUID(), channelId, messageId, emoji });
+    },
+    [store, serverId, channelId],
+  );
+  const typingNames = useMemo(
+    () => (page?.typing ?? []).filter((member) => member.memberId !== memberId).map((member) => member.name),
+    [page?.typing, memberId],
+  );
+  // Signal's rhythm: "started" again every 10 s while the keys move, "stopped" after 3 s without one
+  // or when the field empties. A host without the command answers with an error, which stops nothing.
+  const typing = useRef<{ active: boolean; sentAt: number; idle: ReturnType<typeof setTimeout> | null }>({
+    active: false,
+    sentAt: 0,
+    idle: null,
+  });
+  const sendTyping = useCallback(
+    (active: boolean) => {
+      void store
+        .command(serverId, { type: "typing", operationId: Crypto.randomUUID(), channelId, typing: active })
+        .catch(() => undefined);
+    },
+    [store, serverId, channelId],
+  );
+  const onDraftChange = useCallback(
+    (draft: string) => {
+      const state = typing.current;
+      if (state.idle) clearTimeout(state.idle);
+      state.idle = null;
+      if (!draft.trim() || archived || !online) {
+        if (state.active) sendTyping(false);
+        state.active = false;
+        return;
+      }
+      const now = Date.now();
+      if (!state.active || now - state.sentAt >= 10_000) {
+        state.active = true;
+        state.sentAt = now;
+        sendTyping(true);
+      }
+      state.idle = setTimeout(() => {
+        state.idle = null;
+        if (state.active) sendTyping(false);
+        state.active = false;
+      }, 3_000);
+    },
+    [sendTyping, archived, online],
+  );
+  useEffect(
+    () => () => {
+      const state = typing.current;
+      if (state.idle) clearTimeout(state.idle);
+      if (state.active) sendTyping(false);
+    },
+    [sendTyping],
+  );
+  // The unread messages that mention the reader when the chat opened; the @ goes to each in turn.
+  const unreadAtOpen = useRef<number | null>(null);
+  if (unreadAtOpen.current === null && summary) unreadAtOpen.current = summary.unreadCount;
+  const [visitedMentions, setVisitedMentions] = useState<ReadonlySet<string>>(() => new Set());
+  const unreadMentionIds = useMemo(() => {
+    const count = unreadAtOpen.current ?? 0;
+    if (!memberId || count === 0 || !page) return [];
+    const marker = `(member:${memberId})`;
+    return page.messages
+      .filter((entry) => !(entry.author.kind === "member" && entry.author.id === memberId))
+      .slice(-count)
+      .filter((entry) => entry.message.text.includes(marker) && !visitedMentions.has(entry.id))
+      .map((entry) => entry.id);
+  }, [memberId, page, visitedMentions]);
+  const [focusMessageId, setFocusMessageId] = useState<string | null>(null);
+  const mentionJump = useMemo(
+    () =>
+      unreadMentionIds.length > 0
+        ? {
+            count: unreadMentionIds.length,
+            onPress: () => {
+              const next = unreadMentionIds[0];
+              if (!next) return;
+              setFocusMessageId(next);
+              setVisitedMentions((current) => new Set([...current, next]));
+            },
+          }
+        : null,
+    [unreadMentionIds],
+  );
   const name = channel?.name ?? t("mobile.channel.chat.fallbackName");
   const target = useMemo(
     () => ({ kind: "channel" as const, id: channelId, serverId, name, members }),
@@ -180,6 +281,14 @@ function ChannelChat({ channelId, serverId }: { channelId: string; serverId: str
       loadOlder={loadOlder}
       needsAction={channelTasksNeedingAction(page?.tasks ?? []).length > 0}
       channelLeadAgentId={channel?.leadAgentId ?? null}
+      channelViewer={viewer}
+      reactInChannel={archived ? undefined : reactInChannel}
+      mentionPeople={mentionPeople}
+      typingNames={typingNames}
+      onDraftChange={onDraftChange}
+      mentionJump={mentionJump}
+      focusMessageId={focusMessageId}
+      onFocusPlaced={() => setFocusMessageId(null)}
       onLeave={leaveChat}
     />
   );

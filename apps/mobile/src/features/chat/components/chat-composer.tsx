@@ -57,6 +57,7 @@ import { useMotionPreference, useReducedMotion } from "@/shared/lib/motion";
 import { isAndroid } from "@/shared/lib/platform";
 import { selectionColorProps } from "@/shared/lib/selection-color";
 import { useText } from "@/shared/lib/text";
+import { groupChatText } from "../../channels/model/group-chat-text";
 import { editMentionDraft, insertMention, mentionDraft, mentionQuery } from "../model/chat-mentions";
 import { applyMarkdownListEdit, markdownListReturn } from "../model/composer-lists";
 import { largePastedText } from "../model/composer-paste";
@@ -142,6 +143,8 @@ interface ChatComposerProps {
   /** Replaces "Ask {name}", such as while the composer answers a question. */
   placeholder?: string;
   mentionAgents: MobileAgent[];
+  /** HoleA.I: the people of the server in a group chat. `@` offers them after the agents. */
+  mentionPeople?: readonly { id: string; name: string }[];
   /** The skills of the chat's agent and the apps of its server. `@` offers them after the agents. */
   mentionSkills?: readonly MentionSkill[];
   /** A new value writes `@` in the field and offers the skills and apps alone, for the plus menu. */
@@ -189,6 +192,7 @@ interface ChatComposerProps {
 
 const NO_FILES: ChatAttachments["items"] = [];
 const NO_SKILLS: readonly MentionSkill[] = [];
+const NO_PEOPLE: readonly { id: string; name: string }[] = [];
 
 /**
  * A skill or a connected app that the composer can name, as `@[name](skill:id)` or `@[name](mcp:id)`,
@@ -240,6 +244,7 @@ export const ChatComposer = memo(function ChatComposer({
   agentName,
   placeholder,
   mentionAgents,
+  mentionPeople = NO_PEOPLE,
   mentionSkills = NO_SKILLS,
   skillPickerVersion = 0,
   onSuggestionsVisibleChange,
@@ -298,6 +303,10 @@ export const ChatComposer = memo(function ChatComposer({
     : [];
   // The limit comes after the rank, so it never cuts an agent whose name matches.
   const suggestions = query && !skillsOnly ? rankAgentMentions(mentionAgents, query.query).slice(0, 8) : [];
+  const personSuggestions =
+    query && !skillsOnly
+      ? mentionPeople.filter((person) => person.name.toLocaleLowerCase().includes(query.query.trim())).slice(0, 8)
+      : [];
   // What the bar has to stay open for. A send takes the text and the files out of
   // the composer at once, so a draft is always a new one.
   const hasDraft = Boolean(draft.trim()) || files.length > 0;
@@ -658,7 +667,7 @@ export const ChatComposer = memo(function ChatComposer({
     }
   }, [disabled, sendGate]);
 
-  const suggestionCount = suggestions.length + skillSuggestions.length;
+  const suggestionCount = suggestions.length + personSuggestions.length + skillSuggestions.length;
   // Android takes the focus from the field when its keyboard hides, which a drag in this list does, and
   // when the plus menu that asks for the skills closes. There the list stays while an `@` query is in
   // the text, and closes with a choice or the end of the query. iOS keeps the field focused for both.
@@ -807,11 +816,49 @@ export const ChatComposer = memo(function ChatComposer({
                 </Typography.Paragraph>
               </Button>
             ))}
+            {personSuggestions.length > 0 ? (
+              <View>
+                {suggestions.length > 0 ? (
+                  <Typography type="body-xs" className="px-4 pt-2 pb-1 text-muted">
+                    {groupChatText.people}
+                  </Typography>
+                ) : null}
+                {personSuggestions.map((person) => (
+                  <Button
+                    key={`member:${person.id}`}
+                    variant="ghost"
+                    className="min-h-12 flex-row justify-start gap-3 rounded-none px-4"
+                    accessibilityLabel={groupChatText.mentionPerson(person.name)}
+                    onPress={() => {
+                      void haptics.selection();
+                      const next = insertMention(latestTextRef.current, query, person, "member");
+                      latestTextRef.current = next;
+                      onChangeDraft(next);
+                      const position = query.start + person.name.length + 2;
+                      setCursor(position);
+                      pendingCursor.current = position;
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <View className="size-7 items-center justify-center rounded-full bg-control">
+                      <Typography type="body-sm" className="font-semibold">
+                        {person.name.slice(0, 1).toLocaleUpperCase()}
+                      </Typography>
+                    </View>
+                    <Typography.Paragraph numberOfLines={1} className="flex-1">
+                      {person.name}
+                    </Typography.Paragraph>
+                  </Button>
+                ))}
+              </View>
+            ) : null}
             {(["skill", "mcp"] as const).map((kind) => {
               const group = skillSuggestions.filter((tool) => tool.kind === kind);
               if (group.length === 0) return null;
               // A heading when the list shows another group above this one.
-              const titled = suggestions.length > 0 || (kind === "mcp" && group.length < skillSuggestions.length);
+              const titled =
+                suggestions.length + personSuggestions.length > 0 ||
+                (kind === "mcp" && group.length < skillSuggestions.length);
               return (
                 <View key={kind}>
                   {titled ? (

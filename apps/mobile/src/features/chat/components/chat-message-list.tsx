@@ -4,6 +4,7 @@ import { expandAttachmentReferences } from "@openbot/contracts/attachment-refere
 import { expandChatTagReferences } from "@openbot/contracts/chat-tag-references";
 import type { AttachmentSummary, BrowserTakeoverRequest } from "@openbot/contracts/ipc";
 import { markdownPlainText } from "@openbot/contracts/markdown-preview-text";
+import type { ChannelReaction } from "@openbot/contracts/signal-port/reactions";
 import type { MobileTextKey } from "@openbot/i18n/mobile";
 import { useIsFocused } from "expo-router";
 import { Button, Typography } from "heroui-native";
@@ -105,6 +106,8 @@ import { ChatOutboxStatus, OutboxMessageMenu, type OutboxRowStatus } from "./cha
 import { ChatSelectableText } from "./chat-selectable-text";
 import { HistoryShownContext } from "./use-history-shown";
 import { useReplyHaptics } from "./use-reply-haptics";
+
+const NO_CHANNEL_REACTIONS: readonly ChannelReaction[] = [];
 
 /** The most movement and time of a touch that ends the selection: more is a scroll or a hold. */
 const TAP_SLOP = 10;
@@ -298,6 +301,8 @@ interface ChatMessageListProps {
   onReply?: (message: ChatBubbleMessage) => void;
   /** Sets the reader's reaction on a message. `null` removes it. */
   onReact?: (message: ChatBubbleMessage, emoji: string | null) => Promise<void>;
+  /** HoleA.I: the reader in a group chat. Set, the reactions are the people's pills (one each). */
+  channelViewer?: { id: string; name: string } | null;
   /** The message whose text the reader selects in its bubble. */
   selectingMessageId?: string | null;
   onSelectText?: (message: ChatBubbleMessage) => void;
@@ -360,6 +365,8 @@ interface MessageRowShared {
   replyHaptics: ReturnType<typeof useReplyHaptics>;
   canReply: boolean;
   canReact: boolean;
+  /** HoleA.I: the reader in a group chat, or null in an agent chat. */
+  channelViewer: { id: string; name: string } | null;
   canSelectText: boolean;
   canSelectQuestion: boolean;
   /** The width inside the list padding. The iOS menu of a queued message does not limit its width. */
@@ -499,6 +506,7 @@ const MessageRow = memo(function MessageRow({
 }) {
   const { t } = useText();
   const [selectionHeight, setSelectionHeight] = useState(0);
+  const [pickerRequest, setPickerRequest] = useState(0);
   // Native text views keep a selection until they draw again. When the chat ends the selection
   // from outside, such as with a tap elsewhere, the next generation draws them without it.
   const [selectionGeneration, setSelectionGeneration] = useState(0);
@@ -770,7 +778,14 @@ const MessageRow = memo(function MessageRow({
           selecting={selecting}
           maxWidth={bubbleMaxWidth(shared.listWidth)}
           onReply={shared.canReply ? () => actions.reply(message) : undefined}
-          onSelectText={selectable ? () => actions.selectText(message) : undefined}
+          // A group chat: a touch and hold opens the emoji, as in Signal. Select text stays in the row.
+          onSelectText={
+            shared.channelViewer && shared.canReact && bubble
+              ? () => setPickerRequest((request) => request + 1)
+              : selectable
+                ? () => actions.selectText(message)
+                : undefined
+          }
         >
           {rendered}
         </ChatMessageGesture>
@@ -792,6 +807,9 @@ const MessageRow = memo(function MessageRow({
           copyText={messageCopyText(message)}
           createdAt={message.createdAt}
           reactions={message.reactions}
+          channelReactions={shared.channelViewer ? (message.channelReactions ?? NO_CHANNEL_REACTIONS) : undefined}
+          viewer={shared.channelViewer}
+          pickerRequest={pickerRequest}
           agentsById={agentsById}
           onReact={shared.canReact ? (emoji) => actions.react(message, emoji) : undefined}
           onReply={shared.canReply ? () => actions.reply(message) : undefined}
@@ -1007,6 +1025,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   onRetryHistory,
   onReply,
   onReact,
+  channelViewer = null,
   selectingMessageId = null,
   onSelectText,
   onSelectionChange,
@@ -1268,6 +1287,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       replyHaptics,
       canReply,
       canReact,
+      channelViewer,
       canSelectText,
       canSelectQuestion,
       listWidth,
@@ -1297,6 +1317,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       replyHaptics,
       canReply,
       canReact,
+      channelViewer,
       canSelectText,
       canSelectQuestion,
       listWidth,

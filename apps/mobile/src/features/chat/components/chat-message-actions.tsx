@@ -1,4 +1,10 @@
 import { type ConversationReaction, MESSAGE_REACTIONS, MORE_MESSAGE_REACTIONS } from "@openbot/contracts/ipc";
+import {
+  applyChannelReaction,
+  CHANNEL_REACTION_GROUPS_SHOWN,
+  type ChannelReaction,
+  groupChannelReactions,
+} from "@openbot/contracts/signal-port/reactions";
 import { Button, Typography } from "heroui-native";
 import { useThemeColor } from "heroui-native/hooks";
 import Check from "lucide-react-native/icons/check";
@@ -9,7 +15,7 @@ import Reply from "lucide-react-native/icons/reply";
 import Square from "lucide-react-native/icons/square";
 import TextSelect from "lucide-react-native/icons/square-dashed-text";
 import Volume2 from "lucide-react-native/icons/volume-2";
-import { type PropsWithChildren, useMemo, useState } from "react";
+import { type PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
 import { type AccessibilityState, Pressable, View } from "react-native";
 import Animated, { FadeIn, FadeOut, ReduceMotion } from "react-native-reanimated";
 import { showFailureAlert } from "@/features/analytics/failure-reports";
@@ -17,6 +23,7 @@ import { toggleReadAloud, useReadingAloud } from "@/features/voice/model/message
 import type { MobileAgent } from "@/features/workspace/context/mobile-workspace-context";
 import { haptics } from "@/shared/lib/haptics";
 import { useText } from "@/shared/lib/text";
+import { groupChatText } from "../../channels/model/group-chat-text";
 import { useCopyMessage } from "./use-copy-message";
 import { useHistoryShown } from "./use-history-shown";
 
@@ -108,6 +115,9 @@ export function ChatMessageActions({
   onSelectText,
   selecting = false,
   readAloudId,
+  channelReactions,
+  viewer,
+  pickerRequest = 0,
 }: {
   align: "start" | "end";
   /** The text that Copy puts on the clipboard. Empty for a message of files only. */
@@ -123,6 +133,15 @@ export function ChatMessageActions({
   selecting?: boolean;
   /** The message that Read aloud reads. Unset where the app cannot read aloud. */
   readAloudId?: string;
+  /**
+   * HoleA.I: set in a group chat. The people's reactions, one each, drawn as Signal's pills: one per
+   * emoji with its count, the reader's own lit, and "+N" past three. `reactions` is unused there.
+   */
+  channelReactions?: readonly ChannelReaction[];
+  /** The reader in a group chat: their member id and name, for their own reaction. */
+  viewer?: { id: string; name: string } | null;
+  /** Opens the emoji picker each time it grows, as a touch and hold on a group chat message does. */
+  pickerRequest?: number;
 }) {
   const { t, format } = useText();
   const [mutedColor, foregroundColor] = useThemeColor(["muted", "foreground"]);
@@ -142,16 +161,44 @@ export function ChatMessageActions({
           ...(reactions ?? []).filter((reaction) => reaction.actor.kind !== "user"),
         ]
       : (reactions ?? []);
-  const own = shown.find((reaction) => reaction.actor.kind === "user")?.emoji ?? null;
+  // A group chat: the reader's choice shows at once over the host's list, until the next list comes.
+  const [pendingChannel, setPendingChannel] = useState<{
+    emoji: string | null;
+    over: readonly ChannelReaction[] | undefined;
+  } | null>(null);
+  const channelMode = channelReactions !== undefined;
+  const viewerId = viewer?.id ?? null;
+  const channelShown = useMemo(
+    () =>
+      channelMode && pendingChannel && pendingChannel.over === channelReactions && viewer
+        ? applyChannelReaction(channelReactions, viewer, pendingChannel.emoji, Date.now())
+        : (channelReactions ?? []),
+    [channelMode, pendingChannel, channelReactions, viewer],
+  );
+  const channelGroups = useMemo(() => groupChannelReactions(channelShown, viewerId), [channelShown, viewerId]);
+  const own = channelMode
+    ? (channelShown.find((reaction) => reaction.memberId === viewerId)?.emoji ?? null)
+    : (shown.find((reaction) => reaction.actor.kind === "user")?.emoji ?? null);
+  const seenRequest = useRef(pickerRequest);
+  useEffect(() => {
+    if (pickerRequest === seenRequest.current) return;
+    seenRequest.current = pickerRequest;
+    if (onReact) {
+      setPickerOpen(true);
+      setMoreEmoji(false);
+    }
+  }, [pickerRequest, onReact]);
 
   const react = (emoji: string | null) => {
     if (!onReact) return;
     setPickerOpen(false);
     setMoreEmoji(false);
-    setPending({ emoji, over: reactions });
+    if (channelMode) setPendingChannel({ emoji, over: channelReactions });
+    else setPending({ emoji, over: reactions });
     void haptics.selection();
     onReact(emoji).catch((error: unknown) => {
       setPending(null);
+      setPendingChannel(null);
       void haptics.notification("error");
       showFailureAlert(error, "turn", t("mobile.chat.message.reactionFailed"), t("mobile.chat.copyFailedMessage"));
     });
@@ -170,7 +217,43 @@ export function ChatMessageActions({
         accessibilityLabel={t("mobile.chat.message.actions")}
         className="flex-row items-center"
       >
-        {shown.map((reaction) =>
+        {channelMode
+          ? channelGroups.slice(0, CHANNEL_REACTION_GROUPS_SHOWN).map((group) => (
+              <Pressable
+                key={group.emoji}
+                accessibilityRole="button"
+                accessibilityLabel={`${groupChatText.reactionPill(group.emoji, group.count, group.names)}. ${
+                  group.mine ? groupChatText.removeReaction(group.emoji) : groupChatText.addSameReaction(group.emoji)
+                }`}
+                accessibilityState={{ selected: group.mine }}
+                disabled={!onReact}
+                onPress={() => react(group.mine ? null : group.emoji)}
+                className={`mr-1 h-7 flex-row items-center gap-1 rounded-full px-2 ${
+                  group.mine ? "bg-accent/25 border border-accent/60" : "bg-control"
+                }`}
+                style={({ pressed }) => (pressed ? PRESSED : undefined)}
+              >
+                <Typography type="body-sm">{group.emoji}</Typography>
+                {group.count > 1 ? (
+                  <Typography type="body-xs" className={group.mine ? "text-accent-text" : "text-muted"}>
+                    {group.count}
+                  </Typography>
+                ) : null}
+              </Pressable>
+            ))
+          : null}
+        {channelMode && channelGroups.length > CHANNEL_REACTION_GROUPS_SHOWN ? (
+          <View
+            accessible
+            accessibilityLabel={groupChatText.reactionMore(channelGroups.length - CHANNEL_REACTION_GROUPS_SHOWN)}
+            className="mr-1 h-7 items-center justify-center rounded-full bg-control px-2"
+          >
+            <Typography type="body-xs" className="text-muted">
+              +{channelGroups.length - CHANNEL_REACTION_GROUPS_SHOWN}
+            </Typography>
+          </View>
+        ) : null}
+        {(channelMode ? [] : shown).map((reaction) =>
           reaction.actor.kind === "user" && onReact ? (
             <ActionButton
               key="user"

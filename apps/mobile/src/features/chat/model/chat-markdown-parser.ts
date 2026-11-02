@@ -36,6 +36,22 @@ const markdown = new Marked({
       },
     },
     {
+      // HoleA.I: a person mentioned in a group chat reads as "@Name", as the desktop draws it.
+      name: "memberMention",
+      level: "inline",
+      start: (source) => source.indexOf("@["),
+      tokenizer(source) {
+        const reference = chatTagReferences(source)[0];
+        if (reference?.start === 0 && reference.kind === "member")
+          return {
+            type: "strong",
+            raw: source.slice(0, reference.end),
+            text: `@${reference.name}`,
+            tokens: [{ type: "text", raw: `@${reference.name}`, text: `@${reference.name}` }],
+          };
+      },
+    },
+    {
       name: "chatQuote",
       level: "inline",
       start: (source) => source.indexOf("@["),

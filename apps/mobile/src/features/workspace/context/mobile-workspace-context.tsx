@@ -94,7 +94,9 @@ import { mobileAnalytics } from "@/features/analytics/mobile-analytics";
 import { trackWorkspaceActions } from "@/features/analytics/workspace-actions";
 import { useMobileSession } from "@/features/auth/context/mobile-session-context";
 import { decodeMobileBrowserTabs } from "@/features/browser/model/browser-tabs";
+import { refreshMutedThreads } from "@/features/channels/model/channel-mutes";
 import { MobileChannelStore } from "@/features/channels/model/channel-store";
+import { notifyGroupChatPeople } from "@/features/channels/model/group-chat-notifications";
 import { useLiveActivity } from "@/features/live-activity/use-live-activity";
 import { usePushNotifications } from "@/features/push-notifications/use-push-notifications";
 import { useSyncedNotificationLevelsLoader } from "@/features/push-notifications/use-synced-notification-levels";
@@ -580,6 +582,9 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
   const channelStore = useMemo(
     () =>
       new MobileChannelStore(request, (serverId, channels) => {
+        // HoleA.I: group chat mutes follow the chats' threads, and teammates' messages notify.
+        refreshMutedThreads(serverId, channels);
+        notifyGroupChatPeople(serverId, channels);
         // The calendar leaves out archived channels. Message streaming also sends `channels-changed`,
         // so the calendar reloads only when the set of open channels changes: an archive, a restore,
         // a new channel or a deleted one.

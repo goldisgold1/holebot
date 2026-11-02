@@ -23,6 +23,7 @@ export const SidebarSectionHeader = memo(function SidebarSectionHeader({
   id,
   name,
   empty,
+  fixed = false,
   visibleSectionIds,
   collapsed,
   onToggle,
@@ -30,6 +31,8 @@ export const SidebarSectionHeader = memo(function SidebarSectionHeader({
   id: string;
   name: string;
   empty: boolean;
+  /** HoleA.I: not a section of the layout, such as "Group chats": it has no menu. */
+  fixed?: boolean;
   visibleSectionIds: readonly string[];
   collapsed: boolean;
   onToggle: (sectionId: string) => void;
@@ -113,43 +116,45 @@ export const SidebarSectionHeader = memo(function SidebarSectionHeader({
             <ChevronRight size={14} color={muted} strokeWidth={2.2} />
           </Animated.View>
         </Pressable>
-        <MenuView
-          actions={actions}
-          onPressAction={({ nativeEvent }) => {
-            const action = nativeEvent.event;
-            if (action === "up" || action === "down")
-              void run({
-                type: "move",
-                sectionId: id,
-                direction: action,
-                steps: Math.abs(
-                  index -
-                    (layout?.order.indexOf(visibleSectionIds[visibleIndex + (action === "up" ? -1 : 1)] ?? id) ??
-                      index),
-                ),
-              });
-            if (action === "rename") router.push({ pathname: "/section-form", params: { serverId, sectionId: id } });
-            if (action === "delete")
-              Alert.alert(t("mobile.agent.section.deleteTitle", { name }), t("mobile.agent.section.deleteBody"), [
-                { text: t("common.cancel"), style: "cancel" },
-                {
-                  text: t("common.delete"),
-                  style: "destructive",
-                  onPress: () => void run({ type: "delete", sectionId: id }),
-                },
-              ]);
-          }}
-        >
-          <View
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={t("mobile.agent.section.options", { name })}
-            className="size-8 items-center justify-center"
-            hitSlop={8}
+        {fixed ? null : (
+          <MenuView
+            actions={actions}
+            onPressAction={({ nativeEvent }) => {
+              const action = nativeEvent.event;
+              if (action === "up" || action === "down")
+                void run({
+                  type: "move",
+                  sectionId: id,
+                  direction: action,
+                  steps: Math.abs(
+                    index -
+                      (layout?.order.indexOf(visibleSectionIds[visibleIndex + (action === "up" ? -1 : 1)] ?? id) ??
+                        index),
+                  ),
+                });
+              if (action === "rename") router.push({ pathname: "/section-form", params: { serverId, sectionId: id } });
+              if (action === "delete")
+                Alert.alert(t("mobile.agent.section.deleteTitle", { name }), t("mobile.agent.section.deleteBody"), [
+                  { text: t("common.cancel"), style: "cancel" },
+                  {
+                    text: t("common.delete"),
+                    style: "destructive",
+                    onPress: () => void run({ type: "delete", sectionId: id }),
+                  },
+                ]);
+            }}
           >
-            <Ellipsis size={18} color={muted} />
-          </View>
-        </MenuView>
+            <View
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={t("mobile.agent.section.options", { name })}
+              className="size-8 items-center justify-center"
+              hitSlop={8}
+            >
+              <Ellipsis size={18} color={muted} />
+            </View>
+          </MenuView>
+        )}
       </View>
       {empty && !collapsed ? (
         <Typography.Paragraph className="pb-2 text-muted" style={typeScale.preview}>

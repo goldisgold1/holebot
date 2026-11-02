@@ -81,6 +81,7 @@ import {
 import { showsOnline } from "@/features/workspace/model/server-status";
 import {
   type MobileSidebarItem,
+  mobileGroupChatItems,
   mobileSidebarItems,
   mobileWaitingItems,
 } from "@/features/workspace/model/sidebar-layout";
@@ -442,18 +443,24 @@ export function ConnectedScreen({ variant = "screen" }: { variant?: "screen" | "
         sidebar?.layout ?? null,
         unpinnedAgents.filter((agent) => waitingAgentIds.has(agent.id)),
       ),
+      // HoleA.I: as on the desktop, the agents always come first and their folders hold agents only;
+      // the group chats that are not pinned or hidden follow every folder in "Group chats".
       ...mobileSidebarItems(
         sidebar?.layout ?? null,
         unpinnedAgents.filter((agent) => !waitingAgentIds.has(agent.id)),
-        openChannels.filter((channel) => !pinnedChannelIds.includes(channel.id)),
+        [],
         undefined,
         t,
+      ),
+      ...mobileGroupChatItems(
+        openChannels.filter((channel) => !pinnedChannelIds.includes(channel.id)),
+        sidebar?.layout ?? null,
       ),
     ],
     [sidebar?.layout, unpinnedAgents, waitingAgentIds, openChannels, pinnedChannelIds, t],
   );
   const visibleSectionIds = useMemo(
-    () => items.filter((item) => item.kind === "section").map((item) => item.id),
+    () => items.filter((item) => item.kind === "section" && !item.fixed).map((item) => item.id),
     [items],
   );
   const insets = useSafeAreaInsets();
@@ -552,6 +559,7 @@ export function ConnectedScreen({ variant = "screen" }: { variant?: "screen" | "
             id={item.id}
             name={item.name}
             empty={item.empty}
+            fixed={item.fixed}
             visibleSectionIds={visibleSectionIds}
             collapsed={collapsedSectionIds?.has(item.id) ?? false}
             onToggle={toggleSection}
@@ -773,19 +781,16 @@ export function ConnectedScreen({ variant = "screen" }: { variant?: "screen" | "
                       </Button>
                     </View>
                   ) : null}
-                  <PinnedAgentsGrid agents={pinnedAgents} animateLayout={!updateHeader.moving}>
-                    {pinnedChannels.length > 0
-                      ? pinnedChannels.map((channel) => (
-                          <ChannelListRow
-                            key={channel.id}
-                            channel={channel}
-                            serverId={activeServer.id}
-                            agents={channelAgents}
-                            pinned
-                          />
-                        ))
-                      : null}
-                  </PinnedAgentsGrid>
+                  <PinnedAgentsGrid agents={pinnedAgents} animateLayout={!updateHeader.moving} />
+                  {/* HoleA.I: pinned group chats are rows under the pinned agents, never tiles beside them. */}
+                  {pinnedChannels.map((channel) => (
+                    <ChannelListRow
+                      key={channel.id}
+                      channel={channel}
+                      serverId={activeServer.id}
+                      agents={channelAgents}
+                    />
+                  ))}
                 </AgentListRowReveal>
               }
               ListEmptyComponent={

@@ -7,6 +7,7 @@ export function mentionDraft(source: string) {
   for (const reference of chatTagReferences(source)) {
     if (
       reference.kind !== "agent" &&
+      reference.kind !== "member" &&
       reference.kind !== "quote" &&
       reference.kind !== "skill" &&
       reference.kind !== "mcp"
@@ -55,12 +56,12 @@ export function mentionQuery(source: string, cursor: number) {
   return { start, end: cursor, query: query.toLocaleLowerCase() };
 }
 
-/** Writes an agent mention, or a skill or app reference as the desktop chip sends it, over the typed `@query`. */
+/** Writes an agent or person (`member`) mention, or a skill or app reference as the desktop chip sends it, over the typed `@query`. */
 export function insertMention(
   source: string,
   range: { start: number; end: number },
   agent: { id: string; name: string },
-  kind: "agent" | "skill" | "mcp" = "agent",
+  kind: "agent" | "member" | "skill" | "mcp" = "agent",
 ) {
   const wireOffset = (position: number) => {
     let offset = position;

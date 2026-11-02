@@ -12,7 +12,7 @@ import { Typography } from "heroui-native";
 import { useThemeColor } from "heroui-native/hooks";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppState, Keyboard, useColorScheme, View } from "react-native";
+import { AppState, Keyboard, Pressable, useColorScheme, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { KeyboardGestureArea } from "react-native-keyboard-controller";
 import Animated, { useSharedValue } from "react-native-reanimated";
@@ -61,6 +61,7 @@ import { isAndroid, isIOS } from "@/shared/lib/platform";
 import { useText } from "@/shared/lib/text";
 import { useAppForeground } from "@/shared/lib/use-app-foreground";
 import { useReducedTransparency } from "@/shared/lib/use-reduced-transparency";
+import { groupChatText } from "../../channels/model/group-chat-text";
 import { mentionDraft } from "../model/chat-mentions";
 import type { ChatTarget } from "../model/chat-target";
 import {
@@ -148,6 +149,18 @@ export interface ChatViewProps {
   detached?: boolean;
   /** Loads the latest messages in place of the window around a searched message. */
   showLatestMessages?: () => Promise<void>;
+  /** HoleA.I: a group chat sets these. The reader, for the people's reaction pills. */
+  channelViewer?: { id: string; name: string } | null;
+  /** Sets the reader's reaction on a group chat message, or removes it with `null`. */
+  reactInChannel?: (messageId: string, emoji: string | null) => Promise<void>;
+  /** The people of the server that `@` offers after the agents in a group chat. */
+  mentionPeople?: readonly { id: string; name: string }[];
+  /** The others typing in the group chat now, by name. */
+  typingNames?: readonly string[];
+  /** Called with each change of the draft, so a group chat can say the reader types. */
+  onDraftChange?: (draft: string) => void;
+  /** The unread messages that mention the reader, and how to go to the next one. */
+  mentionJump?: { count: number; onPress: () => void } | null;
   /** Leaves the chat, from the back button and the Android edge swipe. */
   onLeave: () => void;
 }
@@ -239,6 +252,12 @@ export function ChatView({
   onFocusPlaced,
   detached = false,
   showLatestMessages,
+  channelViewer = null,
+  reactInChannel,
+  mentionPeople,
+  typingNames,
+  onDraftChange,
+  mentionJump = null,
   onLeave: leaveConversation,
 }: ChatViewProps) {
   const { t, errorMessage } = useText();
@@ -295,6 +314,11 @@ export function ChatView({
   const selectionQuote = selection ? selection.selected.trim() || markdownPlainText(selection.message.body) : "";
   const [replyFocusVersion, setReplyFocusVersion] = useState(0);
   const [draft, setDraft] = useState("");
+  const draftChange = useRef(onDraftChange);
+  draftChange.current = onDraftChange;
+  useEffect(() => {
+    draftChange.current?.(draft);
+  }, [draft]);
   const [sendError, setSendError] = useState<{
     agentId: string;
     message: string;
@@ -902,8 +926,13 @@ export function ChatView({
       workspace().setMessageReaction(target.id, target.serverId, hostMessageIds.get(message.id) ?? message.id, emoji),
     [workspace, target.id, target.serverId, hostMessageIds],
   );
-  // The reaction route is an agent route. A channel message has no reaction.
-  const canReact = target.kind === "agent";
+  // An agent chat reacts through the agent route; a group chat through its `react` command.
+  const canReact = target.kind === "agent" || Boolean(reactInChannel);
+  const reactHere = useCallback(
+    (message: ChatBubbleMessage, emoji: string | null) =>
+      target.kind === "channel" && reactInChannel ? reactInChannel(message.id, emoji) : react(message, emoji),
+    [target.kind, reactInChannel, react],
+  );
   // Select text starts the selection, and a second tap on it ends the selection.
   const selectText = useCallback((message: ChatBubbleMessage) => {
     Keyboard.dismiss();
@@ -1024,7 +1053,8 @@ export function ChatView({
               olderError={olderError}
               onLoadOlder={loadOlder}
               onReply={readOnly ? undefined : replyToMessage}
-              onReact={canReact && !readOnly ? react : undefined}
+              onReact={canReact && !readOnly ? reactHere : undefined}
+              channelViewer={target.kind === "channel" ? channelViewer : null}
               selectingMessageId={selection?.message.id ?? null}
               onSelectText={selectText}
               onSelectionChange={changeSelection}
@@ -1116,6 +1146,37 @@ export function ChatView({
                       />
                     ))
                 : null}
+              {mentionJump && mentionJump.count > 0 ? (
+                <View className="items-end pb-2" style={{ paddingRight: insets.right + 16 }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={groupChatText.nextMention}
+                    onPress={() => {
+                      void haptics.selection();
+                      mentionJump.onPress();
+                    }}
+                    className="h-10 min-w-10 flex-row items-center justify-center gap-1 rounded-full bg-control px-3"
+                  >
+                    <Typography.Paragraph className="font-semibold text-accent-text">@</Typography.Paragraph>
+                    {mentionJump.count > 1 ? (
+                      <Typography.Paragraph type="body-xs" className="text-muted">
+                        {mentionJump.count}
+                      </Typography.Paragraph>
+                    ) : null}
+                  </Pressable>
+                </View>
+              ) : null}
+              {typingNames?.length ? (
+                <Typography.Paragraph
+                  type="body-xs"
+                  numberOfLines={1}
+                  accessibilityLiveRegion="polite"
+                  className="pb-1.5 text-muted"
+                  style={{ paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }}
+                >
+                  {groupChatText.typing(typingNames)}
+                </Typography.Paragraph>
+              ) : null}
               {sendError?.agentId === target.id ? (
                 <Typography.Paragraph
                   accessibilityRole="alert"
@@ -1188,6 +1249,7 @@ export function ChatView({
                   handoffFocusVersion={handoffFocusVersion}
                   onCancelReply={cancelReply}
                   mentionAgents={mentionAgents}
+                  mentionPeople={mentionPeople}
                   mentionSkills={mentionSkills}
                   skillPickerVersion={skillPickerVersion}
                   onSuggestionsVisibleChange={setSuggestionsOpen}

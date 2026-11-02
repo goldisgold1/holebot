@@ -9,6 +9,8 @@ import expo.modules.notifications.notifications.model.NotificationRequest
 import expo.modules.notifications.notifications.triggers.ChannelAwareTrigger
 import expo.modules.notifications.service.ExpoFirebaseMessagingService
 import expo.modules.notifications.service.NotificationsService
+import org.json.JSONArray
+import java.io.File
 import java.util.Date
 import java.util.UUID
 
@@ -33,10 +35,36 @@ class OpenBotMessagingService : ExpoFirebaseMessagingService() {
     }
     val sound = remoteMessage.data["sound"]
     val opened = SealedNotification.open(this, sealed)
+    // HoleA.I: the work of a group chat the reader muted on this phone shows nothing.
+    if (opened != null && isMutedThread(opened.serverId, opened.threadId)) return
     val identifier = remoteMessage.messageId ?: UUID.randomUUID().toString()
     val request = NotificationRequest(identifier, content(opened, sound), ChannelAwareTrigger(channelId(sound)))
     val sent = remoteMessage.sentTime
     NotificationsService.receive(this, Notification(request, if (sent > 0) Date(sent) else Date()))
+  }
+
+  /**
+   * Whether a group chat that holds this thread is muted, from `holeai-channel-mutes-v1.json`, which
+   * the app writes into its files folder (`channel-mutes.ts`). A mute without `until` lasts until undone.
+   */
+  private fun isMutedThread(serverId: String, threadId: String?): Boolean {
+    if (threadId == null) return false
+    return try {
+      val file = File(filesDir, MUTES_FILE)
+      if (!file.exists()) return false
+      val mutes = JSONArray(file.readText())
+      val now = System.currentTimeMillis()
+      (0 until mutes.length()).any { index ->
+        val mute = mutes.getJSONObject(index)
+        val until = if (mute.isNull("until")) null else mute.optLong("until")
+        val threads = mute.optJSONArray("threadIds") ?: JSONArray()
+        mute.optString("serverId") == serverId &&
+          (until == null || until > now) &&
+          (0 until threads.length()).any { threads.optString(it) == threadId }
+      }
+    } catch (_: Exception) {
+      false
+    }
   }
 
   private fun content(opened: OpenedNotification?, sound: String?): NotificationContent {
@@ -60,6 +88,9 @@ class OpenBotMessagingService : ExpoFirebaseMessagingService() {
   companion object {
     /** The title until the app opens the seal. A brand name, so it is the same in every language. */
     private const val APP_NAME = "HoleBot"
+
+    /** The group chats muted on this phone (`channel-mutes.ts`). */
+    private const val MUTES_FILE = "holeai-channel-mutes-v1.json"
 
     /** The sounds of `NOTIFICATION_SOUND_FILES`, as `with-notification-sounds.js` names their copies. */
     private val SOUND_RESOURCES = mapOf(

@@ -5,6 +5,7 @@ import * as Crypto from "expo-crypto";
 import { Link, router } from "expo-router";
 import { Typography } from "heroui-native";
 import { useThemeColor } from "heroui-native/hooks";
+import BellOff from "lucide-react-native/icons/bell-off";
 import { memo, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { useUniwind } from "uniwind";
@@ -15,7 +16,6 @@ import { ChatLinkPressable } from "@/features/agents/components/chat-link-pressa
 import { useChatRowBackground } from "@/features/agents/components/chat-list-pane-context";
 import { ChatZoomSource } from "@/features/agents/components/chat-zoom-source";
 import { PinnedChatItem } from "@/features/agents/components/pinned-agents-grid";
-import { useChatSectionMenu } from "@/features/agents/components/use-chat-section-menu";
 import { showFailureAlert } from "@/features/analytics/failure-reports";
 import {
   useMobileWorkspaceReader,
@@ -29,13 +29,34 @@ import { haptics } from "@/shared/lib/haptics";
 import { isAndroid, longPressDelay } from "@/shared/lib/platform";
 import { currentText, useText } from "@/shared/lib/text";
 import { typeScale } from "@/shared/lib/type-scale";
+import {
+  type ChannelMuteDuration,
+  channelMuteOf,
+  loadChannelMutes,
+  setChannelMuted,
+  useChannelMutes,
+} from "../model/channel-mutes";
+import { groupChatText } from "../model/group-chat-text";
 import { ChannelAvatar } from "./channel-avatar";
+
+const MUTE_CHOICES: { id: `mute-${ChannelMuteDuration}`; duration: ChannelMuteDuration; title: string }[] = [
+  { id: "mute-1h", duration: "1h", title: groupChatText.mute1h },
+  { id: "mute-8h", duration: "8h", title: groupChatText.mute8h },
+  { id: "mute-1d", duration: "1d", title: groupChatText.mute1d },
+  { id: "mute-7d", duration: "7d", title: groupChatText.mute7d },
+  { id: "mute-always", duration: "always", title: groupChatText.muteAlways },
+];
+
+/** HoleA.I: whether the reader muted this group chat on this phone (Signal's per-chat mute). */
+export function useChannelMuted(serverId: string, channelId: string): boolean {
+  loadChannelMutes();
+  return useChannelMutes((state) => channelMuteOf(state.mutes, serverId, channelId) !== null);
+}
 
 function useChannelMenuActions(channel: ChannelSummary, serverId: string) {
   const { t } = useText();
   const workspace = useMobileWorkspaceReader();
   const { toggleChannelPinAnimated } = useAgentPinTransition();
-  const sectionMenu = useChatSectionMenu(serverId, channel.id);
   const isPinned = useMobileWorkspaceSelector(({ pinnedChannelIds }) => pinnedChannelIds.includes(channel.id));
   const canPin = useMobileWorkspaceSelector(({ pinnedAgentIds, pinnedChannelIds }) =>
     canToggleAgentPin([...pinnedAgentIds, ...pinnedChannelIds], channel.id),
@@ -51,6 +72,16 @@ function useChannelMenuActions(channel: ChannelSummary, serverId: string) {
   const handlePin = (withHaptic = true) => toggleChannelPinAnimated(channel, serverId, { haptic: withHaptic });
   const handleHide = () => {
     if (workspace().hideChannel(channel.id, serverId)) void haptics.impact();
+  };
+  const muted = useChannelMuted(serverId, channel.id);
+  const handleMute = (duration: ChannelMuteDuration | null) => {
+    setChannelMuted(
+      serverId,
+      channel.id,
+      duration,
+      (channel.threads ?? []).map((thread) => thread.threadId),
+    );
+    void haptics.selection();
   };
   const handleInfo = () =>
     router.push({ pathname: "/channel-info/[channelId]", params: { channelId: channel.id, serverId } });
@@ -89,7 +120,18 @@ function useChannelMenuActions(channel: ChannelSummary, serverId: string) {
         },
       },
     ]);
-  return { isPinned, canPin, canDelete, sectionMenu, handlePin, handleHide, handleInfo, handleCopyId, handleDelete };
+  return {
+    isPinned,
+    canPin,
+    canDelete,
+    muted,
+    handleMute,
+    handlePin,
+    handleHide,
+    handleInfo,
+    handleCopyId,
+    handleDelete,
+  };
 }
 
 /** The chat link of a channel on iOS, with its context menu. Android uses `ChannelAndroidMenu`. */
@@ -103,8 +145,18 @@ function ChannelContextMenuLink({
   children: ReactNode;
 }) {
   const { t } = useText();
-  const { isPinned, canPin, canDelete, sectionMenu, handlePin, handleHide, handleInfo, handleCopyId, handleDelete } =
-    useChannelMenuActions(channel, serverId);
+  const {
+    isPinned,
+    canPin,
+    canDelete,
+    muted,
+    handleMute,
+    handlePin,
+    handleHide,
+    handleInfo,
+    handleCopyId,
+    handleDelete,
+  } = useChannelMenuActions(channel, serverId);
   return (
     <Link href={{ pathname: "/channel/[channelId]", params: { channelId: channel.id, serverId } }} asChild>
       <Link.Trigger>{children}</Link.Trigger>
@@ -120,7 +172,19 @@ function ChannelContextMenuLink({
         <Link.MenuAction icon="eye.slash" onPress={handleHide}>
           {t("mobile.agent.menu.hide")}
         </Link.MenuAction>
-        {sectionMenu.menu}
+        {muted ? (
+          <Link.MenuAction icon="bell" onPress={() => handleMute(null)}>
+            {groupChatText.unmute}
+          </Link.MenuAction>
+        ) : (
+          <Link.Menu icon="bell.slash" title={groupChatText.mute}>
+            {MUTE_CHOICES.map((choice) => (
+              <Link.MenuAction key={choice.id} onPress={() => handleMute(choice.duration)}>
+                {choice.title}
+              </Link.MenuAction>
+            ))}
+          </Link.Menu>
+        )}
         <Link.MenuAction icon="info.circle" onPress={handleInfo}>
           {t("mobile.agent.menu.info")}
         </Link.MenuAction>
@@ -179,8 +243,18 @@ function OpenChannelMenu({
   useEffect(() => {
     menu.current?.show();
   }, []);
-  const { isPinned, canPin, canDelete, sectionMenu, handlePin, handleHide, handleInfo, handleCopyId, handleDelete } =
-    useChannelMenuActions(channel, serverId);
+  const {
+    isPinned,
+    canPin,
+    canDelete,
+    muted,
+    handleMute,
+    handlePin,
+    handleHide,
+    handleInfo,
+    handleCopyId,
+    handleDelete,
+  } = useChannelMenuActions(channel, serverId);
   const actions: MenuAction[] = [
     {
       id: "pin",
@@ -189,7 +263,14 @@ function OpenChannelMenu({
       attributes: { disabled: !canPin },
     },
     { id: "hide", title: t("mobile.agent.menu.hide"), image: "eye.slash" },
-    ...sectionMenu.androidActions,
+    muted
+      ? { id: "unmute", title: groupChatText.unmute, image: "bell" }
+      : {
+          id: "mute",
+          title: groupChatText.mute,
+          image: "bell.slash",
+          subactions: MUTE_CHOICES.map((choice) => ({ id: choice.id, title: choice.title })),
+        },
     { id: "info", title: t("mobile.agent.menu.info"), image: "info.circle" },
     {
       id: "more",
@@ -212,6 +293,8 @@ function OpenChannelMenu({
     info: handleInfo,
     copy: handleCopyId,
     delete: handleDelete,
+    unmute: () => handleMute(null),
+    ...Object.fromEntries(MUTE_CHOICES.map((choice) => [choice.id, () => handleMute(choice.duration)])),
   };
   return (
     <MenuView
@@ -221,7 +304,6 @@ function OpenChannelMenu({
       actions={actions}
       onCloseMenu={onClose}
       onPressAction={({ nativeEvent }) => {
-        sectionMenu.onAction(nativeEvent.event);
         handlers[nativeEvent.event]?.();
       }}
     >
@@ -248,7 +330,8 @@ export const ChannelListRow = memo(function ChannelListRow({
   rightInset?: number;
 }) {
   const { t } = useText();
-  const [background, accent] = useThemeColor(["background", "accent"]);
+  const [background, accent, mutedColor] = useThemeColor(["background", "accent", "muted"]);
+  const muted = useChannelMuted(serverId, channel.id);
   const rowBackground = useChatRowBackground(channel.id);
   const { toggleChannelPinAnimated } = useAgentPinTransition();
   const isPinned = useMobileWorkspaceSelector(({ pinnedChannelIds }) => pinnedChannelIds.includes(channel.id));
@@ -356,6 +439,20 @@ export const ChannelListRow = memo(function ChannelListRow({
                 >
                   {channel.name}
                 </Typography.Paragraph>
+                {muted ? (
+                  <BellOff size={14} color={String(mutedColor)} accessibilityLabel={groupChatText.muted} />
+                ) : null}
+                {(channel.unreadMentions ?? 0) > 0 ? (
+                  <View
+                    accessible
+                    accessibilityLabel={groupChatText.mentionBadge}
+                    className="size-5 items-center justify-center rounded-full bg-accent"
+                  >
+                    <Typography type="body-xs" className="font-bold text-accent-foreground">
+                      @
+                    </Typography>
+                  </View>
+                ) : null}
               </View>
               <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.preview}>
                 {previewLine}

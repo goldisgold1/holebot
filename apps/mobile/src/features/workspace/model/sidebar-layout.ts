@@ -2,11 +2,13 @@ import type { ChannelSummary, SidebarLayoutSnapshot } from "@openbot/contracts/i
 import { SIDEBAR_UNASSIGNED_SECTION_ID } from "@openbot/contracts/ipc";
 import type { MobileTranslate } from "@openbot/i18n/mobile";
 import { currentText } from "@/shared/lib/text";
+import { groupChatText } from "../../channels/model/group-chat-text";
 import type { MobileAgent } from "./workspace-types";
 
 export type MobileSidebarItem =
   | { kind: "waiting"; id: string; count: number }
-  | { kind: "section"; id: string; name: string; empty: boolean }
+  /** `fixed` is not a section of the layout, such as "Group chats": no menu, and it does not move. */
+  | { kind: "section"; id: string; name: string; empty: boolean; fixed?: boolean }
   | { kind: "agent"; id: string; agent: MobileAgent }
   | { kind: "channel"; id: string; channel: ChannelSummary };
 
@@ -42,6 +44,28 @@ export function mobileSidebarItems(
       ...(collapsedSectionIds.has(id) ? [] : group),
     ];
   });
+}
+
+/** HoleA.I: the id of "Group chats", which keeps its collapsed state as a section does. */
+export const GROUP_CHATS_SECTION_ID = "holeai-group-chats";
+
+/**
+ * HoleA.I: "Group chats", after every agent folder, as the desktop sidebar lists them: the group chats
+ * that are not pinned or hidden, in layout order.
+ */
+export function mobileGroupChatItems(
+  channels: ChannelSummary[],
+  layout: SidebarLayoutSnapshot | null,
+): MobileSidebarItem[] {
+  if (channels.length === 0) return [];
+  const positions = new Map(layout?.agentOrder.map((id, index) => [id, index]));
+  const sorted = [...channels].sort(
+    (a, b) => (positions.get(a.id) ?? positions.size) - (positions.get(b.id) ?? positions.size),
+  );
+  return [
+    { kind: "section", id: GROUP_CHATS_SECTION_ID, name: groupChatText.groupChats, empty: false, fixed: true },
+    ...sorted.map((channel) => ({ kind: "channel" as const, id: channel.id, channel })),
+  ];
 }
 
 /**
