@@ -650,3 +650,23 @@
     animation: none;
   }
 }
+
+/* The way back to the chats from a full page (PageBackButton.tsx). It floats at the top left, out of the
+   window grid, in the strip the page rail used to hold. */
+.page-back-button {
+  position: fixed;
+  z-index: 40;
+  top: var(--openbot-space-2);
+  left: var(--openbot-space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--openbot-space-1);
+  border-radius: var(--holeai-radius-pill);
+  background: var(--openbot-hover);
+  color: var(--openbot-text-primary);
+}
+
+.page-back-button > svg {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+}

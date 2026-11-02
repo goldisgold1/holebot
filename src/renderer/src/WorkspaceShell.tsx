@@ -35,6 +35,7 @@ import { WorkspaceSidebar } from "./features/sidebar/WorkspaceSidebar";
 import { TasksPanel } from "./features/tasks/TasksPanel";
 import { createHostRestartToasts, type HostRestartView } from "./features/updates/host-restart-toast";
 import { useUsage } from "./features/usage/usage-context";
+import { PageBackButton } from "./features/window/PageBackButton";
 import { WindowPageView } from "./features/window/WindowPageView";
 import { WorkspacePageRail } from "./features/window/WorkspacePageRail";
 import { useWindowPage } from "./features/window/window-page-context";
@@ -224,6 +225,7 @@ export function WorkspaceShell(props: { account: () => CentralAuthUser }) {
       <div class="app-window">
         {/* HoleA.I: the clean look has no page rail; the foot of the sidebar opens the other pages. */}
         <WorkspacePageRail hidden />
+        <PageBackButton />
         <WorkspaceFrame
           class={chatWindow ? "app-frame-chat-window" : undefined}
           compact={layout.leftPanelCompact()}
