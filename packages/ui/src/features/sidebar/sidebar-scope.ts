@@ -125,7 +125,15 @@ export function createSidebarScope(props: SidebarProps) {
   });
 
   createEffect(
-    () => [resolvedPinnedItems(), waitingChats(), filteredChats(), groupChats(), orderedPeople(), userHiddenAgentList(), userHiddenChannelList()],
+    () => [
+      resolvedPinnedItems(),
+      waitingChats(),
+      filteredChats(),
+      groupChats(),
+      orderedPeople(),
+      userHiddenAgentList(),
+      userHiddenChannelList(),
+    ],
     () => {
       scrollFades.remeasure();
     },
