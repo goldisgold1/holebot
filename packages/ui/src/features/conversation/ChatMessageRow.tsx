@@ -1,4 +1,5 @@
 import type { AttachmentSummary, ConversationReaction, InstalledSkill } from "@openbot/contracts/ipc";
+import { CHANNEL_REACTION_GROUPS_SHOWN, type ChannelReactionGroup } from "@openbot/contracts/signal-port/reactions";
 import {
   Bubble,
   BubbleContent,
@@ -66,6 +67,10 @@ export interface ChatMessageRowProps {
   referenceState?: "loading" | "unavailable" | undefined;
   reactions?: readonly ConversationReaction[] | undefined;
   reactionOverflowCount?: number | undefined;
+  /** HoleA.I: a group chat's reactions, grouped by emoji (Signal's pills). Drawn in place of `reactions`. */
+  groupReactions?: readonly ChannelReactionGroup[] | undefined;
+  /** Adds the reader's reaction with that emoji, or takes it back when it is theirs. */
+  onToggleGroupReaction?: ((emoji: string) => void) | undefined;
   onRemoveReaction?: (() => void) | undefined;
   actions?: JSX.Element;
   /** Draws the right-click menu, a `MessageMenu`. Without it, right-click keeps the native menu. */
@@ -247,7 +252,37 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
               />
               {props.children}
             </BubbleContent>
-            <Show when={(props.reactions?.length ?? 0) > 0}>
+            <Show when={(props.groupReactions?.length ?? 0) > 0}>
+              <BubbleReactions
+                class="message-reaction-anchor"
+                align={person() ? "start" : "end"}
+                overflowCount={Math.max(0, (props.groupReactions?.length ?? 0) - CHANNEL_REACTION_GROUPS_SHOWN)}
+                role="group"
+                aria-label={t("chat.row.reactions", {
+                  emoji: (props.groupReactions ?? []).map((group) => group.emoji).join(", "),
+                })}
+              >
+                <For each={(props.groupReactions ?? []).slice(0, CHANNEL_REACTION_GROUPS_SHOWN)}>
+                  {(group) => (
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      class={["message-reaction-pill", { "message-reaction-pill-mine": group.mine }]}
+                      title={`${group.names.join(", ")} ${group.emoji}`}
+                      aria-pressed={group.mine ? "true" : "false"}
+                      aria-label={`${group.names.join(", ")} ${group.emoji}`}
+                      onClick={() => props.onToggleGroupReaction?.(group.emoji)}
+                    >
+                      <span aria-hidden="true">{group.emoji}</span>
+                      <Show when={group.count > 1}>
+                        <span class="message-reaction-count">{group.count}</span>
+                      </Show>
+                    </Button>
+                  )}
+                </For>
+              </BubbleReactions>
+            </Show>
+            <Show when={!props.groupReactions && (props.reactions?.length ?? 0) > 0}>
               <BubbleReactions
                 class="message-reaction-anchor"
                 align={person() ? "start" : "end"}

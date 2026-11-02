@@ -416,7 +416,7 @@ export class ChannelStore {
       const existing = databaseRow(
         db
           .prepare(
-            "SELECT sequence, json_extract(message_json, '$.message.status') AS status FROM projection_channel_messages WHERE channel_id = ? AND message_id = ?",
+            "SELECT sequence, json_extract(message_json, '$.message.status') AS status, json_extract(message_json, '$.reactions') AS reactions FROM projection_channel_messages WHERE channel_id = ? AND message_id = ?",
           )
           .get(change.channel.id, message.id),
       );
@@ -434,7 +434,19 @@ export class ChannelStore {
           : 1;
       db.prepare(
         "INSERT INTO projection_channel_messages VALUES (?, ?, ?, ?) ON CONFLICT(channel_id, message_id) DO UPDATE SET message_json = excluded.message_json",
-      ).run(change.channel.id, message.id, assigned, JSON.stringify({ ...message, sequence: assigned }));
+      ).run(
+        change.channel.id,
+        message.id,
+        assigned,
+        // HoleA.I: a change to a message that people reacted to keeps their reactions.
+        JSON.stringify({
+          ...message,
+          sequence: assigned,
+          ...(message.reactions === undefined && isString(existing?.reactions)
+            ? { reactions: JSON.parse(existing.reactions) }
+            : {}),
+        }),
+      );
       if (existing) {
         // A streaming message changes on each part of its text; a packet already leaves it unread.
         if (existing.status !== "streaming")
@@ -457,6 +469,28 @@ export class ChannelStore {
       db.prepare(
         "INSERT INTO projection_channel_assignments VALUES (?, ?, ?, ?, ?) ON CONFLICT(assignment_id) DO UPDATE SET delivery_id = excluded.delivery_id, assignment_json = excluded.assignment_json",
       ).run(assignment.id, change.channel.id, assignment.taskId, assignment.deliveryId, JSON.stringify(assignment));
+  }
+
+  /** HoleA.I: writes a message's new reactions in place, leaving every read and context cursor alone. */
+  react(channel: Channel, message: ChannelMessage, operationId: string): Channel {
+    const commandId = `channels:${operationId}`;
+    const previous = this.database.commandResult(commandId);
+    if (previous !== undefined) return decodeChannel(previous);
+    const next = { ...channel, revision: channel.revision + 1 };
+    const payload = { channel: next, message };
+    return this.database.dispatch(
+      commandId,
+      [{ aggregateType: "channel", aggregateId: channel.id, eventType: "channel.reacted", payload }],
+      (db) => {
+        db.prepare(
+          "INSERT INTO projection_channels VALUES (?, ?) ON CONFLICT(channel_id) DO UPDATE SET channel_json = excluded.channel_json",
+        ).run(next.id, JSON.stringify(next));
+        db.prepare(
+          "UPDATE projection_channel_messages SET message_json = ? WHERE channel_id = ? AND message_id = ?",
+        ).run(JSON.stringify(message), channel.id, message.id);
+        return next;
+      },
+    );
   }
 
   update(
@@ -783,6 +817,16 @@ export class ChannelStore {
               tasks: value.tasks,
               assignments: value.assignments.map(decodeAssignment),
             });
+            break;
+          }
+          case "channel.reacted": {
+            if (!isChannelMessage(value.message)) throw new Error("Invalid channel reaction event.");
+            db.prepare(
+              "INSERT INTO projection_channels VALUES (?, ?) ON CONFLICT(channel_id) DO UPDATE SET channel_json = excluded.channel_json",
+            ).run(channelId, JSON.stringify(decodeChannel(value.channel)));
+            db.prepare(
+              "UPDATE projection_channel_messages SET message_json = ? WHERE channel_id = ? AND message_id = ?",
+            ).run(JSON.stringify(value.message), channelId, value.message.id);
             break;
           }
           case "channel.context-created": {

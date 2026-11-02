@@ -1,8 +1,9 @@
 import { INPUT_LIMITS } from "./input-limits";
 import { isBoundedString, isIdentifier } from "./ipc-bounded-values";
-import { type ConversationMessage, isConversationMessage } from "./ipc-conversation-messages";
+import { type ConversationMessage, isConversationMessage, isMessageReaction } from "./ipc-conversation-messages";
 import { optionalHistoryExtent } from "./ipc-decoding";
 import { type DynamicRecord, isDynamicRecord, isOneOf, isString } from "./runtime-values";
+import { type ChannelReaction, isChannelReaction } from "./signal-port/reactions";
 
 export const CHANNEL_CHATS_CAPABILITY = "channel-chats-v1";
 export const CHANNEL_DELETE_CAPABILITY = "channel-delete-v1";
@@ -68,6 +69,8 @@ export interface ChannelMessage {
   taskId: string | null;
   superseded: boolean;
   message: ConversationMessage;
+  /** HoleA.I: the people's reactions, one each (Signal's rule). Absent when there are none. */
+  reactions?: ChannelReaction[];
 }
 
 /** One ellipsised sidebar line: enough to preview a channel, never a whole message body. */
@@ -157,7 +160,9 @@ export type ChannelCommand =
       taskId: string;
       recipientAgentId: string | null;
     }
-  | { type: "read"; operationId: string; channelId: string; throughSequence: number };
+  | { type: "read"; operationId: string; channelId: string; throughSequence: number }
+  /** HoleA.I: sets the sender's reaction on a message, or removes it with `null`. */
+  | { type: "react"; operationId: string; channelId: string; messageId: string; emoji: string | null };
 
 export interface ChannelReadInput {
   channelId: string;
@@ -260,6 +265,7 @@ export function isChannelMessage(value: unknown): value is ChannelMessage {
     isBoundedString(value.author.name, INPUT_LIMITS.accountName) &&
     (value.taskId === null || isIdentifier(value.taskId)) &&
     typeof value.superseded === "boolean" &&
+    (value.reactions === undefined || (Array.isArray(value.reactions) && value.reactions.every(isChannelReaction))) &&
     isConversationMessage(value.message)
   );
 }
@@ -357,6 +363,12 @@ export function parseChannelCommand(value: unknown): ChannelCommand {
   if (value.type === "save" && isChannelDraft(draft))
     return { ...common, type: value.type, draft, ...(value.update === true ? { update: true } : {}) };
   if (value.type === "archive" || value.type === "restore") return { ...common, type: value.type };
+  if (
+    value.type === "react" &&
+    isIdentifier(value.messageId) &&
+    (value.emoji === null || isMessageReaction(value.emoji))
+  )
+    return { ...common, type: value.type, messageId: value.messageId, emoji: value.emoji };
   if (value.type === "read" && sequence(value.throughSequence))
     return { ...common, type: value.type, throughSequence: value.throughSequence };
   if (

@@ -1499,3 +1499,23 @@ button.chat-action-target:active,
   opacity: 1;
   visibility: visible;
 }
+
+/* HoleA.I: group chat reactions (Signal's pills): a count beside the emoji, the reader's own lit. */
+.message-reaction-count {
+  font-size: var(--openbot-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--openbot-text-muted, currentColor);
+}
+
+.message-reaction-anchor .message-reaction-pill:has(.message-reaction-count) {
+  width: auto;
+  padding-inline: 4px;
+}
+
+.ui-bubble-reactions.message-reaction-anchor:has(> .message-reaction-pill:only-child .message-reaction-count) {
+  width: auto;
+}
+
+.message-reaction-anchor .message-reaction-pill-mine {
+  background: color-mix(in srgb, var(--openbot-accent, currentColor) 18%, transparent);
+}

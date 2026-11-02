@@ -1187,7 +1187,10 @@ export function ConversationTimeline() {
                 const messageActions = {
                   onReact: (emoji: MessageReaction | null) => {
                     const currentMessage = message();
-                    if (currentMessage) void reactToMessage(currentMessage, emoji);
+                    if (!currentMessage) return;
+                    // HoleA.I: in a group chat the reaction is the reader's, one per person (Signal).
+                    if (channel) channel.react(currentMessage.id, emoji);
+                    else void reactToMessage(currentMessage, emoji);
                   },
                   onReply: () => {
                     const currentMessage = message();
@@ -1268,6 +1271,13 @@ export function ConversationTimeline() {
                             onOpenReference={openReference}
                             referenceState={replyJump.referenceState(message(), referencedMessage())}
                             reactions={channel ? undefined : displayedReactions()}
+                            groupReactions={channel ? channel.reactions(message()?.id ?? "") : undefined}
+                            onToggleGroupReaction={(emoji) => {
+                              const messageId = message()?.id;
+                              if (!channel || !messageId) return;
+                              const mine = channel.reactions(messageId).find((group) => group.mine)?.emoji;
+                              channel.react(messageId, mine === emoji ? null : emoji);
+                            }}
                             reactionOverflowCount={message()?.reactionSummary?.overflowCount}
                             onRemoveReaction={() => {
                               const currentMessage = message();
@@ -1329,7 +1339,7 @@ export function ConversationTimeline() {
                                     pickerOpen={openReactionMessageId() === message()?.id}
                                     expandedEmoji={expandedEmojiMessageId() === message()?.id}
                                     copied={copiedMessageId() === message()?.id}
-                                    reactions={!channel}
+                                    reactions
                                     authorName={channel ? author().name : undefined}
                                     onTogglePicker={() => {
                                       const messageId = message()?.id;
@@ -1358,7 +1368,7 @@ export function ConversationTimeline() {
                                 : () => (
                                     <MessageMenu
                                       message={message() ?? initialMessage}
-                                      reactions={!channel}
+                                      reactions
                                       authorName={channel ? author().name : undefined}
                                       {...messageActions}
                                       readAloud={messageReadAloud()}

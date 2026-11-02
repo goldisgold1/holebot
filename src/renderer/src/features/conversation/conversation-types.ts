@@ -30,6 +30,7 @@ import type {
   UpdateAgentInput,
   WorkspaceDirectory,
 } from "@openbot/contracts/ipc";
+import type { ChannelReactionGroup } from "@openbot/contracts/signal-port/reactions";
 import type { ConversationUiBlock } from "@openbot/contracts/ui-blocks";
 import type { AgentMessage, AgentProfile } from "@openbot/ui/data";
 import type { BrowserViewRuntime } from "@openbot/ui/features/browser/BrowserLiveView";
@@ -120,6 +121,10 @@ export interface ConversationChannelSource {
   AboveComposer: () => JSX.Element;
   /** Shows in place of the transcript while the channel has no message. */
   EmptyState: () => JSX.Element;
+  /** HoleA.I: the people's reactions on a message, grouped the way Signal shows them. */
+  reactions: (messageId: string) => ChannelReactionGroup[];
+  /** Sets the reader's reaction on a message, or removes it with `null`. */
+  react: (messageId: string, emoji: string | null) => void;
 }
 
 export interface ConversationChannelSettingsPaneProps {

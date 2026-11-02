@@ -24,6 +24,7 @@ import {
   type UpdateChannelMemoryInput,
 } from "@openbot/contracts/ipc";
 import { type DynamicRecord, isDynamicRecord, isString } from "@openbot/contracts/runtime-values";
+import { applyChannelReaction } from "@openbot/contracts/signal-port/reactions";
 import { isFixedSourceText, matchingSourceKeys, sourceText } from "@openbot/i18n/source";
 import { Deferred, Effect, Exit, Fiber, Result, Schema, Scope } from "effect";
 import { type ChannelOperationError, channelFailure, channelResult, channelSync } from "./channel-effects";
@@ -405,6 +406,18 @@ export class ChannelService {
       return result;
     }
     const channel = yield* channelSync(() => this.store.get(command.channelId));
+    // HoleA.I: a reaction changes only the message's reactions. It wakes nobody, and the agents'
+    // context packets stay as they are.
+    if (command.type === "react") {
+      const target = yield* channelSync(() => this.store.message(channel.id, command.messageId));
+      if (!target) return yield* channelFailure(new Error(sourceText("error.backend.channelReferenceUnavailable")));
+      const reactions = applyChannelReaction(target.reactions, actor, command.emoji, Date.now());
+      const { reactions: _previous, ...rest } = target;
+      const updated: ChannelMessage = reactions.length > 0 ? { ...rest, reactions } : rest;
+      const result = yield* channelSync(() => this.store.react(channel, updated, command.operationId));
+      this.publish(channel.id);
+      return result;
+    }
     if (command.type === "read") {
       const result = yield* channelSync(() =>
         this.store.markRead(channel.id, actor.id, command.throughSequence, command.operationId),

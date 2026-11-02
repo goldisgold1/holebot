@@ -160,8 +160,14 @@ const conversationMessage: Decoder = (value) => {
     throw new Error("Invalid channel message.");
   return decodeTeamProtocolV2Json(snapshot.messages[0]);
 };
-const message: Decoder = (value) =>
-  record(value, {
+// HoleA.I: the people's reactions on a message, after Signal: one per person.
+const reaction: Decoder = (value) =>
+  record(value, { emoji: string(64), memberId: identifier, name: string(120), at: sequence });
+const message: Decoder = (value) => ({
+  ...(isDynamicRecord(value) && value.reactions !== undefined
+    ? { reactions: list(reaction, 1000)(value.reactions) }
+    : {}),
+  ...record(value, {
     id: identifier,
     channelId: identifier,
     sequence,
@@ -174,7 +180,8 @@ const message: Decoder = (value) =>
     taskId: nullable(identifier),
     superseded: boolean,
     message: conversationMessage,
-  });
+  }),
+});
 
 const memory: Decoder = (value) =>
   record(value, {
@@ -271,7 +278,7 @@ export function channelRequest(path: string, value: unknown): TeamProtocolV2Json
   // `cancel` belongs to `channel-task-cancel-v1`: a host takes it only from a peer that advertises
   // that capability, and it has the task fields of `stop`.
   const common = record(value, {
-    type: oneOf("save", "archive", "restore", "read", "send", "stop", "resume", "reassign", "cancel"),
+    type: oneOf("save", "archive", "restore", "read", "react", "send", "stop", "resume", "reassign", "cancel"),
     operationId: identifier,
     channelId: identifier,
   });
@@ -281,6 +288,8 @@ export function channelRequest(path: string, value: unknown): TeamProtocolV2Json
     return { ...common, draft: draft(value.draft), ...(value.update === true ? { update: true } : {}) };
   if (value.type === "archive" || value.type === "restore") return common;
   if (value.type === "read") return { ...common, throughSequence: sequence(value.throughSequence) };
+  if (value.type === "react")
+    return { ...common, ...record(value, { messageId: identifier, emoji: nullable(string(64)) }) };
   if (value.type === "send") {
     const result = record(value, {
       text: string(100000),

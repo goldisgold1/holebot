@@ -6,6 +6,7 @@
 
 import { leadingAddress } from "@openbot/contracts/chat-tag-references";
 import type { AgentApproval, AgentEvent, BrowserTakeoverRequest } from "@openbot/contracts/ipc";
+import { groupChannelReactions } from "@openbot/contracts/signal-port/reactions";
 import type { AgentMessage } from "@openbot/ui/data";
 import { unloadedHistory } from "@openbot/ui/features/conversation/ChatScrollRail";
 import { useText } from "@openbot/ui/text";
@@ -259,6 +260,15 @@ export function createChannelConversation(env: ChannelConversationEnvironment) {
     ),
     AboveComposer: () => <ChannelAboveComposer channelId={channelId} />,
     EmptyState: () => <ChannelEmptyState channelId={channelId} />,
+    reactions: (messageId) => {
+      const entry = entries().find((candidate) => candidate.id === messageId);
+      const own = entry?.reactions?.find((reaction) => env.isOwnSender(reaction.memberId));
+      return groupChannelReactions(entry?.reactions, own?.memberId ?? null);
+    },
+    react: (messageId, emoji) => {
+      if (!env.connectionReady() || readOnly()) return;
+      void channels.command({ type: "react", operationId: crypto.randomUUID(), channelId, messageId, emoji });
+    },
   };
 
   return {
