@@ -236,6 +236,14 @@ export const FALLBACK_MODELS: AgentModelOption[] = [
   },
   {
     provider: "claude",
+    id: "claude-sonnet-5-5",
+    name: "Claude Sonnet 5.5",
+    description: "Balanced Claude model for general agent work.",
+    defaultReasoningEffort: "high",
+    supportedReasoningEfforts: ["low", "medium", "high", "xhigh", "max"],
+  },
+  {
+    provider: "claude",
     id: "claude-fable-5",
     name: "Claude Fable 5",
     description: "Fast Claude model for everyday agent work.",

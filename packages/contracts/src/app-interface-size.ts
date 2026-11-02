@@ -8,7 +8,8 @@ import { isOneOf } from "./runtime-values";
  */
 export const APP_INTERFACE_SIZES = [67, 75, 80, 90, 100, 110, 125, 150, 175, 200] as const;
 export type AppInterfaceSize = (typeof APP_INTERFACE_SIZES)[number];
-export const DEFAULT_APP_INTERFACE_SIZE: AppInterfaceSize = 100;
+// HoleA.I: Grok Bot draws its interface about 10% larger than ours at 100%, so the default is one step up.
+export const DEFAULT_APP_INTERFACE_SIZE: AppInterfaceSize = 110;
 
 /** The preference as it is stored and as it crosses IPC. */
 export interface AppInterfaceSizePreference {

@@ -700,8 +700,10 @@ export const BUILT_IN_PROVIDER_DRIVERS: readonly BuiltInProviderDriver[] = [
       signIn: { argv: ["auth", "login", "--claudeai"], env: CLAUDE_COMMAND_ENV, timeoutMs: CLI_LOGIN_TIMEOUT_MS },
       signOut: { argv: ["auth", "logout"], env: CLAUDE_COMMAND_ENV, timeoutMs: 30_000 },
     },
-    // `claudeModelName` says why Claude Code's own model names are not used.
-    catalog: { modelName: claudeModelName },
+    // `claudeModelName` says why Claude Code's own model names are not used. `model/list` starts a
+    // Claude Code process; on Windows with many agents that passes 5 s, and the picker then fell back
+    // to the built-in list, which has no Sonnet 5.5.
+    catalog: { modelName: claudeModelName, slowList: true },
     resolveCli: resolveClaudeCli,
     createClient: (cli, requestTimeoutMs, context) =>
       new ClaudeAgentClient(

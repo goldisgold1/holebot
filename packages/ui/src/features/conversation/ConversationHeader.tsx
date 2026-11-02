@@ -1,19 +1,23 @@
-import { Badge, Button, ChevronDown, Clock3, Lock } from "@openbot/ui";
+import { Badge, Button, ChevronDown, Clock3, Lock, MotionTooltip } from "@openbot/ui";
 import { ProviderModelPicker } from "@openbot/ui/components/ProviderModelPicker";
 import type { AgentProfile } from "@openbot/ui/data";
+import { AccountUsageDetails } from "@openbot/ui/features/account/AccountUsageDetails";
+import type { AccountUsageProviderRow } from "@openbot/ui/features/account/account-usage-view";
 import { AgentAvatar } from "@openbot/ui/features/agents/AgentAvatar";
 import { agentAccessLockLabel } from "@openbot/ui/features/agents/agent-access";
 import { RemoteDesktopIcon } from "@openbot/ui/features/conversation/ConversationIcons";
 import { SidePanelToggle, type SidePanelToggleProps } from "@openbot/ui/features/conversation/SidePanel";
 import { useText } from "@openbot/ui/text";
 import type { ComponentProps, JSX } from "@solidjs/web";
-import { Show } from "solid-js";
+import { For, Show } from "solid-js";
 
 export interface ConversationHeaderProps {
   agent: AgentProfile | null | undefined;
   /** The title of a chat that has no one agent, such as a channel. It shows when `agent` is missing. */
   title?: JSX.Element | undefined;
   modelPicker: ComponentProps<typeof ProviderModelPicker>;
+  /** The plan limits of the agent's provider account. Their bars sit beside the model picker. */
+  usage?: ConversationHeaderUsage | undefined;
   /** A model, effort, provider or account chosen during the running turn. It applies from the next turn. */
   pendingModel?: ConversationHeaderPendingModel | undefined;
   onSettingsIntent: () => void;
@@ -46,6 +50,12 @@ export interface ConversationHeaderPendingModel {
   running: string;
   /** The same for the next turn. */
   next: string;
+}
+
+export interface ConversationHeaderUsage {
+  row: AccountUsageProviderRow;
+  /** Opens the Usage page. */
+  onOpen: () => void;
 }
 
 export interface ConversationHeaderRemoteControl {
@@ -115,6 +125,7 @@ export function ConversationHeader(props: ConversationHeaderProps) {
             );
           }}
         </Show>
+        <Show when={props.agent && props.usage}>{(usage) => <HeaderUsage usage={usage()} />}</Show>
         <Show when={props.agent}>
           <ProviderModelPicker {...props.modelPicker} />
         </Show>
@@ -140,5 +151,62 @@ export function ConversationHeader(props: ConversationHeaderProps) {
         <Show when={props.sidePanel}>{(sidePanel) => <SidePanelToggle {...sidePanel()} />}</Show>
       </div>
     </header>
+  );
+}
+
+/**
+ * HoleA.I: the plan limits beside the model picker, one short bar per window (5 hours, then the
+ * week), filled by what is left. Hover shows each window with its reset time; a click opens Usage.
+ */
+function HeaderUsage(props: { usage: ConversationHeaderUsage }) {
+  const { t } = useText();
+  const windows = () => props.usage.row.ringWindows.slice(0, 2);
+  const label = () =>
+    windows()
+      .map((window) => t("account.usage.row.window", { window: window.label, percent: window.remainingPercent }))
+      .join(", ");
+  return (
+    <MotionTooltip
+      content={
+        <AccountUsageDetails
+          rows={[props.usage.row]}
+          loading={false}
+          error={null}
+          refreshActive={false}
+          refreshDisabled
+          onRefresh={() => undefined}
+          title={<h2 class="account-usage-popover-title">{t("account.usage.title")}</h2>}
+        />
+      }
+      class="ui-popover-menu-surface account-usage-popover header-usage-card"
+      placement="bottom-end"
+      openDelay={250}
+      closeDelay={75}
+    >
+      <Button
+        variant="ghost"
+        type="button"
+        class="header-usage"
+        aria-label={`${t("account.usage.title")}: ${label()}`}
+        onClick={() => props.usage.onOpen()}
+      >
+        <For each={windows()} keyed={false}>
+          {(window) => (
+            <span class="header-usage-window">
+              <span class="header-usage-label" aria-hidden="true">
+                {window().label}
+              </span>
+              <span class="header-usage-track" aria-hidden="true">
+                <span
+                  class="header-usage-fill"
+                  data-usage-tone={window().tone}
+                  style={{ width: `${window().remainingPercent}%` }}
+                />
+              </span>
+            </span>
+          )}
+        </For>
+      </Button>
+    </MotionTooltip>
   );
 }

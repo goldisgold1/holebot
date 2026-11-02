@@ -22,8 +22,8 @@
 }
 
 :root {
-  /* The agent face's eyes. */
-  --holeai-face-eye: #f9f9f9;
+  /* The agent face's eyes: dark pills on the flat body. */
+  --holeai-face-eye: #151515;
   /* Grok Bot's type: the system face (Segoe UI on Windows, SF on macOS), 14px rows, 13px secondary lines. */
   --openbot-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --holeai-text-row: 14px;

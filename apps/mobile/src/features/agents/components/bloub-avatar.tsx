@@ -1,6 +1,5 @@
-import { bloubAvatarProfile } from "@openbot/brand/bloub-avatar";
 import { type AvatarMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
-import { CUTE_FACE_EYE, CUTE_FACE_EYES, cuteFaceBody, cuteFaceClosedEyes } from "@openbot/brand/cute-face";
+import { type BotEye, botClosedEyes, botToken } from "@openbot/brand/cute-face";
 import type { AvatarHue } from "@openbot/contracts/ipc";
 import { memo, useEffect, useMemo } from "react";
 import Animated, {
@@ -19,7 +18,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import Svg, { Ellipse, Path } from "react-native-svg";
+import Svg, { G, Path, Rect } from "react-native-svg";
 import { useAgentColorTransition } from "@/features/agents/components/agent-color-glow";
 import { AgentOrbitRings } from "@/features/agents/components/agent-orbit-rings";
 import { getBloubAvatarColor } from "@/features/agents/model/bloub-activity";
@@ -54,7 +53,7 @@ interface BloubAvatarProps extends AgentPhotoProps {
 }
 
 // HoleA.I: the Grok Bot style face (see @openbot/brand/cute-face), the same drawing as the desktop.
-const FACE_EYE = "#f9f9f9";
+const FACE_EYE = "#151515";
 // The face is drawn in a 140-unit box, and the body's bottom edge is about 45 units under its centre.
 const FACE_BOX = 140;
 const FACE_SEAT = 45;
@@ -62,7 +61,7 @@ const FACE_SEAT = 45;
 const EYE_SHUT = 0.1;
 const POSE_EASING = Easing.bezier(0.42, 0, 0.58, 1);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 export function BloubAvatar({
   agentId,
@@ -298,8 +297,8 @@ function CuteFaceSvg({
   eyes?: DerivedValue<FaceEyes>;
   opacity?: number;
 }) {
-  const body = cuteFaceBody(bloubAvatarProfile(seed, null).shape);
-  const closedEyes = cuteFaceClosedEyes(mood);
+  const token = useMemo(() => botToken(seed), [seed]);
+  const closedEyes = botClosedEyes(token, mood);
   return (
     <Svg
       accessibilityElementsHidden
@@ -310,35 +309,43 @@ function CuteFaceSvg({
       viewBox="-70 -70 140 140"
       width={size}
     >
-      <FaceBody d={body} color={color} />
-      {closedEyes ? (
-        <Path d={closedEyes} fill="none" stroke={FACE_EYE} strokeWidth={4.5} strokeLinecap="round" />
-      ) : (
-        CUTE_FACE_EYES.map((x) => <FaceEye key={x} x={x} up={mood === "waiting"} eyes={eyes} />)
-      )}
-      {mood === "asleep" ? (
-        <Path d="M 30 -36 h 9 l -9 10 h 9" fill="none" stroke={FACE_EYE} strokeWidth={2.6} opacity={0.7} />
-      ) : null}
+      <G transform="translate(-50 -50)">
+        {token.slices.map((slice) => (
+          <FaceBody key={slice.transform} d={token.shape.body.path} transform={slice.transform} color={color} />
+        ))}
+        <G transform={token.front}>
+          {closedEyes ? (
+            <Path d={closedEyes} fill="none" stroke={FACE_EYE} strokeWidth={4.5} strokeLinecap="round" />
+          ) : (
+            token.eyes.map((eye) => <FaceEye key={eye.x} eye={eye} up={mood === "waiting"} eyes={eyes} />)
+          )}
+        </G>
+        {mood === "asleep" ? (
+          <Path d="M 80 12 h 8 l -8 9 h 8" fill="none" stroke={FACE_EYE} strokeWidth={2.6} opacity={0.7} />
+        ) : null}
+      </G>
     </Svg>
   );
 }
 
-function FaceBody({ d, color }: { d: string; color: DerivedValue<string> | string }) {
+function FaceBody({ d, transform, color }: { d: string; transform: string; color: DerivedValue<string> | string }) {
   const props = useAnimatedProps(() => ({ fill: typeof color === "string" ? color : color.get() }));
-  return <AnimatedPath d={d} animatedProps={props} />;
+  return <AnimatedPath d={d} transform={transform} fillRule="evenodd" animatedProps={props} />;
 }
 
-function FaceEye({ x, up, eyes }: { x: number; up: boolean; eyes?: DerivedValue<FaceEyes> | undefined }) {
-  const cy = CUTE_FACE_EYE.cy - (up ? 3 : 0);
+function FaceEye({ eye, up, eyes }: { eye: BotEye; up: boolean; eyes?: DerivedValue<FaceEyes> | undefined }) {
+  const top = eye.y - (up ? 3 : 0);
   const eyeProps = useAnimatedProps(() => {
     const at = eyes?.get();
+    const height = eye.height * (at?.open ?? 1);
     return {
-      cx: x + (at?.x ?? 0),
-      cy: cy + (at?.y ?? 0),
-      ry: CUTE_FACE_EYE.ry * (at?.open ?? 1),
+      x: eye.x + (at?.x ?? 0),
+      // A blink shuts the pill toward its middle.
+      y: top + (at?.y ?? 0) + (eye.height - height) / 2,
+      height,
     };
   });
-  return <AnimatedEllipse rx={CUTE_FACE_EYE.rx} fill={FACE_EYE} animatedProps={eyeProps} />;
+  return <AnimatedRect width={eye.width} rx={eye.width / 2} fill={FACE_EYE} animatedProps={eyeProps} />;
 }
 
 // Choices show the same idle pose without mounting animation clocks, worklets,

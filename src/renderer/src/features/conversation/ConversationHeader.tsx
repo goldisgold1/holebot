@@ -13,6 +13,8 @@ import { ConversationHeader as SharedConversationHeader } from "@openbot/ui/feat
 import { ThreadHeader } from "@openbot/ui/features/conversation/threads/ThreadHeader";
 import { MAIN_THREAD_ID } from "@openbot/ui/features/conversation/threads/thread-types";
 import { createEffect, createSignal, Show } from "solid-js";
+import { usePlanLimitRows } from "../usage/plan-limit-rows";
+import { useWindowPage } from "../window/window-page-context";
 import { ConversationVoiceCall } from "./ConversationVoiceCall";
 import { useConversationViewScope } from "./conversation-scope";
 
@@ -31,6 +33,8 @@ import { useText } from "@openbot/ui/text";
 /** @internal Stable HMR boundary for conversation header. */
 export function ConversationHeader() {
   const { t } = useText();
+  const planLimitRows = usePlanLimitRows();
+  const windowPage = useWindowPage();
   const {
     actingBrowserControl,
     agentActivity,
@@ -129,6 +133,13 @@ export function ConversationHeader() {
       onToggleVoiceCall={voiceCallKey() ? () => setVoiceCallExpanded(!voiceCallExpanded()) : undefined}
       voiceCallExpanded={voiceCallExpanded()}
       pendingModel={pendingModel()}
+      usage={(() => {
+        const provider = settingsProvider();
+        const row = planLimitRows().find(
+          (candidate) => candidate.provider === provider && candidate.reportsUsage && candidate.ringWindows.length > 0,
+        );
+        return row ? { row, onOpen: () => windowPage.openUsage(null) } : undefined;
+      })()}
       modelPicker={{
         provider: settingsProvider(),
         foreignProvider: props.agent ? foreignProvider(props.agent.provider) : undefined,

@@ -777,7 +777,8 @@
 
 /* HoleA.I: the agent face (CuteFace.tsx), Grok Bot style. The eye colour is a token; the body colour is the agent's own.
    Blink and bob run only while the avatar is animated, which keeps the sidebar's resting rows still. */
-.cute-face .cute-face-body {
+.cute-face .cute-face-rim {
+  fill: none;
   stroke: var(--agent-avatar-outline, transparent);
   stroke-width: calc(var(--agent-avatar-outline-width, 1.5px) * 2);
   stroke-linejoin: round;
@@ -810,6 +811,70 @@
 .cute-face .cute-face-bob {
   transform-box: view-box;
   transform-origin: center 80%;
+}
+
+/* The 3D turn (cute-face.ts botToken). The live yaw and pitch are the agent's resting pose plus what the
+   moods animate (--face-turn, --face-nod, --face-front) plus where the pointer is. Every slice of the token
+   steps by its depth along that slant and the whole token skews with the yaw, so it turns like a solid
+   thing; the factors match TURN_STEP and TURN_SKEW. */
+@property --face-turn {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --face-nod {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --face-front {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.cute-face {
+  --face-look-yaw: 0;
+  --face-look-pitch: 0;
+  --face-yaw: calc(var(--face-base-yaw, 0.23) * (1 - var(--face-front)) + var(--face-turn) + var(--face-look-yaw));
+  --face-pitch: calc(var(--face-base-pitch, 0.25) + var(--face-nod) + var(--face-look-pitch));
+}
+
+.agent-avatar[data-looking] .cute-face {
+  --face-look-yaw: calc(var(--face-look-x, 0) * 0.3);
+  --face-look-pitch: calc(var(--face-look-y, 0) * -0.2);
+}
+
+.cute-face .cute-face-turn {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: skewY(calc(var(--face-yaw) * 15deg));
+}
+
+.cute-face .cute-face-slice {
+  translate: calc(var(--face-yaw) * var(--face-depth) * 1.5px) calc(var(--face-pitch) * var(--face-depth) * -1.6px);
+}
+
+/* Idle: the head follows the glances, turning toward each spot and tipping up or down, while the body
+   breathes. Thinking: it faces you more, looks up and holds a tilt, swaying a little. Happy: it wiggles
+   side to side and bounces. */
+.cute-face[data-animated] {
+  animation: cute-face-turn 4.8s ease-in-out infinite;
+  animation-delay: var(--cute-face-delay, 0s);
+}
+
+.agent-avatar[data-looking] .cute-face {
+  animation: none;
+}
+
+.cute-face:is([data-mood="working"], [data-mood="connecting"]) {
+  animation: cute-face-ponder-turn 3.2s ease-in-out infinite;
+}
+
+.cute-face[data-mood="responded"] {
+  animation: cute-face-wiggle 0.5s ease-in-out 3;
 }
 
 /* Resting motion, learned from watching messenger faces: the eyes do the work. They glance to a spot, hold,
@@ -849,17 +914,17 @@
 
 /* Thinking: the same glances, faster, while the face wanders around its spot. Replaces the orbit rings. */
 .cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-bob {
-  animation: cute-face-wander 2.4s ease-in-out infinite;
+  animation: cute-face-ponder 3.2s ease-in-out infinite;
 }
 
 .cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-eyes {
   animation:
-    cute-face-glance 1.6s steps(1, end) infinite,
+    cute-face-ponder-eyes 3.2s steps(1, end) infinite,
     cute-face-blink 3.2s ease-in-out infinite;
 }
 
 .cute-face[data-mood="responded"] .cute-face-bob {
-  animation: cute-face-hop 0.6s ease-out 1;
+  animation: cute-face-hop 0.5s ease-out 3;
 }
 
 .cute-face[data-mood="asleep"] .cute-face-zz {
@@ -906,50 +971,113 @@
   0%,
   100% {
     translate: 0 0;
-    rotate: 0deg;
-  }
-
-  20% {
-    translate: -1.5px 0;
-    rotate: -3deg;
-  }
-
-  40% {
-    translate: 1.5px 0;
-    rotate: 3deg;
-  }
-
-  60% {
-    translate: 0 1px;
-    rotate: 0deg;
-  }
-
-  80% {
-    translate: 1px -1px;
-    rotate: 2deg;
-  }
-}
-
-@keyframes cute-face-wander {
-  0%,
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
+    scale: 1 1;
   }
 
   25% {
-    translate: -4px -3px;
-    rotate: -6deg;
+    translate: 0 -0.6px;
+    scale: 0.99 1.015;
   }
 
   50% {
-    translate: 0 -5px;
-    rotate: 0deg;
+    translate: 0 0.4px;
+    scale: 1.03 0.96;
   }
 
   75% {
-    translate: 4px -3px;
-    rotate: 6deg;
+    translate: 0 -0.3px;
+    scale: 1 1;
+  }
+}
+
+/* Lags the glance (steps at 20/40/60/80%) a little, so the eyes lead and the head follows. */
+@keyframes cute-face-turn {
+  0%,
+  20%,
+  100% {
+    --face-turn: 0;
+    --face-nod: 0;
+  }
+
+  27%,
+  40% {
+    --face-turn: -0.12;
+    --face-nod: 0.02;
+  }
+
+  47%,
+  60% {
+    --face-turn: 0.1;
+    --face-nod: -0.03;
+  }
+
+  67%,
+  80% {
+    --face-turn: -0.04;
+    --face-nod: -0.08;
+  }
+
+  87%,
+  94% {
+    --face-turn: 0.06;
+    --face-nod: 0.07;
+  }
+}
+
+@keyframes cute-face-ponder-turn {
+  0%,
+  100% {
+    --face-front: 0.45;
+    --face-turn: -0.03;
+    --face-nod: 0.08;
+  }
+
+  50% {
+    --face-front: 0.45;
+    --face-turn: 0.04;
+    --face-nod: 0.1;
+  }
+}
+
+@keyframes cute-face-ponder {
+  0%,
+  100% {
+    translate: 0 -1px;
+    rotate: -5deg;
+  }
+
+  50% {
+    translate: 0 -2px;
+    rotate: -3deg;
+  }
+}
+
+@keyframes cute-face-ponder-eyes {
+  0% {
+    translate: 2px -3px;
+  }
+
+  35% {
+    translate: -2px -4px;
+  }
+
+  70% {
+    translate: 1px -2px;
+  }
+}
+
+@keyframes cute-face-wiggle {
+  0%,
+  100% {
+    --face-turn: 0;
+  }
+
+  25% {
+    --face-turn: 0.14;
+  }
+
+  75% {
+    --face-turn: -0.14;
   }
 }
 
@@ -976,19 +1104,26 @@
   }
 
   40% {
-    translate: 0 -8px;
+    translate: 0 -7px;
+    rotate: 4deg;
+    scale: 0.97 1.04;
   }
 
-  70% {
-    translate: 0 1px;
+  75% {
+    translate: 0 0.5px;
+    rotate: -2deg;
+    scale: 1.05 0.95;
   }
 
   100% {
     translate: 0 0;
+    rotate: 0deg;
+    scale: 1 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cute-face,
   .cute-face .cute-face-eyes,
   .cute-face .cute-face-bob {
     animation: none;
@@ -1043,4 +1178,131 @@
 /* Toasts at the top start below the window buttons' row, so they never cover the buttons. */
 [data-sonner-toaster][data-y-position="top"] {
   top: calc(var(--offset-top) + env(titlebar-area-height, 0px)) !important;
+}
+
+/* One flat surface, as in Grok Bot: no card inside a darker frame, no line under the top row. The top
+ * row is part of the panes, and the chat header floats on the transcript. */
+.app-window {
+  --window-frame: var(--openbot-bg-canvas);
+  --window-edge: 0px;
+}
+
+.app-window > .app-frame-edge {
+  padding: 0;
+}
+
+.app-window > .app-frame-edge::before {
+  inset: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.app-window > .app-frame-edge > .sidebar::before {
+  inset: 0 0 0 auto;
+}
+
+.app-window > .app-frame-edge > .sidebar .sidebar-topbar::after {
+  content: none;
+}
+
+/* Search is a round button beside New, at the top right of the agent list. */
+.sidebar:not(.sidebar-compact) .sidebar-search-wrap {
+  position: absolute;
+  z-index: 2;
+  top: calc((var(--left-header-height) - var(--openbot-control-md)) / 2 + 1px);
+  right: calc(var(--openbot-space-2) + var(--openbot-control-md) + var(--openbot-space-1));
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar:not(.sidebar-compact) .sidebar-search-trigger {
+  width: var(--openbot-control-md);
+  min-width: 0;
+  height: var(--openbot-control-md);
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--holeai-radius-pill);
+}
+
+.sidebar:not(.sidebar-compact) .sidebar-search-placeholder {
+  display: none;
+}
+
+.sidebar-topbar-actions .ui-icon-button {
+  border-radius: var(--holeai-radius-pill);
+  background: var(--openbot-hover);
+}
+
+/* Bubbles stop at about 60% of the column, as in Grok Bot, so long replies read as a column of text. */
+.message-entry .ui-bubble-content {
+  max-width: min(560px, 100%);
+}
+
+/* A new chat is quiet, as in Grok Bot: the face, the name and a short line about the agent. The full
+ * instructions and the sample turn stay in the agent's details. */
+.agent-chat-empty-turn,
+.agent-chat-empty-title > span:not(.agent-chat-empty-ready) {
+  display: none;
+}
+
+.agent-chat-empty-title .agent-chat-empty-ready {
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-xl);
+}
+
+.agent-chat-empty-description {
+  display: -webkit-box;
+  max-width: 420px;
+  overflow: hidden;
+  color: var(--openbot-text-muted);
+  font-size: var(--holeai-text-preview);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* The plan limits beside the model picker: one short bar per window, filled by what is left. */
+.header-usage {
+  display: inline-flex;
+  height: var(--openbot-control-sm);
+  align-items: center;
+  gap: var(--openbot-space-2);
+  padding: 0 var(--openbot-space-2);
+  border-radius: var(--holeai-radius-pill);
+  color: var(--openbot-text-muted);
+}
+
+.header-usage-window {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--openbot-space-1);
+}
+
+.header-usage-label {
+  font-size: var(--openbot-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.header-usage-track {
+  position: relative;
+  width: 28px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--holeai-radius-pill);
+  background: color-mix(in srgb, var(--openbot-text-primary) 15%, transparent);
+}
+
+.header-usage-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--openbot-success);
+}
+
+.header-usage-fill[data-usage-tone="warning"] {
+  background: var(--openbot-warning);
+}
+
+.header-usage-fill[data-usage-tone="critical"] {
+  background: var(--openbot-danger);
 }

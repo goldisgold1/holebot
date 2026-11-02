@@ -38,6 +38,8 @@ const meta = {
             <div class="conversation-identity" data-voice-call-anchor="">
               <VoicePanel
                 {...args}
+                // Storybook drops the agent object from the args on some loads.
+                agent={args.agent ?? STORY_AGENT}
                 muted={muted()}
                 onToggleMute={() => {
                   setMuted(!muted());
