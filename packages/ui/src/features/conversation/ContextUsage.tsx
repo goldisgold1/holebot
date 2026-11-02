@@ -100,7 +100,8 @@ function meterLevel(usage: ContextUsageView): "quiet" | "normal" | RadialProgres
  * The composer's context ring and the popover it opens. It shows how full the agent's provider
  * thread is and when it compacts. `newChat` adds the New chat action, which asks first. `compact`
  * adds the Compact action, for a thread that OpenBot compacts (`autoCompactAt` is set, or the user
- * turned it off). `autoCompact` adds the threshold picker for such a thread.
+ * turned it off). `autoCompact` adds the threshold picker for such a thread. `compactButton` also puts
+ * Compact beside the ring, so the user compacts in one click, as `/compact` does in Claude Code.
  */
 export function ContextUsageMeter(props: {
   usage: ContextUsageView;
@@ -112,6 +113,7 @@ export function ContextUsageMeter(props: {
     | undefined;
   compact?: (() => Promise<void>) | undefined;
   autoCompact?: { value: AutoCompactThreshold; change: (value: AutoCompactThreshold) => void } | undefined;
+  compactButton?: boolean | undefined;
 }) {
   const { t, format, errorMessage } = useText();
   const [open, setOpen] = createSignal(false);
@@ -134,6 +136,8 @@ export function ContextUsageMeter(props: {
       setOpen(false);
     } catch (error) {
       setCompaction({ phase: "refused", message: errorMessage(error, t("composer.context.compactFailed")) });
+      // The popover holds the refusal, so a refusal from the button beside the ring opens it.
+      setOpen(true);
     }
   };
   const [confirming, setConfirming] = createSignal(false);
@@ -147,6 +151,21 @@ export function ContextUsageMeter(props: {
   let popover: HTMLElement | undefined;
   return (
     <>
+      <Show when={props.compactButton ? compact() : undefined}>
+        {(start) => (
+          <Button
+            variant="ghost"
+            type="button"
+            class="composer-button context-compact-button"
+            aria-label={t("composer.context.compact")}
+            title={t("composer.context.compact")}
+            disabled={props.usage.compacting || compaction().phase === "requesting"}
+            onClick={() => void requestCompaction(start())}
+          >
+            <Minimize2 aria-hidden="true" />
+          </Button>
+        )}
+      </Show>
       <Popover.Root
         open={open()}
         onOpenChange={(next) => {

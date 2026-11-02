@@ -88,6 +88,7 @@ function ComposerToolbar(props: {
           newChat={props.onStartNewChat ? { agent: STORY_AGENT, start: props.onStartNewChat } : undefined}
           compact={props.onCompact}
           autoCompact={props.autoCompact}
+          compactButton={props.autoCompact !== undefined}
         />
         <Button type="button" variant="ghost" class="dictation-button" aria-label="Dictate">
           <Mic aria-hidden="true" />
