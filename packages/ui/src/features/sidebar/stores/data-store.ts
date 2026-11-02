@@ -54,7 +54,11 @@ export function createSidebarDataStore(deps: {
       nextCache.set(key, { source, item: resolved });
       return resolved;
     };
-    for (const ref of chatPinnedItems()) {
+    // HoleA.I: the Team view pins only group chats. The Agents view draws the pinned agents first and
+    // the pinned group chats under them.
+    const refs = chatPinnedItems().filter((ref) => props.view !== "team" || ref.kind === "channel");
+    const ordered = [...refs.filter((ref) => ref.kind === "agent"), ...refs.filter((ref) => ref.kind !== "agent")];
+    for (const ref of ordered) {
       if (ref.kind === "agent") {
         const agent = agentById().get(ref.id);
         // A hidden agent keeps its pin, so a restore puts it back in the strip.
@@ -69,11 +73,14 @@ export function createSidebarDataStore(deps: {
     pinnedItemCache = nextCache;
     return items;
   });
+  // HoleA.I: the Team view is the group chats and the people, with no agents.
   const listedAgents = createMemo(() =>
-    props.agents.filter(
-      (agent) =>
-        !agentIsUserHidden(agent.id) && !pinnedKeys().has(sidebarPinnedItemKey({ kind: "agent", id: agent.id })),
-    ),
+    props.view === "team"
+      ? []
+      : props.agents.filter(
+          (agent) =>
+            !agentIsUserHidden(agent.id) && !pinnedKeys().has(sidebarPinnedItemKey({ kind: "agent", id: agent.id })),
+        ),
   );
   /**
    * Agents and channels that wait for the user leave their section for the "Needs you" group, the
@@ -105,8 +112,11 @@ export function createSidebarDataStore(deps: {
   const userHiddenAgentList = createMemo(() =>
     sortByLayoutOrder(props.agents.filter((agent) => agentIsUserHidden(agent.id))),
   );
+  // HoleA.I: the Agents view shows a group chat only when it is pinned there.
   const listedChannels = createMemo(() =>
-    channels().filter((channel) => !pinnedKeys().has(sidebarPinnedItemKey({ kind: "channel", id: channel.id }))),
+    props.view === "agents"
+      ? []
+      : channels().filter((channel) => !pinnedKeys().has(sidebarPinnedItemKey({ kind: "channel", id: channel.id }))),
   );
   const filteredChannels = createMemo(() => listedChannels().filter((channel) => !chatWaits(channel.id)));
   function sortByLayoutOrder<T extends { id: string }>(items: T[]): T[] {
@@ -194,7 +204,8 @@ export function createSidebarDataStore(deps: {
   });
   const visibleSectionIds = createMemo(() =>
     props.layout.order.filter((sectionId) => {
-      if (sectionId === SIDEBAR_PEOPLE_SECTION_ID) return props.showPeople !== false && orderedPeople().length > 0;
+      if (sectionId === SIDEBAR_PEOPLE_SECTION_ID)
+        return props.showPeople !== false && props.view !== "agents" && orderedPeople().length > 0;
       if (customSectionById().has(sectionId)) return true;
       if (sectionId !== SIDEBAR_UNASSIGNED_SECTION_ID) return false;
       return (filteredChatsBySection().get(sectionId)?.length ?? 0) > 0;

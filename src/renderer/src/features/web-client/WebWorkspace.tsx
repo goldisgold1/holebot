@@ -1708,7 +1708,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
   /** The rail button of the page. The server settings open from the server menu, so no button is current. */
   const railPage = (): PageRailPage | null => {
     const current = page();
-    if (current === "agents") return layout.sidebarView();
+    if (current === "agents") return layout.sidebarView() === "routines" ? "routines" : "agents";
     return current === "server-settings" ? null : current;
   };
   /** The settings page on screen, if any. */

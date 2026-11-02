@@ -60,7 +60,7 @@ export function WorkspacePageRail(props: { hidden: boolean }) {
   };
   const current = (): PageRailPage | null => {
     const page = windowPage.page();
-    if (page === "agents") return layout.sidebarView();
+    if (page === "agents") return layout.sidebarView() === "routines" ? "routines" : "agents";
     return page === "server-settings" ? null : page;
   };
   return (

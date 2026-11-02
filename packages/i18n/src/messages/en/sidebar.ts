@@ -27,6 +27,7 @@ export const messages = defineMessages("sidebar", {
   "sidebar.empty.noAgents": "No agents yet",
   "sidebar.empty.firstAgent": "Create your first agent",
   "sidebar.view.label": "Sidebar view",
+  "sidebar.view.team": "Team",
   "sidebar.view.agents": "Agents",
   "sidebar.view.routines": "Routines",
   "sidebar.section.layoutUnsupported": "This server does not support sidebar layout changes.",

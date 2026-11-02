@@ -480,6 +480,22 @@ export class ChannelService {
         const open = allTasks.filter((task) => !terminal(task));
         const eligible = this.eligibleMembers(current);
         const recipients = this.#recipients(eligible, text, command.recipientAgentId);
+        // HoleA.I: a channel with no lead is a team group chat. A message that tags no agent and
+        // answers none is talk between people: it is kept for the history that a tagged agent reads,
+        // and it wakes nobody and steers no open work.
+        if (
+          current.leadAgentId === null &&
+          recipients.length === 0 &&
+          !(referenced && referenced.author.kind === "agent")
+        ) {
+          const message = this.message(current.id, null, { kind: "member", ...actor }, text, id);
+          message.message.replyToMessageId = command.replyToMessageId;
+          if (committed) message.message.attachments = committed.attachments;
+          const result = yield* channelSync(() =>
+            this.store.update(current, { messages: [message], tasks: [] }, operationId),
+          );
+          return { current, continued: [], affected: [], resumed: [], message, result };
+        }
         const continues =
           /^(?:also|instead|actually|please change|change that|correction|continue|resume|go on|keep going|yes|no|use that|make it)\b/iu.test(
             text.trim(),
