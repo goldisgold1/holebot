@@ -1,6 +1,10 @@
 import { defineMessages } from "../../message";
 
 export const messages = defineMessages("usage", {
+  "usage.limits.title": "Plan limits by agent",
+  "usage.limits.used": "used",
+  "usage.limits.resetsIn": "resets in {time}",
+  "usage.limits.ofUsage": "{share} of usage",
   "usage.metric.cost": "Cost",
   "usage.metric.tokens": "Tokens",
   "usage.period.days7": "7 days",

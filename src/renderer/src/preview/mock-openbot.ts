@@ -41,6 +41,7 @@ import {
   type ApprovalAutomationPreference,
   type AppSetupState,
   type AttachmentImportEvent,
+  type AutoCompactPreference,
   type AvatarHue,
   agentAutoApprovalEnabled,
   agentAutomationAllowed,
@@ -74,6 +75,7 @@ import {
   DEFAULT_APP_INTERFACE_SIZE,
   DEFAULT_APP_LOGO_COLOR,
   DEFAULT_APPROVAL_AUTOMATION_PREFERENCE,
+  DEFAULT_AUTO_COMPACT_THRESHOLD,
   DEFAULT_BUSY_MESSAGE_MODE,
   DEFAULT_CUSTOM_PROVIDER_HARNESS,
   DEFAULT_DYNAMIC_ISLAND_PREFERENCE,
@@ -441,6 +443,7 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
   let analyticsPreference = clone<AnalyticsPreference>(options.analyticsPreference ?? { enabled: true });
   let approvalAutomation = clone<ApprovalAutomationPreference>(DEFAULT_APPROVAL_AUTOMATION_PREFERENCE);
   let busyMessageMode: BusyMessageModePreference = { mode: DEFAULT_BUSY_MESSAGE_MODE };
+  let autoCompact: AutoCompactPreference = { threshold: DEFAULT_AUTO_COMPACT_THRESHOLD };
   let agentDefaults: AgentDefaults = { ...DEFAULT_AGENT_DEFAULTS };
   let agentMemoryLimit: AgentMemoryLimitPreference = { limit: DEFAULT_AGENT_MEMORY_LIMIT };
   let memoryReview: MemoryReviewPreference = { interval: DEFAULT_MEMORY_REVIEW_INTERVAL };
@@ -1127,6 +1130,11 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
     setBusyMessageModePreference: async ({ mode }) => {
       busyMessageMode = { mode };
       return clone(busyMessageMode);
+    },
+    getAutoCompactPreference: async () => clone(autoCompact),
+    setAutoCompactPreference: async ({ threshold }) => {
+      autoCompact = { threshold };
+      return clone(autoCompact);
     },
     getAgentDefaults: async () => clone(agentDefaults),
     setAgentDefaults: async (next) => {
@@ -1857,6 +1865,13 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
         clone(serverId === storyForeignServerId ? withStoryForeignProvider(agentStatus) : agentStatus),
       getRuntimeSnapshot: async () => clone(runtimeSnapshot),
       getHostAnalytics: async (input) => mockHostAnalytics(input, agents),
+      getQuotaShares: async ({ windows }) =>
+        windows.map((window) => ({
+          ...window,
+          basis: "cost" as const,
+          total: 10,
+          agents: agents.slice(0, 3).map((agent, index) => ({ agentId: agent.id, amount: [5, 3, 2][index] ?? 1 })),
+        })),
       getAnalytics: async (input) => {
         const agent = agents.find((entry) => entry.id === input.agentId);
         if (!agent) throw new Error("Agent not found.");

@@ -25,6 +25,7 @@ import {
   decodeOptionalHostAnalytics,
   decodeProviderUsageResetOutcome,
   decodeProviderUsageResets,
+  decodeQuotaShares,
   type HostProviderAccounts,
   isAccountUsage,
   isAgentHostSettings,
@@ -208,6 +209,10 @@ export function decodeDuplicateAgentResultFromMain(value: unknown): DuplicateAge
 
 export function decodeAgentAnalyticsFromMain(value: unknown) {
   return decodeOptionalAgentAnalytics(value);
+}
+
+export function decodeQuotaSharesFromMain(value: unknown) {
+  return decodeQuotaShares(value);
 }
 
 export function decodeHostAnalyticsFromMain(value: unknown) {

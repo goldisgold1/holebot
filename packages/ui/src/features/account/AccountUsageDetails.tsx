@@ -2,8 +2,11 @@ import { ProviderLogo } from "@openbot/brand";
 import { Button, Gauge, RefreshCw } from "@openbot/ui";
 import type { JSX } from "@solidjs/web";
 import { createSignal, For, onCleanup, Show } from "solid-js";
+import { avatarHeadColor } from "../../bloub-avatar";
 import { useText } from "../../text";
+import { AgentAvatar } from "../agents/AgentAvatar";
 import {
+  type AccountUsageAgentShare,
   type AccountUsageProviderRow,
   type AccountUsageWindowRow,
   accountUsageRowKey,
@@ -108,6 +111,70 @@ export function AccountUsageDetails(props: {
   );
 }
 
+/** The most agents a window names; the rest share one "+n" chip. */
+const SPLIT_AGENTS = 3;
+
+/**
+ * HoleA.I: who used a window. A thin bar under the meter splits its used part by agent, and the chips
+ * name the largest, each with the points of the limit it used.
+ */
+function AccountUsageAgentSplit(props: { agents: readonly AccountUsageAgentShare[]; window: string }) {
+  const text = useText();
+  const { t, format } = text;
+  const percent = (value: number) => format.percent(value / 100, { maximumFractionDigits: value < 10 ? 1 : 0 });
+  const shown = () => props.agents.slice(0, SPLIT_AGENTS);
+  const rest = () => props.agents.slice(SPLIT_AGENTS);
+  const restPercent = () => rest().reduce((total, agent) => total + agent.limitPercent, 0);
+  return (
+    <span class="account-usage-agents">
+      <span class="sr-only">{t("account.usage.agents.label", { window: props.window })}</span>
+      <span class="account-usage-agents-bar" aria-hidden="true">
+        <For each={props.agents}>
+          {(agent) => (
+            <span
+              class="account-usage-agents-segment"
+              style={{
+                "inline-size": `${agent.limitPercent}%`,
+                background: avatarHeadColor(agent.avatarSeed, agent.avatarHue),
+              }}
+            />
+          )}
+        </For>
+      </span>
+      <span class="account-usage-agents-list">
+        <For each={shown()}>
+          {(agent) => (
+            <span
+              class="account-usage-agent"
+              title={t("account.usage.agents.title", {
+                name: agent.name,
+                limit: percent(agent.limitPercent),
+                share: format.percent(agent.usageShare, { maximumFractionDigits: 0 }),
+                window: props.window,
+              })}
+            >
+              <AgentAvatar
+                seed={agent.avatarSeed}
+                hue={agent.avatarHue}
+                url={agent.avatarUrl}
+                motion="hover"
+                class="account-usage-agent-avatar"
+              />
+              <span class="account-usage-agent-name">{agent.name}</span>
+              <strong class="account-usage-agent-percent">{percent(agent.limitPercent)}</strong>
+            </span>
+          )}
+        </For>
+        <Show when={rest().length > 0}>
+          <span class="account-usage-agent account-usage-agent-more">
+            {t("account.usage.agents.more", { count: rest().length, percent: percent(restPercent()) })}
+          </span>
+        </Show>
+      </span>
+    </span>
+  );
+}
+
 /** The limit windows of one account: a bar, the amount left and the time to the reset of each. */
 export function AccountUsageWindowList(props: { windows: readonly AccountUsageWindowRow[]; now: number }) {
   const text = useText();
@@ -132,6 +199,9 @@ export function AccountUsageWindowList(props: { windows: readonly AccountUsageWi
             >
               {formatUsageResetIn(usageWindow.resetsAt, props.now, text)}
             </span>
+            <Show when={usageWindow.agents.length > 0}>
+              <AccountUsageAgentSplit agents={usageWindow.agents} window={usageWindow.label} />
+            </Show>
           </span>
         )}
       </For>

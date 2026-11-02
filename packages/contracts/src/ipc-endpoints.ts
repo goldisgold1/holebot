@@ -185,6 +185,7 @@ import type {
   PreviewWorkspaceFileInput,
   WorkspaceDirectory,
 } from "./ipc-attachments";
+import type { AutoCompactPreference } from "./ipc-auto-compact";
 import type { BitwardenConnectorStatus, BitwardenHostConnectInput } from "./ipc-bitwarden-connector";
 import type {
   BrowserBounds,
@@ -393,6 +394,7 @@ import type {
   SteerQueuedMessageInput,
   UpdateQueuedMessageInput,
 } from "./ipc-queue";
+import type { QuotaShare, QuotaShareInput } from "./ipc-quota-shares";
 import type {
   RemoteDesktopSetupAction,
   RemoteDesktopSetupStatus,
@@ -653,6 +655,8 @@ export const IPC_ENDPOINTS = {
     setBusyMessageModePreference: request<BusyMessageModePreference, BusyMessageModePreference>()(
       "app:set-busy-message-mode",
     ),
+    getAutoCompactPreference: request<undefined, AutoCompactPreference>()("app:get-auto-compact"),
+    setAutoCompactPreference: request<AutoCompactPreference, AutoCompactPreference>()("app:set-auto-compact"),
     getAgentDefaults: request<undefined, AgentDefaults>()("app:get-agent-defaults"),
     setAgentDefaults: request<AgentDefaults, AgentDefaults>()("app:set-agent-defaults"),
     getAgentMemoryLimitPreference: request<undefined, AgentMemoryLimitPreference>()("app:get-agent-memory-limit"),
@@ -1347,6 +1351,8 @@ export const IPC_ENDPOINTS = {
     getRuntimeSnapshot: scopedQuery<AgentRuntimeSnapshot | null>()("agent:get-runtime-snapshot"),
     getAnalytics: scopedRequest<AgentAnalyticsInput, AgentAnalytics | null, "required">()("agent:get-analytics"),
     getHostAnalytics: scopedRequest<HostAnalyticsInput, HostAnalytics | null, "required">()("host:get-analytics"),
+    /** HoleA.I: how each plan window's usage splits between the agents. A joined server answers null. */
+    getQuotaShares: scopedRequest<QuotaShareInput, QuotaShare[] | null, "required">()("host:get-quota-shares"),
     getUsage: scopedRequest<string | undefined, AccountUsage>()("agent:get-usage"),
     listModels: scopedQuery<ClientAgentModelOption[]>()("agent:list-models"),
     listAgents: scopedQuery<ClientAgentSummary[]>()("agent:list"),

@@ -1306,3 +1306,215 @@
 .header-usage-fill[data-usage-tone="critical"] {
   background: var(--openbot-danger);
 }
+
+/* HoleA.I: who used each plan window, under its meter. The thin bar is the used part of the limit,
+   one colour per agent; the chips name the largest with the points of the limit each one used. */
+.account-usage-popover {
+  width: min(340px, calc(100vw - var(--openbot-space-4)));
+}
+
+.account-usage-agents {
+  display: grid;
+  min-width: 0;
+  grid-column: 2 / -1;
+  gap: 6px;
+  margin-block: 1px var(--openbot-space-1);
+}
+
+.account-usage-agents-bar {
+  display: flex;
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--openbot-radius-pill);
+  background: color-mix(in srgb, var(--openbot-border) 60%, transparent);
+  gap: 1px;
+}
+
+.account-usage-agents-segment {
+  display: block;
+  height: 100%;
+  flex: none;
+}
+
+.account-usage-agents-list {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.account-usage-agent {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  color: var(--openbot-text-secondary);
+  font-size: var(--openbot-text-xs);
+  line-height: 16px;
+}
+
+.account-usage-agent .account-usage-agent-avatar {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.account-usage-agent-name {
+  max-width: 8.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-usage-agent-percent {
+  color: var(--openbot-text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--openbot-weight-semibold);
+}
+
+.account-usage-agent-more {
+  color: var(--openbot-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* HoleA.I: Usage page - each plan window as a card, its meter split by the agents that used it. */
+.usage-limits {
+  display: grid;
+  gap: var(--openbot-space-2);
+  margin-block-end: var(--openbot-space-4);
+}
+
+.usage-limits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--openbot-space-3);
+}
+
+.usage-limit-card {
+  --usage-limit-tone: var(--openbot-text-primary);
+
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  border: 1px solid var(--openbot-border);
+  border-radius: var(--openbot-radius-lg);
+  padding: var(--openbot-space-3) var(--openbot-space-4);
+  background: var(--openbot-bg-surface);
+  gap: var(--openbot-space-3);
+}
+
+.usage-limit-card[data-usage-tone="warning"] {
+  --usage-limit-tone: var(--openbot-warning);
+}
+
+.usage-limit-card[data-usage-tone="critical"] {
+  --usage-limit-tone: var(--openbot-danger);
+}
+
+.usage-limit-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--openbot-space-2);
+}
+
+.usage-limit-logo {
+  width: var(--openbot-icon-md);
+  height: var(--openbot-icon-md);
+  flex: none;
+  fill: var(--openbot-provider-current);
+}
+
+.usage-limit-name,
+.usage-limit-used {
+  display: grid;
+  min-width: 0;
+  font-size: var(--openbot-text-xs);
+  line-height: var(--openbot-leading-sm);
+}
+
+.usage-limit-name {
+  flex: 1;
+  color: var(--openbot-text-muted);
+}
+
+.usage-limit-name strong {
+  overflow: hidden;
+  color: var(--openbot-text-primary);
+  font-size: var(--openbot-text-sm);
+  font-weight: var(--openbot-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-limit-used {
+  justify-items: end;
+  color: var(--openbot-text-muted);
+  white-space: nowrap;
+}
+
+.usage-limit-used strong {
+  color: var(--usage-limit-tone);
+  font-size: var(--openbot-text-xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--openbot-weight-semibold);
+  line-height: 1.1;
+}
+
+.usage-limit-bar {
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--openbot-radius-pill);
+  background: color-mix(in srgb, var(--openbot-border) 70%, transparent);
+  gap: 2px;
+}
+
+.usage-limit-segment {
+  display: block;
+  height: 100%;
+  flex: none;
+}
+
+.usage-limit-agents {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: 6px;
+  list-style: none;
+}
+
+.usage-limit-agent {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  grid-template-columns: 20px minmax(0, 1fr) auto 3.5em;
+  gap: var(--openbot-space-2);
+  font-size: var(--openbot-text-sm);
+  line-height: 20px;
+}
+
+.usage-limit-agent .usage-limit-avatar {
+  width: 20px;
+  height: 20px;
+}
+
+.usage-limit-agent-name {
+  overflow: hidden;
+  color: var(--openbot-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-limit-agent-share {
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-limit-agent-percent {
+  color: var(--openbot-text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--openbot-weight-semibold);
+  text-align: right;
+}

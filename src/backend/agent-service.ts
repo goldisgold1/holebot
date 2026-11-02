@@ -71,6 +71,7 @@ import type {
   ProviderUsageResets,
   QueuedMessageReceipt,
   QueueSnapshot,
+  QuotaShareInput,
   RemoveMcpServerInput,
   ReorderQueueInput,
   ResetAgentSessionSettingInput,
@@ -109,6 +110,7 @@ import type {
 import {
   type AgentDefaults,
   type AgentModelChoice,
+  type AutoCompactThreshold,
   agentAutomationAllowed,
   agentBrowserProfile,
   agentNewChatAllowed,
@@ -338,6 +340,11 @@ export interface AgentServiceOptions {
    * default cap, which was the only cap before the setting existed.
    */
   agentMemoryLimit?: () => number;
+  /**
+   * The share of the context window at which a chat compacts on its own, or null for Off. The main
+   * process owns the preference. Omitted, 80%, the only threshold before the setting existed.
+   */
+  autoCompactThreshold?: () => AutoCompactThreshold;
   /**
    * The completed turns between two background memory reviews; `0` is off. The main process owns
    * the preference. Omitted, every 20 turns.
@@ -889,6 +896,7 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
     });
     this.#compaction = new ContextCompaction({
       timeoutMs: options.contextCompactionTimeoutMs,
+      threshold: options.autoCompactThreshold,
       changed: () => this.#emitRuntimeSnapshot(),
       store,
       providers: this.#providers,
@@ -1562,6 +1570,11 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
     return this.#store.database.usage.readHost(input);
   }
 
+  /** HoleA.I: how each plan window's usage splits between the agents. */
+  getQuotaShares(input: QuotaShareInput) {
+    return this.#store.database.usage.readQuotaShares(input);
+  }
+
   /** The provider-reported token counts of one turn by provider and model, for host analytics. */
   getTurnUsage(agentId: string, turnId: string, since: string) {
     return this.#store.database.usage.readTurn(agentId, turnId, since);
@@ -1758,6 +1771,11 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
   /** The developer instructions state the limit, so a new limit reloads every agent's threads. */
   memoryLimitChanged(): void {
     for (const agent of this.listAgents()) this.#conversation.unloadAgentThreads(agent.id);
+  }
+
+  /** The user changed when chats compact on their own. */
+  autoCompactThresholdChanged(): void {
+    this.#compaction.thresholdChanged();
   }
 
   createMemory(input: CreateAgentMemoryInput): AgentMemory {

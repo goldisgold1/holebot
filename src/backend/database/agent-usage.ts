@@ -13,6 +13,8 @@ import {
   type HostAnalyticsInput,
   parseAgentAnalyticsInput,
   parseHostAnalyticsInput,
+  type QuotaShare,
+  type QuotaShareInput,
   type UsageTokens,
 } from "@openbot/contracts/ipc";
 import type { DynamicRecord } from "@openbot/contracts/runtime-values";
@@ -268,6 +270,41 @@ export class AgentUsage {
       costUsd = costUsd === null || cost === null ? null : costUsd + cost;
     }
     return { tokens, costUsd };
+  }
+
+  /**
+   * HoleA.I: what each agent spent on a provider since each window started, for the plan meters. By
+   * estimated cost when the window has one, else by tokens; the two never mix in one window.
+   */
+  readQuotaShares(input: QuotaShareInput): QuotaShare[] {
+    const statement = this.#core.connection.prepare(
+      "SELECT agent_id, tokens_json, estimated_cost_usd FROM agent_usage_records WHERE occurred_at >= ? AND provider = ?",
+    );
+    return input.windows.map((window) => {
+      const cost = new Map<string, number>();
+      const tokens = new Map<string, number>();
+      for (const row of databaseRows(statement.all(window.since, window.provider))) {
+        const agentId = requiredStringColumn(row, "agent_id");
+        const counts = decodeUsageTokens(JSON.parse(requiredStringColumn(row, "tokens_json")));
+        let sum = 0;
+        for (const key of TOKEN_KEYS) sum += counts[key] ?? 0;
+        tokens.set(agentId, (tokens.get(agentId) ?? 0) + sum);
+        const rowCost = optionalNumberColumn(row, "estimated_cost_usd");
+        if (rowCost !== null) cost.set(agentId, (cost.get(agentId) ?? 0) + rowCost);
+      }
+      const costTotal = [...cost.values()].reduce((total, amount) => total + amount, 0);
+      const basis = costTotal > 0 ? "cost" : "tokens";
+      const amounts = basis === "cost" ? cost : tokens;
+      return {
+        ...window,
+        basis,
+        total: [...amounts.values()].reduce((total, amount) => total + amount, 0),
+        agents: [...amounts]
+          .filter(([, amount]) => amount > 0)
+          .map(([agentId, amount]) => ({ agentId, amount }))
+          .sort((left, right) => right.amount - left.amount || left.agentId.localeCompare(right.agentId)),
+      };
+    });
   }
 
   read(raw: AgentAnalyticsInput): AgentAnalytics {

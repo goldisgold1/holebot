@@ -35,6 +35,7 @@ import {
   parseGenerateAgentProfile,
   parseHostAnalyticsInput,
   parseLocalBrowserSecretResponse,
+  parseQuotaShareInput,
   parseResetAgentSessionSetting,
   parseSaveAgentProfile,
   parseSetAgentHiddenInput,
@@ -226,6 +227,10 @@ export function agentIpcHandlers({
           await runCauseEffect(remoteServers.refreshRuntimeSnapshots());
           return null;
         },
+      }),
+      getQuotaShares: scopedHandler(parseQuotaShareInput, {
+        local: (input) => service.getQuotaShares(input),
+        remote: () => null,
       }),
       getHostAnalytics: scopedHandler(parseHostAnalyticsInput, {
         local: (input) => service.getHostAnalytics(input),

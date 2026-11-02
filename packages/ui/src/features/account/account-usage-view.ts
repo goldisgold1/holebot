@@ -3,11 +3,13 @@ import {
   type AccountUsageLimit,
   type AccountUsageWindow,
   type AgentProviderId,
+  type AvatarHue,
   agentProviderDescriptor,
   agentProviderName,
   DEFAULT_PROVIDER_ACCOUNT_ID,
   isAgentProvider,
   type ProviderAccountStatus,
+  type QuotaShare,
 } from "@openbot/contracts/ipc";
 import {
   type PlanLimitTone,
@@ -31,6 +33,23 @@ export interface AccountUsageWindowRow {
   /** Unix seconds. */
   resetsAt: number | null;
   resetsAtLabel: string | null;
+  /** Unix seconds the window started, to the minute: the reset less the window's length. */
+  startsAt: number | null;
+  /** HoleA.I: what each agent spent of this window, largest first. Empty until the split is read. */
+  agents: AccountUsageAgentShare[];
+}
+
+/** HoleA.I: one agent's part of a plan window. */
+export interface AccountUsageAgentShare {
+  agentId: string;
+  name: string;
+  avatarSeed: string;
+  avatarHue: AvatarHue | null;
+  avatarUrl: string | null;
+  /** Its part of everything spent in the window, 0..1. */
+  usageShare: number;
+  /** The points of the meter it used: the window's used percent times its part. */
+  limitPercent: number;
 }
 
 export interface AccountUsageProviderRow {
@@ -124,6 +143,11 @@ function usageRow(
       tone: usageTone(remainingPercent),
       resetsAt: window.resetsAt,
       resetsAtLabel: formatUsageReset(window.resetsAt, text),
+      startsAt:
+        window.resetsAt !== null && window.windowDurationMins
+          ? Math.floor((window.resetsAt - window.windowDurationMins * 60) / 60) * 60
+          : null,
+      agents: [],
     };
   };
   const reported = limit ? reportedUsageWindows(limit) : [];
@@ -179,6 +203,68 @@ function usageRow(
     reportsUsage: agentProviderDescriptor(provider).reportsUsage,
     sharedQuotaWith: limit?.sharedQuotaWith ?? null,
   };
+}
+
+/** HoleA.I: the windows whose split by agent to read: one per window that knows when it started. */
+export function quotaShareWindows(rows: readonly AccountUsageProviderRow[]): { provider: string; since: string }[] {
+  const seen = new Set<string>();
+  const windows: { provider: string; since: string }[] = [];
+  for (const row of rows) {
+    // The records name the provider, not the account, so a provider with several accounts has no split.
+    if (row.accountId !== null || rows.some((other) => other !== row && other.provider === row.provider)) continue;
+    for (const window of row.windows) {
+      if (window.startsAt === null) continue;
+      const since = new Date(window.startsAt * 1_000).toISOString();
+      const key = `${row.provider}\u0000${since}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      windows.push({ provider: row.provider, since });
+    }
+  }
+  return windows;
+}
+
+/** HoleA.I: the rows with each window's split by agent filled in from a quota share reading. */
+export function withQuotaShares(
+  rows: readonly AccountUsageProviderRow[],
+  shares: readonly QuotaShare[],
+  agents: ReadonlyArray<{
+    id: string;
+    name: string;
+    avatarSeed: string;
+    avatarHue: AvatarHue | null;
+    avatarUrl: string | null;
+  }>,
+): AccountUsageProviderRow[] {
+  if (shares.length === 0) return [...rows];
+  const byWindow = new Map(shares.map((share) => [`${share.provider}\u0000${share.since}`, share]));
+  return rows.map((row) => ({
+    ...row,
+    windows: row.windows.map((window) => {
+      const share =
+        window.startsAt === null
+          ? undefined
+          : byWindow.get(`${row.provider}\u0000${new Date(window.startsAt * 1_000).toISOString()}`);
+      if (!share || share.total <= 0) return window;
+      const used = 100 - window.remainingPercent;
+      return {
+        ...window,
+        agents: share.agents.map((part) => {
+          const agent = agents.find((candidate) => candidate.id === part.agentId);
+          const usageShare = part.amount / share.total;
+          return {
+            agentId: part.agentId,
+            name: agent?.name ?? part.agentId,
+            avatarSeed: agent?.avatarSeed ?? part.agentId,
+            avatarHue: agent?.avatarHue ?? null,
+            avatarUrl: agent?.avatarUrl ?? null,
+            usageShare,
+            limitPercent: used * usageShare,
+          };
+        }),
+      };
+    }),
+  }));
 }
 
 export function usageWindowLabel(durationMins: number | null, text: UsageText = currentText()): string {
