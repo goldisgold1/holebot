@@ -314,7 +314,40 @@ function GeneratedAvatar(props: {
     const group = element?.closest<HTMLElement>(`${HOVER_GROUP}, [tabindex]`);
     const interactionTarget = group?.matches(HOVER_GROUP) ? group : element;
     const startInteraction = () => setInteracting(true);
-    const stopInteraction = () => setInteracting(false);
+    const stopInteraction = () => {
+      setInteracting(false);
+      lookAt(null);
+    };
+    // HoleA.I: while the pointer is near, the eyes look toward it (half strength, so they never leave the
+    // face), and a press pokes the face into a quick spin. The values ride as CSS custom properties, so a
+    // pointer move restyles one element and renders nothing.
+    const lookAt = (pointer: { x: number; y: number } | null) => {
+      if (!element) return;
+      if (!pointer) {
+        element.removeAttribute("data-looking");
+        return;
+      }
+      const box = element.getBoundingClientRect();
+      const dx = pointer.x - (box.left + box.width / 2);
+      const dy = pointer.y - (box.top + box.height / 2);
+      const reach = Math.max(box.width * 0.75, Math.hypot(dx, dy));
+      element.style.setProperty("--face-look-x", (dx / reach).toFixed(3));
+      element.style.setProperty("--face-look-y", (dy / reach).toFixed(3));
+      element.setAttribute("data-looking", "");
+    };
+    const followPointer = (event: Event) => {
+      if (event instanceof PointerEvent) lookAt({ x: event.clientX, y: event.clientY });
+    };
+    let pokeTimer: ReturnType<typeof setTimeout> | undefined;
+    const poke = () => {
+      if (!element || reducedMotion()) return;
+      element.removeAttribute("data-poked");
+      void element.offsetWidth;
+      element.setAttribute("data-poked", "");
+      clearTimeout(pokeTimer);
+      pokeTimer = setTimeout(() => element?.removeAttribute("data-poked"), 700);
+    };
+    const pointerScope: HTMLElement | Window | undefined = props.followPointer ? window : interactionTarget;
     // Only keyboard focus starts the avatar. A click leaves the focus on the button it lands on, such as
     // the sidebar row of the open channel, and the window gives that button `focusin` again each time it
     // comes back to the front. No pointer is there to leave, so the avatar moved until the next click.
@@ -328,6 +361,8 @@ function GeneratedAvatar(props: {
     };
     interactionTarget?.addEventListener("pointerenter", startInteraction);
     interactionTarget?.addEventListener("pointerleave", stopInteraction);
+    pointerScope?.addEventListener("pointermove", followPointer, { passive: true });
+    interactionTarget?.addEventListener("pointerdown", poke);
     interactionTarget?.addEventListener("focusin", startFocusInteraction);
     interactionTarget?.addEventListener("focusout", stopFocusInteraction);
 
@@ -345,6 +380,9 @@ function GeneratedAvatar(props: {
       media?.removeEventListener?.("change", syncReducedMotion);
       interactionTarget?.removeEventListener("pointerenter", startInteraction);
       interactionTarget?.removeEventListener("pointerleave", stopInteraction);
+      pointerScope?.removeEventListener("pointermove", followPointer);
+      interactionTarget?.removeEventListener("pointerdown", poke);
+      clearTimeout(pokeTimer);
       interactionTarget?.removeEventListener("focusin", startFocusInteraction);
       interactionTarget?.removeEventListener("focusout", stopFocusInteraction);
     };

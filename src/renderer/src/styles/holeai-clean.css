@@ -304,6 +304,27 @@
   animation-delay: var(--cute-face-delay, 0s);
 }
 
+/* The pointer is near: the eyes look at it instead of glancing about, and the body leans the same way. */
+.agent-avatar[data-looking] .cute-face .cute-face-eyes {
+  translate: calc(var(--face-look-x, 0) * 7px) calc(var(--face-look-y, 0) * 6px);
+  animation: cute-face-blink 3.2s ease-in-out infinite;
+  transition: translate var(--openbot-duration-fast) ease-out;
+}
+
+.agent-avatar[data-looking] .cute-face .cute-face-bob {
+  translate: calc(var(--face-look-x, 0) * 2px) calc(var(--face-look-y, 0) * 1.5px);
+  rotate: calc(var(--face-look-x, 0) * 4deg);
+  animation: none;
+  transition:
+    translate var(--openbot-duration-fast) ease-out,
+    rotate var(--openbot-duration-fast) ease-out;
+}
+
+/* A press pokes the face: a squish and a quick spin, then back to what it was doing. */
+.agent-avatar[data-poked] .cute-face .cute-face-bob {
+  animation: cute-face-poke 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) 1;
+}
+
 /* Thinking: the same glances, faster, while the face wanders around its spot. Replaces the orbit rings. */
 .cute-face:is([data-mood="working"], [data-mood="connecting"]) .cute-face-bob {
   animation: cute-face-wander 2.4s ease-in-out infinite;
@@ -407,6 +428,23 @@
   75% {
     translate: 4px -3px;
     rotate: 6deg;
+  }
+}
+
+@keyframes cute-face-poke {
+  0% {
+    scale: 1 1;
+    rotate: 0deg;
+  }
+
+  20% {
+    scale: 1.12 0.86;
+    rotate: 0deg;
+  }
+
+  100% {
+    scale: 1 1;
+    rotate: 360deg;
   }
 }
 
