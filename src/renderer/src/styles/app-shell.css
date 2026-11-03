@@ -3470,9 +3470,73 @@ textarea {
 
 /* HoleA.I: the Reel Factories row under the pinned chats opens the hole.fm Reels Factory board. */
 .reel-factories-avatar {
+  position: relative;
+  overflow: hidden;
   border-radius: var(--openbot-radius-md);
   background: linear-gradient(135deg, var(--openbot-file-orange), var(--openbot-beam-pink));
   color: var(--openbot-action-foreground);
+}
+
+/* While a Reel is in production the factory runs: its belt rolls, its glow breathes, its chimney puffs. */
+.reel-factories-belt {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  left: 3px;
+  height: 3px;
+  border-radius: var(--openbot-radius-pill);
+  background: repeating-linear-gradient(90deg, var(--openbot-action-foreground) 0 4px, transparent 4px 7px);
+  background-size: 14px 100%;
+  opacity: 0;
+}
+
+.reel-factories-row[data-producing] .reel-factories-avatar {
+  animation: reel-factories-glow 2s ease-in-out infinite;
+}
+
+.reel-factories-row[data-producing] .reel-factories-avatar svg {
+  animation: reel-factories-puff 1.2s ease-in-out infinite;
+}
+
+.reel-factories-row[data-producing] .reel-factories-belt {
+  opacity: 0.85;
+  animation: reel-factories-roll 0.6s linear infinite;
+}
+
+.reel-factories-row[data-producing] .agent-row-preview {
+  color: var(--openbot-beam-pink);
+}
+
+@keyframes reel-factories-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--openbot-beam-pink) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--openbot-beam-pink) 70%, transparent);
+  }
+}
+
+@keyframes reel-factories-puff {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes reel-factories-roll {
+  to {
+    background-position: 14px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-factories-row[data-producing] :is(.reel-factories-avatar, .reel-factories-avatar svg, .reel-factories-belt) {
+    animation: none;
+  }
 }
 
 /* HoleA.I: agents another agent spawned hang under that agent's row on a glowing branch. */
@@ -3544,9 +3608,109 @@ textarea {
   }
 }
 
+/* HoleA.I: a spawned worker's editing strip. Frames roll under a playhead and a cut flashes while it
+ * works; idle, the strip holds still and dims. */
+.spawned-edit-strip {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  height: 14px;
+  margin-top: 4px;
+  border: 1px solid var(--openbot-border);
+  border-radius: var(--openbot-radius-sm);
+  opacity: 0.45;
+}
+
+.spawned-edit-strip[data-working] {
+  border-color: var(--openbot-beam-pink);
+  opacity: 1;
+}
+
+.spawned-edit-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  gap: 2px;
+  padding: 2px;
+}
+
+.spawned-edit-frame {
+  flex: 1;
+  border-radius: var(--openbot-radius-sm);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--openbot-file-orange) calc(30% + var(--frame) * 8%), transparent),
+    color-mix(in srgb, var(--openbot-beam-pink) calc(70% - var(--frame) * 6%), transparent)
+  );
+}
+
+.spawned-edit-playhead,
+.spawned-edit-cut {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: var(--openbot-radius-pill);
+  content: "";
+}
+
+.spawned-edit-playhead {
+  left: 30%;
+  background: var(--openbot-action-foreground);
+  box-shadow: 0 0 6px var(--openbot-beam-pink);
+}
+
+.spawned-edit-cut {
+  left: 62%;
+  background: var(--openbot-file-orange);
+  opacity: 0;
+}
+
+.spawned-edit-strip[data-working] .spawned-edit-track {
+  animation: spawned-edit-roll 3.2s linear infinite;
+}
+
+.spawned-edit-strip[data-working] .spawned-edit-playhead {
+  animation: spawned-edit-scrub 1.6s ease-in-out infinite alternate;
+}
+
+.spawned-edit-strip[data-working] .spawned-edit-cut {
+  animation: spawned-edit-cut 1.6s steps(1, end) infinite;
+}
+
+@keyframes spawned-edit-roll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes spawned-edit-scrub {
+  from {
+    left: 6%;
+  }
+  to {
+    left: 92%;
+  }
+}
+
+@keyframes spawned-edit-cut {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  71%,
+  100% {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sidebar-spawned-agents::after {
     display: none;
+  }
+
+  .spawned-edit-strip[data-working] :is(.spawned-edit-track, .spawned-edit-playhead, .spawned-edit-cut) {
+    animation: none;
   }
 }
 

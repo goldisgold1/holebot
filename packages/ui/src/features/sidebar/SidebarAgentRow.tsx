@@ -8,9 +8,12 @@
  * and shows when the user hid it in place of the last message.
  */
 
+/** HoleA.I: the frames of a spawned worker's editing strip. */
+const EDIT_STRIP_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7];
+
 import { AppWindow, Badge, buttonVariants, Clock3, ContextMenu, Lock } from "@openbot/ui";
 import type { JSX } from "@solidjs/web";
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
@@ -23,9 +26,14 @@ import { useSidebarScope } from "./sidebar-scope";
 /**
  * `waiting` is set by the "Needs you" group. The row reads it rather than the agent's state, because
  * the group holds its members still during a drag while the state moves on. `userHidden` is set by
- * the "Hidden" group.
+ * the "Hidden" group. `spawned` is set under the agent that spawned it, and draws its editing strip.
  */
-export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boolean; userHidden?: boolean }) {
+export function SidebarAgentRow(rowProps: {
+  agent: AgentProfile;
+  waiting?: boolean;
+  userHidden?: boolean;
+  spawned?: boolean;
+}) {
   const {
     dragOffset,
     draggedChatId,
@@ -158,6 +166,22 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
             </Show>
           </span>
           <span class="agent-row-preview">{detail()}</span>
+          {/* HoleA.I: a spawned worker cuts its Reel on a little timeline; it plays while the worker works. */}
+          <Show when={rowProps.spawned}>
+            <span
+              class="spawned-edit-strip"
+              data-working={state()?.kind === "working" ? "" : undefined}
+              aria-hidden="true"
+            >
+              <span class="spawned-edit-track">
+                <For each={[...EDIT_STRIP_FRAMES, ...EDIT_STRIP_FRAMES]}>
+                  {(frame) => <span class="spawned-edit-frame" style={`--frame: ${frame};`} />}
+                </For>
+              </span>
+              <span class="spawned-edit-cut" />
+              <span class="spawned-edit-playhead" />
+            </span>
+          </Show>
         </span>
         <Show when={state()}>
           {(state) => <span class="sr-only">{sidebarAgentStateLabel(state(), t, format)}</span>}

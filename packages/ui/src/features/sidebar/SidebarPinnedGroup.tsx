@@ -35,6 +35,11 @@ export function SidebarPinnedGroup() {
     stopSidebarDragging,
   } = useSidebarScope();
   const { t, format } = useText();
+  // HoleA.I: a Reel is in production while any Reel Worker works, and the Reel Factories row runs.
+  const reelsWorking = () =>
+    props.agents.filter(
+      (agent) => /^reel worker\b/i.test(agent.name.trim()) && props.agentStates[agent.id]?.kind === "working",
+    ).length;
   const chatName = (chat: SidebarChatItem) => (chat.kind === "agent" ? chat.agent.name : chat.channel.name);
   const chatIsActive = (chat: SidebarChatItem) =>
     chat.kind === "agent" ? props.activeAgentId === chat.id : props.activeChannelId === chat.id;
@@ -206,18 +211,24 @@ export function SidebarPinnedGroup() {
             <Button
               variant="ghost"
               class="agent-row reel-factories-row"
+              data-producing={reelsWorking() > 0 ? "" : undefined}
               aria-label={t("sidebar.reelFactories.label")}
               title={t("sidebar.reelFactories.hint")}
               onClick={() => open()()}
             >
               <span class="agent-row-avatar reel-factories-avatar" aria-hidden="true">
                 <Factory class="size-5" />
+                <span class="reel-factories-belt" />
               </span>
               <span class="agent-row-copy">
                 <span class="agent-row-heading">
                   <span class="agent-row-title">{t("sidebar.reelFactories.title")}</span>
                 </span>
-                <span class="agent-row-preview">{t("sidebar.reelFactories.preview")}</span>
+                <span class="agent-row-preview">
+                  {reelsWorking() > 0
+                    ? t("sidebar.reelFactories.producing", { count: reelsWorking() })
+                    : t("sidebar.reelFactories.preview")}
+                </span>
               </span>
             </Button>
           )}

@@ -8,6 +8,7 @@ export const messages = defineMessages("sidebar", {
   "sidebar.spawned.label": "Agents that {name} spawned",
   "sidebar.reelFactories.title": "Reel Factories",
   "sidebar.reelFactories.preview": "Live board of every Reel job",
+  "sidebar.reelFactories.producing": { one: "{count} Reel in production", other: "{count} Reels in production" },
   "sidebar.reelFactories.label": "Reel Factories, open the Reels Factory board",
   "sidebar.reelFactories.hint": "Open the Reels Factory board",
   "sidebar.reelFactories.reload": "Reload",
