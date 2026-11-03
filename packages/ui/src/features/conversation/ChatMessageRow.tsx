@@ -108,11 +108,31 @@ export interface ChatMessageRowProps {
  * that from happening a third time. It reads no context and no store: what a caller knows about a
  * conversation arrives as a prop.
  */
+// HoleA.I (Vincent, Nov 3 2026): as in the bot app, a message of one or two emoji and nothing else shows
+// them large without a bubble.
+const EMOJI_ONLY_MAX = 2;
+const emojiSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+const EMOJI_GRAPHEME = /^(\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
+
+export function isEmojiOnlyMessage(message: AgentMessage) {
+  if (message.attachments?.length || message.voiceRecording || message.replyToMessageId) return false;
+  const text = message.body.trim();
+  if (!text || text.length > 32) return false;
+  let count = 0;
+  for (const { segment } of emojiSegmenter.segment(text.replace(/\s+/g, ""))) {
+    if (!EMOJI_GRAPHEME.test(segment)) return false;
+    count += 1;
+    if (count > EMOJI_ONLY_MAX) return false;
+  }
+  return count > 0;
+}
+
 export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
   const { t } = useText();
   const own = () => props.author.kind === "you";
   const member = () => props.author.kind === "member";
   const person = () => own() || member();
+  const emojiOnly = () => props.message.streaming !== true && isEmojiOnlyMessage(props.message);
   // A memo, because `Bubble` reads the variant more than once and it splits the whole body.
   const variant = createMemo(() => conversationBubbleVariant(props.message));
   const seed = () => props.author.agent?.avatarSeed ?? props.author.avatarSeed;
@@ -231,6 +251,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             variant={variant()}
             data-author={person() ? "user" : "assistant"}
             data-streaming={props.message.streaming === true ? "" : undefined}
+            data-emoji-only={emojiOnly() ? "" : undefined}
           >
             <BubbleContent>
               <MessageBody

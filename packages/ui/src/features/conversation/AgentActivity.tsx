@@ -1,10 +1,12 @@
 import type { AppTextKey } from "@openbot/i18n";
 import type { JSX } from "@solidjs/web";
-import { createEffect, createMemo, createSignal, createUniqueId, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, createUniqueId, onCleanup, Show } from "solid-js";
 import { Button } from "../../button";
 import type { AgentProfile } from "../../data";
 import { ChevronDown } from "../../icons";
 import { useText } from "../../text";
+import { AgentAvatar } from "../agents/AgentAvatar";
+import { activityBotState } from "../agents/bot-mark/activity-state";
 import { ThinkingMark } from "../agents/ThinkingMark";
 import { type AgentStep, AgentStepList } from "./AgentSteps";
 
@@ -15,30 +17,30 @@ import { type AgentStep, AgentStepList } from "./AgentSteps";
 export const AGENT_ACTIVITY_LABELS = [
   "Working on it…",
   "Thinking it through…",
-  "Connecting the dots…",
-  "Checking the details…",
-  "Putting the answer together…",
-  "Making sense of it…",
-  "One step at a time…",
-  "Tiny gears are turning…",
+  "Mulling it over…",
+  "Putting it together…",
+  "Getting it done…",
+  "Making progress…",
+  "Handling it…",
+  "Chipping away…",
   "Consulting the inner council…",
   "Cooking up something useful…",
 ] as const;
 
-const FACTUAL_ACTIVITY_LABELS = AGENT_ACTIVITY_LABELS.slice(0, 7);
-const PLAYFUL_ACTIVITY_LABELS = AGENT_ACTIVITY_LABELS.slice(7);
+// HoleA.I (from Vincent's bot app): the plain working phrases only; the last two are kept for old callers.
+const FACTUAL_ACTIVITY_LABELS = AGENT_ACTIVITY_LABELS.slice(0, 8);
 
 export type AgentActivityLabel = (typeof AGENT_ACTIVITY_LABELS)[number];
 
 const AGENT_ACTIVITY_LABEL_KEYS = {
   "Working on it…": "chat.activity.workingOnIt",
   "Thinking it through…": "chat.activity.thinking",
-  "Connecting the dots…": "chat.activity.connectingDots",
-  "Checking the details…": "chat.activity.checkingDetails",
-  "Putting the answer together…": "chat.activity.puttingTogether",
-  "Making sense of it…": "chat.activity.makingSense",
-  "One step at a time…": "chat.activity.oneStep",
-  "Tiny gears are turning…": "chat.activity.tinyGears",
+  "Mulling it over…": "chat.activity.connectingDots",
+  "Putting it together…": "chat.activity.checkingDetails",
+  "Getting it done…": "chat.activity.puttingTogether",
+  "Making progress…": "chat.activity.makingSense",
+  "Handling it…": "chat.activity.oneStep",
+  "Chipping away…": "chat.activity.tinyGears",
   "Consulting the inner council…": "chat.activity.innerCouncil",
   "Cooking up something useful…": "chat.activity.cookingUp",
 } as const satisfies Record<AgentActivityLabel, AppTextKey>;
@@ -67,7 +69,54 @@ export function nextAgentActivityLabel(
  * A step shorter than this shows no time. Most steps end sooner, and a counter that appears and
  * goes away at once is only noise.
  */
-const ELAPSED_VISIBLE_AFTER_MS = 5_000;
+const ELAPSED_VISIBLE_AFTER_MS = 60_000;
+
+/**
+ * HoleA.I (from Vincent's bot app): a line stays up at least this long, and the next one fades in, so a run of
+ * quick steps reads as steps instead of a flicker.
+ */
+const LABEL_MIN_HOLD_MS = 1_200;
+const LABEL_ROLL_MS = 300;
+const LABEL_ROLL_EASE = "cubic-bezier(0.165, 0.84, 0.44, 1)";
+
+function createHeldLabel(label: () => string): {
+  shown: () => string;
+  ref: (element: HTMLElement) => void;
+} {
+  const [shown, setShown] = createSignal(label());
+  let element: HTMLElement | undefined;
+  let since = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const swap = (next: string) => {
+    since = Date.now();
+    setShown(next);
+    if (element && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      // The new line rolls up from below by its own height, as the old one leaves.
+      const rise = element.offsetHeight + 6;
+      element.animate(
+        [
+          { opacity: 0, transform: `translateY(${rise}px)` },
+          { opacity: 1, transform: "none" },
+        ],
+        { duration: LABEL_ROLL_MS, easing: LABEL_ROLL_EASE },
+      );
+    }
+  };
+  createEffect(label, (next) => {
+    clearTimeout(timer);
+    if (next === shown()) return;
+    const wait = LABEL_MIN_HOLD_MS - (Date.now() - since);
+    if (wait <= 0) swap(next);
+    else timer = setTimeout(() => swap(next), wait);
+  });
+  onCleanup(() => clearTimeout(timer));
+  return {
+    shown,
+    ref: (next) => {
+      element = next;
+    },
+  };
+}
 
 export function AgentActivityIndicator(props: {
   agent: AgentProfile | undefined;
@@ -104,15 +153,20 @@ export function AgentActivityIndicator(props: {
       : t("chat.activity.status", { name, label: label() });
   };
   const waiting = () => (props.waitingFor ? "true" : undefined);
+  const held = createHeldLabel(label);
+  // The face moves for the step the agent is on: searching, reading, running commands, generating...
+  const faceState = () => (props.waitingFor ? "waiting" : activityBotState(props.detail));
   const elapsedMs = createElapsed(() => (props.phase === "exiting" ? undefined : props.since));
+  // HoleA.I (from Vincent's bot app): a calm clock that appears after a minute and counts whole minutes.
   const elapsed = createMemo(() => {
     const ms = elapsedMs();
     if (ms < ELAPSED_VISIBLE_AFTER_MS) return null;
-    const total = Math.floor(ms / 1_000);
-    const seconds = format.number(total % 60, { style: "unit", unit: "second", unitDisplay: "narrow" });
-    if (total < 60) return seconds;
-    const minutes = format.number(Math.floor(total / 60), { style: "unit", unit: "minute", unitDisplay: "narrow" });
-    return `${minutes} ${seconds}`;
+    const minutes = Math.floor(ms / 60_000);
+    const hours = Math.floor(minutes / 60);
+    const unit = (value: number, kind: "minute" | "hour") =>
+      format.number(value, { style: "unit", unit: kind, unitDisplay: "narrow" });
+    if (hours === 0) return unit(minutes, "minute");
+    return minutes % 60 === 0 ? unit(hours, "hour") : `${unit(hours, "hour")} ${unit(minutes % 60, "minute")}`;
   });
   return (
     <div class="agent-activity-entry" data-state={props.phase ?? "active"} data-waiting={waiting()}>
@@ -122,8 +176,15 @@ export function AgentActivityIndicator(props: {
         stepsOpenByDefault={props.stepsOpenByDefault}
         live={props.phase !== "exiting"}
       >
-        <ThinkingMark class="agent-activity-mark" still={Boolean(props.waitingFor)} />
-        <span class="agent-activity-label">{label()}</span>
+        <Show
+          when={props.agent}
+          fallback={<ThinkingMark class="agent-activity-mark" still={Boolean(props.waitingFor)} />}
+        >
+          {(agent) => <AgentAvatar agent={agent()} mood="working" state={faceState()} class="agent-activity-mark" />}
+        </Show>
+        <span class="agent-activity-label" ref={held.ref}>
+          {held.shown()}
+        </span>
         <Show when={elapsed()}>{(time) => <span class="agent-activity-elapsed">{time()}</span>}</Show>
       </AgentActivityBody>
     </div>
@@ -191,7 +252,7 @@ function createElapsed(since: () => number | undefined) {
     (from) => {
       if (from === undefined) return;
       setNow(Date.now());
-      const clock = window.setInterval(() => setNow(Date.now()), 1_000);
+      const clock = window.setInterval(() => setNow(Date.now()), 15_000);
       return () => window.clearInterval(clock);
     },
   );
@@ -211,7 +272,5 @@ function pickDifferent<T>(items: readonly T[], previous: T | undefined, random: 
 }
 
 function pickActivityLabel(previous: AgentActivityLabel | undefined, random: () => number): AgentActivityLabel {
-  const tone = random();
-  const pool = Number.isFinite(tone) && tone >= 0.7 ? PLAYFUL_ACTIVITY_LABELS : FACTUAL_ACTIVITY_LABELS;
-  return pickDifferent(pool, previous, random);
+  return pickDifferent(FACTUAL_ACTIVITY_LABELS, previous, random);
 }

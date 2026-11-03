@@ -1,6 +1,5 @@
-/* Keep the working faces in one stack at the message avatars' left edge. The face itself takes the
-   agent chat's size and optical offset, so the two indicators only differ in how many faces they
-   hold. */
+/* Keep the faces at the message avatars' left edge: one working face that passes from worker to
+   worker, then the members who are only reading. */
 .agent-activity-content.channel-activity-content {
   padding-left: var(--openbot-space-0-5);
 }
@@ -10,8 +9,97 @@
   flex: 0 0 auto;
   align-items: center;
 }
-.channel-activity-faces .agent-activity-avatar + .agent-activity-avatar {
-  margin-left: calc(-1 * var(--openbot-space-2));
+.channel-activity-faces .agent-activity-avatar.channel-activity-face {
+  --agent-avatar-optical-offset: -1px;
+
+  width: 22px;
+  height: 22px;
+}
+
+/* The readers: 18px faces one 22px step apart, the newest on top. The cluster is as wide as the
+   seated faces, so a departing face shrinks in place without moving the names. */
+.channel-activity-readers {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(18px + (var(--channel-activity-readers, 1) - 1) * 22px);
+  height: 18px;
+  margin-left: var(--openbot-space-2);
+}
+.channel-activity-readers[data-reading-count="0"] {
+  width: 0;
+  margin-left: 0;
+}
+.channel-activity-reader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--channel-activity-reader-z, 1);
+  display: flex;
+  width: 18px;
+  height: 18px;
+  transform: translateX(var(--channel-activity-reader-x, 0));
+}
+.channel-activity-reader-disc {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  animation: channel-activity-reader-arrive var(--openbot-duration-island-content) cubic-bezier(0.34, 1.56, 0.64, 1)
+    var(--channel-activity-reader-delay, 0ms) both;
+}
+.channel-activity-reader[data-departing="true"] .channel-activity-reader-disc {
+  animation: channel-activity-reader-depart var(--openbot-duration-normal) ease-out 0s both;
+}
+.channel-activity-reader-breath {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  animation: channel-activity-reader-breathe 2.4s ease-in-out var(--channel-activity-reader-breath-delay, 0ms) infinite;
+}
+.channel-activity-reader[data-departing="true"] .channel-activity-reader-breath {
+  animation: none;
+}
+.channel-activity-reader-face {
+  width: 18px;
+  height: 18px;
+}
+
+@keyframes channel-activity-reader-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes channel-activity-reader-depart {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes channel-activity-reader-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .channel-activity-reader-disc,
+  .channel-activity-reader-breath {
+    animation: none;
+  }
 }
 
 /* Who works, before what the work is. The working rings reach about 10px past a face, so the names

@@ -7,7 +7,7 @@ import { createEffect, createMemo, createSignal, createUniqueId, For, onCleanup,
 import { type AvatarMotion, avatarHeadColor, type SupportedAvatarSilhouetteId } from "../../bloub-avatar";
 import type { AgentProfile } from "../../data";
 import { BotMarkFace } from "./BotMarkFace";
-import type { BotMarkHandle } from "./bot-mark/engine";
+import type { BotMarkHandle, BotMarkState } from "./bot-mark/engine";
 
 // Cap avatar animation at 30fps: uncapped bloub clocks measured 30% renderer / 24% GPU
 // for two visible avatars. The shape is 24-40px, so the eye cannot see the difference.
@@ -77,6 +77,8 @@ interface AgentAvatarProps {
    * so use it only where few avatars show. A photo avatar and reduced motion ignore it.
    */
   followPointer?: boolean;
+  /** A bot-mark state that overrides the mood's, such as the step a working agent is on. */
+  state?: BotMarkState | undefined;
   class?: string;
   style?: Record<string, string>;
 }
@@ -130,6 +132,7 @@ export function AgentAvatar(props: AgentAvatarProps) {
           animationOffset={props.animationOffset}
           shape={props.shape}
           followPointer={props.followPointer === true}
+          state={props.state}
           breathe={breathe()}
           class={className()}
           style={style()}
@@ -294,6 +297,7 @@ function GeneratedAvatar(props: {
   animationOffset?: number | undefined;
   shape?: SupportedAvatarSilhouetteId | undefined;
   followPointer: boolean;
+  state?: BotMarkState | undefined;
   breathe?: string | undefined;
   class: string;
   style?: Record<string, string>;
@@ -418,6 +422,7 @@ function GeneratedAvatar(props: {
           mood={props.mood}
           playing={animated()}
           followPointer={props.followPointer}
+          state={props.state}
           handle={(handle) => {
             mark = handle;
           }}

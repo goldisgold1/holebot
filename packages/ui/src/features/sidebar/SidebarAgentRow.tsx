@@ -71,6 +71,8 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
     return named === "reel" && !isSpawnedReelWorker(rowProps.agent) ? "general" : named;
   };
   const working = () => state()?.kind === "working";
+  // As in the bot app, a working row says what the agent is doing now in place of the last message.
+  const liveStep = () => (working() ? props.agentActivity?.[rowProps.agent.id]?.trim() || undefined : undefined);
   const reels = () => (role() === "reel" ? reelWorkerReels(rowProps.agent.name, props.reelFactoryLive) : []);
   const limit = () => {
     const current = state();
@@ -168,7 +170,14 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
             </Show>
           </span>
           {/* HoleA.I: while it works, the row plays its job where the chat preview was. */}
-          <Show when={working() && hasWorkStrip(role())} fallback={<span class="agent-row-preview">{detail()}</span>}>
+          <Show
+            when={working() && hasWorkStrip(role())}
+            fallback={
+              <Show when={liveStep()} fallback={<span class="agent-row-preview">{detail()}</span>}>
+                {(step) => <span class="agent-row-preview agent-row-live-step">{step()}</span>}
+              </Show>
+            }
+          >
             <WorkStrip role={role()} />
           </Show>
           <Show when={reels().length > 0}>

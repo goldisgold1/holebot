@@ -3,6 +3,11 @@ import { defineMessages } from "../../message";
 export const messages = defineMessages("channel", {
   "channel.activity.one": "{name} is working",
   "channel.activity.many": "{names} and {last} are working",
+  "channel.activity.others": {
+    one: "{names} and {count} other are working",
+    other: "{names} and {count} others are working",
+  },
+  "channel.activity.othersCount": { one: "{count} other", other: "{count} others" },
   "channel.activity.status": "{sentence}: {label}",
   "channel.stoppedTask.label": "Stopped task for {name}",
   "channel.stoppedTask.reassignLabel": "Reassign the stopped task of {name}",

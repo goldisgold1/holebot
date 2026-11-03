@@ -71,6 +71,7 @@
     "./features/account/otp-input.css": "./src/features/account/otp-input.css",
     "./features/account/account-usage-view": "./src/features/account/account-usage-view.ts",
     "./features/agents/AgentAvatar": "./src/features/agents/AgentAvatar.tsx",
+    "./features/agents/bot-mark/settle-pose": "./src/features/agents/bot-mark/settle-pose.ts",
     "./features/agents/AgentDeleteUndoToast": "./src/features/agents/AgentDeleteUndoToast.tsx",
     "./features/agents/AgentTemplateInstallDialog": "./src/features/agents/AgentTemplateInstallDialog.tsx",
     "./features/agents/FirstAgentSetup": "./src/features/agents/FirstAgentSetup.tsx",

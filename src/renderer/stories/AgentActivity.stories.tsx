@@ -15,14 +15,14 @@ type IndicatorStory = StoryObj<typeof indicatorMeta>;
 export const Working: IndicatorStory = {
   args: {
     agent: STORY_AGENTS[0],
-    label: "Connecting the dots…",
+    label: "Mulling it over…",
   },
 };
 
 export const Playful: IndicatorStory = {
   args: {
     agent: STORY_AGENTS[1],
-    label: "Tiny gears are turning…",
+    label: "Chipping away…",
   },
 };
 
@@ -40,7 +40,7 @@ export const LongStep: IndicatorStory = {
 export const WaitingForProvider: IndicatorStory = {
   args: {
     agent: STORY_AGENTS[0],
-    label: "Connecting the dots…",
+    label: "Mulling it over…",
     since: Date.now() - 377_000,
     waitingFor: "Grok",
   },
@@ -55,7 +55,7 @@ const CUSTOM_AVATAR =
 export const CustomImage: IndicatorStory = {
   args: {
     agent: { ...STORY_AGENTS[0], avatarUrl: CUSTOM_AVATAR },
-    label: "Connecting the dots…",
+    label: "Mulling it over…",
   },
 };
 
@@ -66,7 +66,7 @@ export const CustomImage: IndicatorStory = {
 export const CustomImageUnavailable: IndicatorStory = {
   args: {
     agent: { ...STORY_AGENTS[0], avatarUrl: "openbot-avatar://agent/chief?v=missing" },
-    label: "Connecting the dots…",
+    label: "Mulling it over…",
   },
 };
 

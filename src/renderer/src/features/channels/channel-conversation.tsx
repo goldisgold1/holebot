@@ -253,6 +253,17 @@ export function createChannelConversation(env: ChannelConversationEnvironment) {
         ? channelWorkers(current, channels.agents(), t("chat.activity.agentFallback"), env.hiddenAgentIds())
         : [];
     },
+    readers: () => {
+      const current = page();
+      if (!current) return [];
+      const working = new Set(source.workers().map((worker) => worker.id));
+      const hidden = env.hiddenAgentIds();
+      return current.channel.members.flatMap(({ agentId }) => {
+        const agent = channels.agents().find((candidate) => candidate.id === agentId);
+        if (!agent || working.has(agentId) || hidden.has(agentId)) return [];
+        return [{ id: agentId, name: agent.name, agent }];
+      });
+    },
     workingTurns,
     interactionAgentName: () => {
       const agentId = approval()?.agentId ?? browserTakeover()?.agentId ?? prompt()?.agentId;

@@ -1,6 +1,16 @@
 import type { AgentEvent, ClientAgentSummary } from "@openbot/contracts/ipc";
-import { TASK_SOUND_CHOICES, type TaskSoundChoice } from "@openbot/ui/features/settings/app-settings";
+import {
+  BOT_APP_SOUNDS,
+  type BotAppSound,
+  TASK_SOUND_CHOICES,
+  type TaskSoundChoice,
+} from "@openbot/ui/features/settings/app-settings";
 import { play, unlock } from "cuelume";
+import blipUrl from "./assets/sounds/blip.wav";
+import chimeAUrl from "./assets/sounds/chime-a.wav";
+import chimeBUrl from "./assets/sounds/chime-b.wav";
+import doubleTickUrl from "./assets/sounds/double-tick.wav";
+import tickUrl from "./assets/sounds/tick.wav";
 
 const TASK_SOUND_STORAGE_KEY = "openbot:task-sound";
 /** The on/off switch from before the sound choice. It is still written, so an older version keeps the choice. */
@@ -9,6 +19,17 @@ const COMPLETION_SOUND_DURATION_SECONDS = 0.22;
 
 let completionAudioContext: AudioContext | undefined;
 
+const BOT_APP_SOUND_URLS: Readonly<Record<BotAppSound, string>> = {
+  blip: blipUrl,
+  tick: tickUrl,
+  "double-tick": doubleTickUrl,
+  "chime-a": chimeAUrl,
+  "chime-b": chimeBUrl,
+};
+/** The bot app plays its sounds at this volume. */
+const BOT_APP_SOUND_GAIN = 0.5;
+const decodedSounds = new Map<BotAppSound, Promise<AudioBuffer>>();
+
 type NotificationAgent = Pick<ClientAgentSummary, "id" | "notifications">;
 type PreferenceStorage = Pick<Storage, "getItem">;
 
@@ -16,7 +37,7 @@ type PreferenceStorage = Pick<Storage, "getItem">;
 let unsavedPreference: TaskSoundChoice | undefined;
 
 /**
- * The classic tone plays unless the user chose another sound. A switch turned off before the choice,
+ * The bot app's blip plays unless the user chose another sound. A switch turned off before the choice,
  * or in an older version, is "off". Reading `window.localStorage` throws when the browser blocks
  * storage, so it is read inside the guard.
  */
@@ -27,9 +48,9 @@ export function readTaskSound(storage?: PreferenceStorage): TaskSoundChoice {
     if (source.getItem(COMPLETION_SOUND_STORAGE_KEY) === "false") return "off";
     const saved = source.getItem(TASK_SOUND_STORAGE_KEY);
     // A saved "off" with the switch on means that an older version turned the sound on again.
-    return TASK_SOUND_CHOICES.find((choice) => choice === saved && choice !== "off") ?? "classic";
+    return TASK_SOUND_CHOICES.find((choice) => choice === saved && choice !== "off") ?? "blip";
   } catch {
-    return "classic";
+    return "blip";
   }
 }
 
@@ -67,6 +88,7 @@ export function playCompletionSoundForAgentEvent(
  */
 export function playSoundChoice(choice: TaskSoundChoice): void {
   if (choice === "classic") void playClassicTone();
+  else if (isBotAppSound(choice)) void playBotAppSound(choice);
   else if (choice !== "off") play("success", { theme: choice, force: true });
 }
 
@@ -78,7 +100,7 @@ export function playSoundChoice(choice: TaskSoundChoice): void {
 export function unlockCompletionSound(): void {
   // A theme plays on the cuelume context.
   const choice = readTaskSound();
-  if (choice !== "off" && choice !== "classic") void unlock();
+  if (choice !== "off" && choice !== "classic" && !isBotAppSound(choice)) void unlock();
   try {
     completionAudioContext ??= new AudioContext();
     if (completionAudioContext.state !== "running") void completionAudioContext.resume().catch(() => undefined);
@@ -126,6 +148,41 @@ async function playClassicTone(): Promise<void> {
     );
     oscillator.start(startedAt);
     oscillator.stop(startedAt + COMPLETION_SOUND_DURATION_SECONDS);
+  } catch {
+    completionAudioContext = undefined;
+  }
+}
+
+function isBotAppSound(choice: TaskSoundChoice): choice is BotAppSound {
+  return BOT_APP_SOUNDS.some((sound) => sound === choice);
+}
+
+async function playBotAppSound(sound: BotAppSound): Promise<void> {
+  try {
+    const context = await appSoundContext();
+    let decoded = decodedSounds.get(sound);
+    if (!decoded) {
+      decoded = fetch(BOT_APP_SOUND_URLS[sound])
+        .then((response) => response.arrayBuffer())
+        .then((data) => context.decodeAudioData(data));
+      decodedSounds.set(sound, decoded);
+      decoded.catch(() => decodedSounds.delete(sound));
+    }
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    source.buffer = await decoded;
+    gain.gain.value = BOT_APP_SOUND_GAIN;
+    source.connect(gain);
+    gain.connect(context.destination);
+    source.addEventListener(
+      "ended",
+      () => {
+        source.disconnect();
+        gain.disconnect();
+      },
+      { once: true },
+    );
+    source.start();
   } catch {
     completionAudioContext = undefined;
   }

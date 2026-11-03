@@ -1391,14 +1391,23 @@ if (!hasSingleInstanceLock) {
         translate: language.translate,
         open: reopenMainWindow,
         quit: () => app.quit(),
+        // HoleA.I: the tray face, unread badge and recent-agent menu read the local agent state.
+        agents: {
+          snapshot: () => service.getRuntimeSnapshot(),
+          reads: () => host.listAgentConversationReads(),
+          subscribe: (listener) => {
+            service.on("event", listener);
+            return () => service.off("event", listener);
+          },
+        },
+        mainWindow: () => windows.ensureMainWindow(),
+        currentWindow: () => windows.getMainWindow(),
       });
       const tray = backgroundTray;
-      tray.sync(appBehavior.keepRunningInBackground);
-      const unsubscribeBackgroundTray = appBehavior.subscribe(() => tray.sync(appBehavior.keepRunningInBackground));
-      teardown.push(0, "background tray", () => {
-        unsubscribeBackgroundTray();
-        tray.destroy();
-      });
+      // HoleA.I (Vincent, Nov 3 2026): as in the bot app, the tray face, badge and agent menu are always
+      // there, not only while the app keeps running in the background.
+      tray.sync(true);
+      teardown.push(0, "background tray", () => tray.destroy());
       // One place turns a language change into every visible consequence: the menu is built again
       // because a native label cannot be changed in place, and every window is told, including the
       // Dynamic Island, which has no Settings of its own to read the new value from.

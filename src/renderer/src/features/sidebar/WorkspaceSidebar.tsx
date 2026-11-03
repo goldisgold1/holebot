@@ -146,7 +146,11 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
   // The host refuses a member: a hidden agent stops for every member, as a deleted one does.
   const hideAllowed = () =>
     activeServerSupportsCapability(AGENT_HIDDEN_CAPABILITY) && serverRoleCanAdminister(activeServer());
-  const { activeTurns, queues, failedTurns, usageLimits, pendingPrompts, pendingApprovals, approvals } = useTurns();
+  const { activeTurns, queues, failedTurns, usageLimits, pendingPrompts, pendingApprovals, approvals, turnProgress } =
+    useTurns();
+  const agentActivity = createMemo(() =>
+    Object.fromEntries(Object.entries(turnProgress()).map(([agentId, progress]) => [agentId, progress?.detail])),
+  );
   const { unreadReplies, recentReplies, markAllAgentMessagesRead } = useConversation();
   const { directPeople, teamPresence } = usePresence();
   const { activeDirectMember, activeDirectMemberId, directThreads } = useDirectMessages();
@@ -363,6 +367,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       directThreads={directThreads()}
       activeDirectMemberId={activeDirectMemberId()}
       agentStates={sidebarAgentStates()}
+      agentActivity={agentActivity()}
       reelFactoryLive={reelFactoryLive()}
       channelWaits={channelWaits()}
       channelPreviewsPending={!channels.state.listed}

@@ -19,9 +19,20 @@ export const SOUND_THEMES = ["default", "mech", "bubble", "press"] as const;
 export type SoundTheme = (typeof SOUND_THEMES)[number];
 /** The action sounds: none, or sounds in one theme. */
 export type SoundChoice = "off" | SoundTheme;
-/** The sound when a task finishes: none, the original tone ("classic"), or the success cue of one theme. */
-export type TaskSoundChoice = "off" | "classic" | SoundTheme;
-export const TASK_SOUND_CHOICES = ["off", "classic", ...SOUND_THEMES] as const satisfies readonly TaskSoundChoice[];
+/** HoleA.I (Vincent, Nov 3 2026): the notification sounds of the bot app, played from their recordings. */
+export const BOT_APP_SOUNDS = ["blip", "tick", "double-tick", "chime-a", "chime-b"] as const;
+export type BotAppSound = (typeof BOT_APP_SOUNDS)[number];
+/**
+ * The sound when a task finishes: none, the original tone ("classic"), a bot app sound, or the success
+ * cue of one theme.
+ */
+export type TaskSoundChoice = "off" | "classic" | BotAppSound | SoundTheme;
+export const TASK_SOUND_CHOICES = [
+  "off",
+  ...BOT_APP_SOUNDS,
+  "classic",
+  ...SOUND_THEMES,
+] as const satisfies readonly TaskSoundChoice[];
 export const ACTION_SOUND_CHOICES = ["off", ...SOUND_THEMES] as const satisfies readonly SoundChoice[];
 
 export interface GeneralSettingsValue {

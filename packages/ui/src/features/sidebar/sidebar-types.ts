@@ -76,6 +76,8 @@ export interface SidebarProps {
   directThreads: DirectThreadSummary[];
   activeDirectMemberId: string | null;
   agentStates: Record<string, SidebarAgentState>;
+  /** HoleA.I: the step each working agent is on, such as "Searching the web", from its turn progress. */
+  agentActivity?: Record<string, string | undefined> | undefined;
   /** HoleA.I: the Reels Factory board's live jobs; null while the board is not signed in. */
   reelFactoryLive?: ReelFactoryLive | null | undefined;
   /** The wait of each channel that waits for the user, from `sidebarChannelWaits`. A missing entry does not wait. */

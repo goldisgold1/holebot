@@ -15,6 +15,8 @@
 
   --holeai-text-soft: #9a9a9a;
   --holeai-bubble: #202020;
+  --holeai-bubble-rim: rgb(255 255 255 / 0.07);
+  --holeai-bubble-shine: rgb(255 255 255 / 0.04);
   --holeai-composer: #181818;
   --holeai-composer-border: rgba(255, 255, 255, 0.08);
   --holeai-user-bubble: #303030;
@@ -29,6 +31,7 @@
   --holeai-text-row: 14px;
   --holeai-text-preview: 13px;
   --holeai-text-bubble: 15px;
+  --holeai-text-emoji: 32px;
   --holeai-radius-row: 10px;
   /* Half the one-line height, so a one-line bubble is a pill; the joined corner inside a run is small. */
   --holeai-radius-bubble: 18px;
@@ -69,6 +72,8 @@
 
   --holeai-text-soft: var(--openbot-text-muted);
   --holeai-bubble: #f0f0f2;
+  --holeai-bubble-rim: rgb(0 0 0 / 0.06);
+  --holeai-bubble-shine: rgb(255 255 255 / 0.5);
   --holeai-composer: #f4f4f5;
   --holeai-composer-border: rgba(20, 20, 20, 0.06);
   --holeai-user-bubble: #e6e6e9;

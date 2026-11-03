@@ -8,6 +8,11 @@ import type { TaskSoundChoice } from "./app-settings";
 const CHOICE_NAME = {
   off: "settings.soundTheme.off",
   classic: "settings.soundTheme.classic",
+  blip: "settings.soundTheme.blip",
+  tick: "settings.soundTheme.tick",
+  "double-tick": "settings.soundTheme.doubleTick",
+  "chime-a": "settings.soundTheme.chimeA",
+  "chime-b": "settings.soundTheme.chimeB",
   default: "settings.soundTheme.warm",
   mech: "settings.soundTheme.mech",
   bubble: "settings.soundTheme.bubble",

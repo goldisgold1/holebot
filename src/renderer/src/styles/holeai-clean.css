@@ -37,6 +37,30 @@
   font-size: var(--holeai-text-preview);
 }
 
+/* A working row's live step shines like the activity line in the chat. */
+.agent-row-preview.agent-row-live-step {
+  background: linear-gradient(
+    90deg,
+    var(--holeai-text-soft) 0%,
+    var(--holeai-text-soft) 30%,
+    var(--openbot-text-primary) 45%,
+    var(--openbot-text-primary) 55%,
+    var(--holeai-text-soft) 70%,
+    var(--holeai-text-soft) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: image-generation-shine 2.2s steps(60, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-row-preview.agent-row-live-step {
+    animation: none;
+  }
+}
+
 .sidebar-section-name {
   color: var(--holeai-text-soft);
   font-weight: 400;
@@ -80,6 +104,15 @@
 
 .virtual-chat-row:has(+ .virtual-chat-row[data-grouped="sender"]) .message-entry-agent .ui-bubble-content {
   border-end-start-radius: var(--holeai-radius-bubble-joined);
+}
+
+/* One or two emoji alone show large, without a bubble (the bot app's standalone emoji). */
+.ui-bubble[data-emoji-only] > .ui-bubble-content {
+  border-color: transparent;
+  background: transparent;
+  padding: 0 2px;
+  font-size: var(--holeai-text-emoji);
+  line-height: 1.2;
 }
 
 /* A new message rises a little further and settles, instead of a 4px nudge. */
@@ -204,6 +237,17 @@
   color: var(--holeai-user-bubble-text);
 }
 
+/*
+ * The bot app's glass edge: a hairline rim and a faint light along the top of each bubble, so the
+ * bubbles read as objects without a shadow. A bare emoji has no bubble, so no rim (see above).
+ */
+.message-entry-user .ui-bubble-content,
+.ui-bubble-variant-secondary > .ui-bubble-content,
+.ui-bubble-variant-muted > .ui-bubble-content {
+  border: 0.5px solid var(--holeai-bubble-rim);
+  background-image: linear-gradient(180deg, var(--holeai-bubble-shine) 0%, transparent 40%);
+}
+
 /* The rail blends into the sidebar: no frame line, only the pages the user pinned (none by default). */
 .window-rail {
   border: 0;
@@ -301,8 +345,9 @@
 }
 
 .agent-activity-mark {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
 }
 
 .thinking-mark .thinking-mark-body,

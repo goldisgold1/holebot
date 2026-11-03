@@ -1,6 +1,7 @@
 import type { AvatarFaceMood } from "@openbot/brand/bloub-avatar-motion";
 import { createEffect, onSettled } from "solid-js";
 import { BOT_MARK_SHAPES, type BotMarkHandle, type BotMarkState, mountBotMark } from "./bot-mark/engine";
+import { settlePose } from "./bot-mark/settle-pose";
 
 /**
  * HoleA.I (Vincent, Nov 3 2026): the agent face is the bot app's avatar engine (bot-mark/engine.js, from
@@ -12,8 +13,9 @@ const MOOD_STATES: Readonly<Record<AvatarFaceMood, BotMarkState>> = {
   working: "working",
   connecting: "thinking",
   waiting: "waiting",
-  responded: "finished",
-  failed: "failed",
+  // The outcome of a turn shows only for the settle pose's moment; after it the face rests.
+  responded: "idle",
+  failed: "idle",
   asleep: "sleeping",
   listening: "listening",
   speaking: "streaming",
@@ -35,17 +37,24 @@ export function BotMarkFace(props: {
   /** Off: one still frame, so a resting row costs nothing. */
   playing: boolean;
   followPointer: boolean;
+  /** Overrides the mood's state, such as the step a working agent is on. */
+  state?: BotMarkState | undefined;
   /** Receives the engine handle, for pokes. */
   handle?: (handle: BotMarkHandle | undefined) => void;
 }) {
   let host: HTMLSpanElement | undefined;
   let mark: BotMarkHandle | undefined;
+  const state = (): BotMarkState => {
+    if (props.state) return props.state;
+    const resting = props.mood === "idle" || props.mood === "responded" || props.mood === "failed";
+    return (resting ? settlePose(props.seed) : undefined) ?? MOOD_STATES[props.mood] ?? "idle";
+  };
   onSettled(() => {
     if (!host) return;
     mark = mountBotMark(host, {
       shape: seededShape(props.seed),
       color: props.color,
-      state: MOOD_STATES[props.mood] ?? "idle",
+      state: state(),
       seed: props.seed,
       followPointer: props.followPointer,
       playing: props.playing,
@@ -58,10 +67,7 @@ export function BotMarkFace(props: {
       mark = undefined;
     };
   });
-  createEffect(
-    () => MOOD_STATES[props.mood] ?? "idle",
-    (state) => mark?.setState(state),
-  );
+  createEffect(state, (next) => mark?.setState(next));
   createEffect(
     () => props.color,
     (color) => mark?.setColor(color),

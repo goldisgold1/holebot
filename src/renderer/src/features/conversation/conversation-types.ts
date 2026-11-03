@@ -109,6 +109,8 @@ export interface ConversationChannelSource {
   author: (message: AgentMessage) => ChatMessageAuthor;
   /** The agents that work now. */
   workers: () => ChannelWorker[];
+  /** The member agents present here that are not working, shown as a row of small faces. */
+  readers: () => ChannelWorker[];
   /** The turns of the workers that run now, whose steps show under the activity line. */
   workingTurns: () => readonly string[];
   /** The agent that the prompt, approval or takeover on screen comes from. */

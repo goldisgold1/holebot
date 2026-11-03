@@ -1472,9 +1472,10 @@ export function ConversationTimeline() {
               <Show
                 when={!channel}
                 fallback={
-                  <Show when={channel && channel.workers().length > 0}>
+                  <Show when={channel && (channel.workers().length > 0 || channel.readers().length > 0)}>
                     <ChannelActivityIndicator
                       workers={channel?.workers() ?? []}
+                      readers={channel?.readers() ?? []}
                       steps={channelWorkingSteps()}
                       stepsOpenByDefault={showAgentSteps()}
                     />

@@ -4,6 +4,7 @@ import { cleanAgentMessageText } from "@openbot/team-client/agent-message-text";
 import { reconcileQueuesWithRuntimeWork } from "@openbot/team-client/dynamic-island-coordinator";
 import { classifyFailure } from "@openbot/telemetry";
 import { toast } from "@openbot/ui";
+import { holdSettlePose } from "@openbot/ui/features/agents/bot-mark/settle-pose";
 import { currentText } from "@openbot/ui/text";
 import { classifyUserError } from "@openbot/user-errors";
 import { flush, onSettled } from "solid-js";
@@ -224,6 +225,14 @@ export function AgentEventBridge() {
         return;
       case "turn-completed":
         completedTurnByAgent.set(event.agentId, event.turnId);
+        {
+          const seed = agentList().find((agent) => agent.id === event.agentId)?.avatarSeed;
+          if (seed)
+            holdSettlePose(
+              seed,
+              event.status === "completed" ? "finished" : event.status === "failed" ? "failed" : null,
+            );
+        }
         setTurnProgress((current) =>
           current[event.agentId]?.turnId === event.turnId ? withoutAgent(current, event.agentId) : current,
         );
