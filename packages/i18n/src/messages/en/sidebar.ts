@@ -11,6 +11,7 @@ export const messages = defineMessages("sidebar", {
   "sidebar.reelFactories.label": "Reel Factories, open the Reels Factory board",
   "sidebar.reelFactories.hint": "Open the Reels Factory board",
   "sidebar.reelFactories.reload": "Reload",
+  "sidebar.reelFactories.signIn": "Sign in",
   "sidebar.reelFactories.openBrowser": "Open in browser",
   "sidebar.reelFactories.loading": "Loading the Reels Factory board...",
   "sidebar.deletedChannels.title": "Deleted group chats",

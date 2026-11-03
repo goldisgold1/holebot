@@ -722,6 +722,7 @@ export const IPC_ENDPOINTS = {
     // HoleA.I: shows or hides the Reels Factory board over the Reel Factories page, and reloads it.
     setReelFactoriesView: request<ReelFactoriesViewBounds | null, void>()("app:set-reel-factories-view"),
     reloadReelFactoriesView: request<undefined, void>()("app:reload-reel-factories-view"),
+    signInReelFactoriesView: request<undefined, void>()("app:sign-in-reel-factories-view"),
     getExternalLinkPreference: request<undefined, ExternalLinkPreference>()("app:get-external-link-preference"),
     setExternalLinkPreference: request<ExternalLinkPreference, ExternalLinkPreference>()(
       "app:set-external-link-preference",

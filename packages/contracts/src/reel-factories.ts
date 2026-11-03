@@ -3,6 +3,9 @@ import { isDynamicRecord } from "./runtime-values";
 /** HoleA.I: the hole.fm Reels Factory board. It stays on the hole.fm VPS, where its readers are. */
 export const REELS_FACTORY_BOARD_URL = "https://ai.holeacquisition.com/bridge/jobs";
 
+/** The dashboard sign-in. The board view keeps its own sign-in, so a first open lands here once. */
+export const REELS_FACTORY_SIGN_IN_URL = "https://ai.holeacquisition.com/";
+
 /** Where the desktop window shows the board, in the page's CSS pixels. */
 export interface ReelFactoriesViewBounds {
   x: number;

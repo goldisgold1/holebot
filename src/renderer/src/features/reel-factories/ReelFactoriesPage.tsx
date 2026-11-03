@@ -1,5 +1,5 @@
 import { REELS_FACTORY_BOARD_URL } from "@openbot/contracts/ipc";
-import { Button, ExternalLink, Factory, RefreshCw } from "@openbot/ui";
+import { Button, ExternalLink, Factory, LogIn, RefreshCw } from "@openbot/ui";
 import { useText } from "@openbot/ui/text";
 import { onCleanup, onSettled } from "solid-js";
 import { appPort } from "../../app-port";
@@ -44,6 +44,10 @@ export function ReelFactoriesPage() {
         </span>
         <h1 class="reel-factories-heading">{t("sidebar.reelFactories.title")}</h1>
         <span class="reel-factories-spacer" />
+        <Button variant="ghost" size="sm" onClick={() => void appPort().signInReelFactoriesView()}>
+          <LogIn class="size-4" aria-hidden="true" />
+          {t("sidebar.reelFactories.signIn")}
+        </Button>
         <Button variant="ghost" size="sm" onClick={() => void appPort().reloadReelFactoriesView()}>
           <RefreshCw class="size-4" aria-hidden="true" />
           {t("sidebar.reelFactories.reload")}

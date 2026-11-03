@@ -1,4 +1,8 @@
-import { REELS_FACTORY_BOARD_URL, type ReelFactoriesViewBounds } from "@openbot/contracts/ipc";
+import {
+  REELS_FACTORY_BOARD_URL,
+  REELS_FACTORY_SIGN_IN_URL,
+  type ReelFactoriesViewBounds,
+} from "@openbot/contracts/ipc";
 import { type BrowserWindow, shell, WebContentsView } from "electron";
 
 /**
@@ -63,8 +67,15 @@ export function createReelFactoriesView(getWindow: () => BrowserWindow | null) {
       });
       shown.setVisible(true);
     },
+    /** Reloads the board, or goes back to it from the sign-in or any other dashboard page. */
     reload(): void {
-      if (view && !view.webContents.isDestroyed()) view.webContents.reload();
+      if (!view || view.webContents.isDestroyed()) return;
+      if (view.webContents.getURL().startsWith(REELS_FACTORY_BOARD_URL)) view.webContents.reload();
+      else void view.webContents.loadURL(REELS_FACTORY_BOARD_URL);
+    },
+    /** Opens the dashboard sign-in in the board's own session; Reload goes back to the board after. */
+    signIn(): void {
+      if (view && !view.webContents.isDestroyed()) void view.webContents.loadURL(REELS_FACTORY_SIGN_IN_URL);
     },
   };
 }
