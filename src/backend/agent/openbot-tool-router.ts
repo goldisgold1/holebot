@@ -123,11 +123,28 @@ import { ToolOperationFailed, toolStep, toToolOperationFailed } from "./tool-ope
 import type { AgentBrowserHost } from "./turn-lifecycle";
 import { handleUpdateAgentsTool } from "./update-agents-tool";
 
-// HoleA.I: the Producer spawns a Reel Worker per job and deletes it when the job is done.
-const SPAWNED_REEL_WORKER_TITLE = "Spawned Reel Worker";
-const SPAWNED_REEL_WORKER_CAP = 2;
-const isReelWorkerName = (name: string) => /^reel worker\b/i.test(name.trim());
-const mayManageReelWorkers = (name: string) => /^((reels? )?producer|cos)\b/i.test(name.trim());
+// HoleA.I: a main agent spawns a "<Role> Worker" for one heavy job and deletes it when the job is
+// done, so its own chat stays small. The title marks a spawned worker, so the cap and the delete leave
+// the agents the user made (Reel Worker 1 and 2 among them) alone.
+const SPAWNED_WORKER_TITLE = /^Spawned (.+) Worker$/;
+const SPAWNED_WORKERS_PER_ROLE = 2;
+
+/** `Reel Worker EC13` is a worker of the role `Reel`, `Story Maker Worker` of `Story Maker`. */
+function workerRole(name: string): string | null {
+  return /^(.+?)\s+worker\b/i.exec(name.trim())?.[1]?.trim() || null;
+}
+
+/** COS manages every role's workers, the Producers the Reel Workers, and each main agent its own. */
+function mayManageWorkers(callerName: string, role: string): boolean {
+  const caller = callerName.trim().toLowerCase();
+  const wanted = role.toLowerCase();
+  if (workerRole(callerName)) return false;
+  if (/^cos\b/.test(caller)) return true;
+  if (wanted === "reel") return /^(reels? )?producer\b/.test(caller);
+  return caller === wanted || caller.startsWith(`${wanted} `);
+}
+
+const spawnedRole = (title: string) => SPAWNED_WORKER_TITLE.exec(title.trim())?.[1]?.toLowerCase() ?? null;
 
 const logger = createOpenBotLogger("openbot-tool-router");
 
@@ -952,7 +969,7 @@ export class OpenBotToolRouter {
 
     if (params.tool === "update_agents") return yield* handleUpdateAgentsTool(params, senderAgentId, this.#hooks);
 
-    if (params.tool === "delete_agent") return yield* this.#deleteReelWorker(params, senderAgentId);
+    if (params.tool === "delete_agent") return yield* this.#deleteWorker(params, senderAgentId);
 
     if (params.tool === "read_usage") {
       const payload = yield* this.#hooks.readUsage(senderAgentId);
@@ -1480,8 +1497,8 @@ export class OpenBotToolRouter {
     return result;
   }, Effect.uninterruptible);
 
-  /** HoleA.I: removes a spawned Reel Worker; only the Producer and COS, and only an idle worker. */
-  readonly #deleteReelWorker = Effect.fn("OpenBotToolRouter.deleteReelWorker")(
+  /** HoleA.I: removes a spawned worker; only its role's main agent or COS, and only while it is idle. */
+  readonly #deleteWorker = Effect.fn("OpenBotToolRouter.deleteWorker")(
     function* (
       this: OpenBotToolRouter,
       params: DynamicToolCallParams,
@@ -1492,12 +1509,13 @@ export class OpenBotToolRouter {
         .strict()
         .parse(params.arguments);
       const caller = this.#requireAgent(senderAgentId);
-      if (!mayManageReelWorkers(caller.name))
-        return openBotToolFailure("Only the Producer and COS can delete Reel Workers.");
       const target = this.#store.list().find((agent) => agent.id === args.agentId);
       if (!target) return openBotToolFailure(`No agent has the id ${args.agentId}.`);
-      if (target.id === senderAgentId || !isReelWorkerName(target.name))
-        return openBotToolFailure('delete_agent removes only agents named "Reel Worker ...".');
+      const role = workerRole(target.name);
+      if (target.id === senderAgentId || !role || spawnedRole(target.title) !== role.toLowerCase())
+        return openBotToolFailure("delete_agent removes only workers that create_agent spawned.");
+      if (!mayManageWorkers(caller.name, role))
+        return openBotToolFailure(`Only the ${role} main agent and COS can delete ${role} Workers.`);
       if (this.#hooks.runsTurn(target.id) || this.#hooks.queuedMessages(target.id) > 0)
         return openBotToolFailure(
           `${target.name} is still working or has queued messages. Delete it after it has sent its summary.`,
@@ -1516,17 +1534,18 @@ export class OpenBotToolRouter {
       senderAgentId: string,
     ): Effect.fn.Return<OpenBotToolResponse, ToolOperationFailed> {
       const args = createAgentToolSchema.parse(params.arguments, { reportInput: true });
-      // HoleA.I: a Reel Worker is spawned per job by the Producer or COS, at most two alive at once,
-      // and marked by its title so the cap leaves the workers the user made alone.
-      if (isReelWorkerName(args.name)) {
-        if (!mayManageReelWorkers(this.#requireAgent(senderAgentId).name))
-          return openBotToolFailure("Only the Producer and COS can spawn Reel Workers.");
-        const alive = this.#store.list().filter((agent) => agent.title === SPAWNED_REEL_WORKER_TITLE).length;
-        if (alive >= SPAWNED_REEL_WORKER_CAP)
+      // HoleA.I: a "<Role> Worker" is spawned for one job by its role's main agent or COS, at most two
+      // alive per role, and marked by its title so the cap and the delete know it.
+      const role = workerRole(args.name);
+      if (role) {
+        if (!mayManageWorkers(this.#requireAgent(senderAgentId).name, role))
+          return openBotToolFailure(`Only the ${role} main agent and COS can spawn ${role} Workers.`);
+        const alive = this.#store.list().filter((agent) => spawnedRole(agent.title) === role.toLowerCase()).length;
+        if (alive >= SPAWNED_WORKERS_PER_ROLE)
           return openBotToolFailure(
-            `${alive} spawned Reel Workers are alive, the cap is ${SPAWNED_REEL_WORKER_CAP}. Delete a finished one first.`,
+            `${alive} spawned ${role} Workers are alive, the cap is ${SPAWNED_WORKERS_PER_ROLE}. Delete a finished one first.`,
           );
-        args.title = SPAWNED_REEL_WORKER_TITLE;
+        args.title = `Spawned ${role} Worker`;
       }
       const hue = args.avatarHue ?? null;
       const caller = this.#requireAgent(senderAgentId);

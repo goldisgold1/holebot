@@ -15,7 +15,7 @@ import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import { agentAccessLockLabel } from "../agents/agent-access";
-import { AgentWorkScene, agentWorkRole, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
+import { AgentWorkScene, agentWorkRole, isSpawnedReelWorker, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarWaitChip, SidebarWaitTooltip } from "./SidebarAgentIndicator";
 import { sidebarAgentStateLabel, sidebarMessageTime, sidebarUsageResetTime } from "./sidebar-filtering";
@@ -65,7 +65,10 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
   const labelDetail = () => (wait()?.detail ? "" : `. ${hiddenLabel()}${detail()}`);
   const [menuOpen, setMenuOpen] = createSignal(false);
   // HoleA.I: a working agent plays the scene of its role, and a Reel Worker lists the Reels it makes.
-  const role = () => agentWorkRole(rowProps.agent.name);
+  const role = () => {
+    const named = agentWorkRole(rowProps.agent.name);
+    return named === "reel" && !isSpawnedReelWorker(rowProps.agent) ? "general" : named;
+  };
   const working = () => state()?.kind === "working";
   const reels = () => (role() === "reel" ? reelWorkerReels(rowProps.agent.name, props.reelFactoryLive) : []);
   const limit = () => {

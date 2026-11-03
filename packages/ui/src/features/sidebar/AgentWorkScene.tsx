@@ -25,6 +25,7 @@ export type AgentWorkRole =
   | "warmup"
   | "growth"
   | "strategist"
+  | "coder"
   | "general";
 
 const ROLE_NAMES: ReadonlyArray<readonly [RegExp, AgentWorkRole]> = [
@@ -39,6 +40,7 @@ const ROLE_NAMES: ReadonlyArray<readonly [RegExp, AgentWorkRole]> = [
   [/^story\b/i, "story"],
   [/^warm-?up\b/i, "warmup"],
   [/^growth\b/i, "growth"],
+  [/^coder/i, "coder"],
   [/^strategist\b/i, "strategist"],
 ];
 
@@ -49,6 +51,10 @@ export function agentWorkRole(name: string): AgentWorkRole {
 }
 
 export const isReelWorkerName = (name: string) => agentWorkRole(name) === "reel";
+
+/** A Reel Worker that a Producer spawned for one job; only these work at the editing desk. */
+export const isSpawnedReelWorker = (agent: { name: string; title: string; spawnedBy?: string | undefined }) =>
+  isReelWorkerName(agent.name) && (agent.spawnedBy !== undefined || /^spawned reel worker$/i.test(agent.title.trim()));
 
 /** `Reel Worker EC13` makes the Reels labelled `EC13 ...`; Reel Worker 1 and 2 name no Reel. */
 export function reelWorkerReels(name: string, live: ReelFactoryLive | null | undefined) {
@@ -179,62 +185,98 @@ function RoleArt(props: { role: AgentWorkRole }): JSX.Element {
         </svg>
       );
     case "coo":
+      // Rosie writes Elle's daily report in Vietnamese and sends it to her.
       return (
         <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
-          <rect class="ws-frame" x="6" y="3" width="150" height="34" rx="3" />
-          <For each={[0, 1, 2]}>
-            {(row) => (
-              <>
-                <rect class="ws-frame" x="12" y={8 + row * 9} width="7" height="7" rx="1.5" />
-                <path class={`ws-check ws-check-${row}`} d={`M13.5 ${11.5 + row * 9}l2 2 3.2-4`} />
-                <rect class="ws-muted" x="24" y={10 + row * 9} width={90 - row * 18} height="3" rx="1.5" />
-              </>
-            )}
-          </For>
-          <circle class="ws-b ws-pulse" cx="190" cy="20" r="9" />
-          <path class="ws-check-static" d="M185.5 20l3 3 6-6.5" />
+          <g class="ws-send">
+            <rect class="ws-frame" x="6" y="1" width="64" height="38" rx="3" />
+            <rect class="ws-b" x="11" y="5" width="12" height="8" rx="1" />
+            <path class="ws-a" d="M17 6.4l.9 2.2 2.3.1-1.8 1.4.6 2.2-2-1.3-2 1.3.6-2.2-1.8-1.4 2.3-.1z" />
+            <rect class="ws-muted" x="27" y="7" width="36" height="3" rx="1.5" />
+            <For each={[0, 1, 2]}>
+              {(line) => (
+                <rect
+                  class="ws-a ws-type"
+                  style={`animation-delay: ${line * 0.6}s;`}
+                  x="11"
+                  y={17 + line * 6}
+                  width={52 - line * 10}
+                  height="3"
+                  rx="1.5"
+                />
+              )}
+            </For>
+          </g>
+          <line class="ws-trail" x1="78" y1="20" x2="176" y2="20" />
+          <circle class="ws-b ws-pulse" cx="194" cy="20" r="12" />
+          <path class="ws-check-static" d="M188.5 20l4 4 7-7.5" />
         </svg>
       );
     case "producer":
+      // The Producer directs like a Hollywood director: chair, megaphone, clapper and a rolling camera.
       return (
         <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
-          <g class="ws-reel-clap">
-            <rect class="ws-b" x="6" y="15" width="34" height="21" rx="2" />
+          <rect class="ws-b" x="6" y="4" width="30" height="9" rx="1.5" />
+          <rect class="ws-fg" x="6" y="19" width="30" height="4" rx="1" />
+          <line class="ws-chair" x1="9" y1="38" x2="33" y2="23" />
+          <line class="ws-chair" x1="33" y1="38" x2="9" y2="23" />
+          <line class="ws-chair" x1="7" y1="13" x2="7" y2="23" />
+          <line class="ws-chair" x1="35" y1="13" x2="35" y2="23" />
+          <g class="ws-shout">
+            <rect class="ws-fg" x="44" y="17" width="7" height="6" rx="1.5" />
+            <path class="ws-a" d="M51 15.5L70 7v26l-19-8.5z" />
+          </g>
+          <path class="ws-wave" d="M75 13q5 7 0 14" />
+          <path class="ws-wave ws-wave-2" d="M81 9q8 11 0 22" />
+          <path class="ws-wave ws-wave-3" d="M87 5q11 15 0 30" />
+          <g class="ws-reel-clap" style="transform: translateX(100px);">
+            <rect class="ws-b" x="0" y="17" width="26" height="19" rx="2" />
             <g class="ws-reel-clap-top">
-              <rect class="ws-fg" x="6" y="8" width="34" height="6" rx="1" />
-              <path class="ws-ink" d="M11 8l3 6M19 8l3 6M27 8l3 6M35 8l3 6" />
+              <rect class="ws-fg" x="0" y="10" width="26" height="6" rx="1" />
+              <path class="ws-ink" d="M5 10l3 6M12 10l3 6M19 10l3 6" />
             </g>
           </g>
-          <g class="ws-spin" style="transform-origin: 90px 20px;">
-            <circle class="ws-frame" cx="90" cy="20" r="15" />
-            <circle class="ws-a" cx="90" cy="11" r="3.5" />
-            <circle class="ws-b" cx="98" cy="25" r="3.5" />
-            <circle class="ws-a" cx="82" cy="25" r="3.5" />
-          </g>
-          <rect class="ws-muted ws-slide" x="120" y="17" width="90" height="6" rx="3" />
+          <circle class="ws-frame ws-spin-local" cx="152" cy="11" r="8" />
+          <circle class="ws-frame ws-spin-local" cx="170" cy="11" r="8" />
+          <rect class="ws-a" x="146" y="19" width="32" height="13" rx="2" />
+          <path class="ws-b" d="M178 22l10-4v15l-10-4z" />
+          <circle class="ws-fg ws-flash" cx="150" cy="23" r="1.6" />
+          <line class="ws-chair" x1="162" y1="32" x2="154" y2="39" />
+          <line class="ws-chair" x1="162" y1="32" x2="170" y2="39" />
         </svg>
       );
     case "analyst":
+      // The Analyst reads a source Reel: frames pass under the glass, the transcript lights line by line,
+      // and the read gets its score.
       return (
         <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
-          <line class="ws-line" x1="6" y1="36" x2="130" y2="36" />
-          <For each={[0, 1, 2, 3, 4]}>
-            {(bar) => (
-              <rect
-                class={`${bar % 2 ? "ws-b" : "ws-a"} ws-bar`}
-                style={`animation-delay: ${bar * 0.18}s;`}
-                x={12 + bar * 24}
-                y="8"
-                width="14"
-                height="28"
-                rx="2"
-              />
-            )}
-          </For>
-          <g class="ws-slide">
-            <circle class="ws-ring" cx="160" cy="18" r="9" />
-            <rect class="ws-fg" x="166" y="24" width="10" height="3" rx="1.5" transform="rotate(40 166 24)" />
+          <rect class="ws-frame" x="4" y="2" width="96" height="22" rx="2" />
+          <g class="ws-frames">
+            <For each={[0, 1, 2, 3, 4, 5]}>
+              {(frame) => (
+                <rect
+                  class={frame % 2 ? "ws-b ws-soft" : "ws-a ws-soft"}
+                  x={7 + frame * 30}
+                  y="5"
+                  width="26"
+                  height="16"
+                  rx="1.5"
+                />
+              )}
+            </For>
           </g>
+          <g class="ws-glass">
+            <circle class="ws-ring" cx="52" cy="13" r="10" />
+            <rect class="ws-fg" x="58" y="20" width="9" height="3" rx="1.5" transform="rotate(45 58 20)" />
+          </g>
+          <For each={[0, 1, 2]}>
+            {(line) => <rect class="ws-muted" x="110" y={6 + line * 9} width={70 - line * 14} height="3" rx="1.5" />}
+          </For>
+          <rect class="ws-b ws-highlight" x="108" y="4" width="74" height="7" rx="2" />
+          <rect class="ws-muted ws-soft" x="6" y="31" width="90" height="3" rx="1.5" />
+          <rect class="ws-a ws-type" x="6" y="31" width="90" height="3" rx="1.5" />
+          <circle class="ws-b ws-pulse" cx="202" cy="20" r="10" />
+          <path class="ws-check-static" d="M197.5 20l3.5 3.5 6-6.5" />
         </svg>
       );
     case "publisher":
@@ -270,27 +312,46 @@ function RoleArt(props: { role: AgentWorkRole }): JSX.Element {
         </svg>
       );
     case "carousel":
+      // The Carousel Maker deals the slides of one carousel into place.
       return (
         <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
-          <g class="ws-carousel">
-            <For each={[0, 1, 2, 3, 4, 5]}>
-              {(slide) => (
-                <rect class={slide % 2 ? "ws-b" : "ws-a"} x={8 + slide * 40} y="6" width="34" height="28" rx="3" />
-              )}
-            </For>
-          </g>
+          <For each={[0, 1, 2, 3, 4]}>
+            {(slide) => (
+              <rect
+                class={`${slide % 2 ? "ws-b" : "ws-a"} ws-deal`}
+                style={`animation-delay: ${slide * 0.35}s; --deal-x: ${slide * 30}px;`}
+                x="8"
+                y="5"
+                width="26"
+                height="26"
+                rx="3"
+              />
+            )}
+          </For>
+          <For each={[0, 1, 2, 3, 4]}>
+            {(dot) => (
+              <circle
+                class="ws-muted ws-pulse"
+                style={`animation-delay: ${dot * 0.35}s;`}
+                cx={60 + dot * 8}
+                cy="37"
+                r="1.6"
+              />
+            )}
+          </For>
         </svg>
       );
     case "story":
+      // The Story Maker scrapes inspiration off a phone into a board and stamps a label on each.
       return (
         <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
-          <rect class="ws-frame" x="8" y="1" width="24" height="38" rx="4" />
+          <rect class="ws-frame" x="6" y="1" width="24" height="38" rx="4" />
           <For each={[0, 1, 2]}>
             {(segment) => (
               <rect
                 class="ws-fg ws-fill"
                 style={`animation-delay: ${segment * 0.8}s;`}
-                x={11 + segment * 6.5}
+                x={9 + segment * 6.5}
                 y="4"
                 width="5.5"
                 height="2"
@@ -298,15 +359,22 @@ function RoleArt(props: { role: AgentWorkRole }): JSX.Element {
               />
             )}
           </For>
+          <rect class="ws-b ws-soft" x="10" y="10" width="16" height="24" rx="2" />
+          <rect class="ws-b ws-scrape" x="12" y="14" width="12" height="16" rx="2" />
           <For each={[0, 1, 2, 3]}>
-            {(ring) => (
-              <circle
-                class={`${ring % 2 ? "ws-b" : "ws-a"} ws-pulse`}
-                style={`animation-delay: ${ring * 0.3}s;`}
-                cx={60 + ring * 36}
-                cy="20"
-                r="11"
-              />
+            {(tile) => (
+              <>
+                <rect class="ws-a ws-soft" x={70 + tile * 36} y="6" width="30" height="28" rx="3" />
+                <rect
+                  class="ws-b ws-stamp"
+                  style={`animation-delay: ${tile * 0.5}s;`}
+                  x={73 + tile * 36}
+                  y="26"
+                  width="18"
+                  height="5"
+                  rx="2.5"
+                />
+              </>
             )}
           </For>
         </svg>
@@ -343,14 +411,48 @@ function RoleArt(props: { role: AgentWorkRole }): JSX.Element {
         </svg>
       );
     case "strategist":
+      // The Strategist ranks the clusters: bubbles shuffle, the ranking fills, the top one gets the star.
       return (
         <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
-          <circle class="ws-frame" cx="22" cy="20" r="16" />
-          <g class="ws-compass" style="transform-origin: 22px 20px;">
-            <path class="ws-b" d="M22 7l3.5 13h-7z" />
-            <path class="ws-muted" d="M22 33l3.5-13h-7z" />
-          </g>
-          <path class="ws-trail" d="M50 30C80 30 90 10 120 10S170 30 210 20" />
+          <circle class="ws-a ws-shuffle" cx="16" cy="14" r="8" />
+          <circle class="ws-b ws-shuffle ws-shuffle-2" cx="38" cy="26" r="6" />
+          <circle class="ws-a ws-soft ws-shuffle ws-shuffle-3" cx="56" cy="12" r="5" />
+          <line class="ws-trail" x1="70" y1="20" x2="96" y2="20" />
+          <For each={[0, 1, 2]}>
+            {(rank) => (
+              <rect
+                class={`${rank === 0 ? "ws-b" : "ws-a"} ws-fill`}
+                style={`animation-delay: ${rank * 0.4}s;`}
+                x="104"
+                y={5 + rank * 11}
+                width={90 - rank * 22}
+                height="7"
+                rx="3.5"
+              />
+            )}
+          </For>
+          <path class="ws-fg ws-pulse" d="M204 4.5l1.8 4 4.4.4-3.3 2.9 1 4.3-3.9-2.3-3.9 2.3 1-4.3-3.3-2.9 4.4-.4z" />
+        </svg>
+      );
+    case "coder":
+      return (
+        <svg class="work-scene-art" viewBox="0 0 220 40" aria-hidden="true">
+          <rect class="ws-frame" x="4" y="2" width="150" height="36" rx="3" />
+          <For each={[0, 1, 2]}>
+            {(line) => (
+              <rect
+                class={`${line === 1 ? "ws-b" : "ws-a"} ws-type`}
+                style={`animation-delay: ${line * 0.7}s;`}
+                x={10 + (line % 2) * 10}
+                y={8 + line * 10}
+                width={110 - line * 22}
+                height="4"
+                rx="2"
+              />
+            )}
+          </For>
+          <rect class="ws-fg ws-caret" x="132" y="27" width="2" height="7" rx="1" />
+          <circle class="ws-b ws-pulse" cx="190" cy="20" r="8" />
         </svg>
       );
     default:

@@ -3692,27 +3692,12 @@ textarea {
   stroke-width: 2;
 }
 
-.work-scene :is(.ws-check, .ws-check-static) {
+.work-scene .ws-check-static {
   fill: none;
   stroke: var(--openbot-action-foreground);
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.work-scene .ws-check {
-  stroke: var(--openbot-beam-pink);
-  stroke-dasharray: 10;
-  stroke-dashoffset: 10;
-  animation: ws-check 3s ease-out infinite;
-}
-
-.work-scene .ws-check-1 {
-  animation-delay: 0.6s;
-}
-
-.work-scene .ws-check-2 {
-  animation-delay: 1.2s;
 }
 
 .work-scene .ws-late {
@@ -3800,20 +3785,6 @@ textarea {
   animation: ws-sort 2.6s ease-in-out infinite;
 }
 
-.work-scene .ws-spin {
-  transform-box: view-box;
-  animation: ws-spin 2.4s linear infinite;
-}
-
-.work-scene .ws-slide {
-  animation: ws-slide 2.4s ease-in-out infinite alternate;
-}
-
-.work-scene .ws-bar {
-  transform-origin: center bottom;
-  animation: ws-bar 1.8s ease-in-out infinite alternate;
-}
-
 .work-scene .ws-fly {
   transform-box: view-box;
   transform-origin: 0 0;
@@ -3826,10 +3797,6 @@ textarea {
 
 .work-scene .ws-develop {
   animation: ws-develop 1.6s ease-out infinite;
-}
-
-.work-scene .ws-carousel {
-  animation: ws-carousel 4s ease-in-out infinite;
 }
 
 .work-scene .ws-fill {
@@ -3854,9 +3821,226 @@ textarea {
   animation: ws-leaf 3s ease-out infinite;
 }
 
-.work-scene .ws-compass {
-  transform-box: view-box;
-  animation: ws-compass 3s ease-in-out infinite;
+.work-scene .ws-chair {
+  stroke: var(--openbot-text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.work-scene .ws-shout {
+  transform-origin: left center;
+  animation: ws-shout 1.2s ease-in-out infinite;
+}
+
+.work-scene .ws-wave {
+  fill: none;
+  stroke: var(--openbot-beam-pink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: ws-wave 1.2s ease-out infinite;
+}
+
+.work-scene .ws-wave-2 {
+  animation-delay: 0.2s;
+}
+
+.work-scene .ws-wave-3 {
+  animation-delay: 0.4s;
+}
+
+.work-scene .ws-spin-local {
+  stroke-dasharray: 6 4;
+  animation: ws-spin 1.6s linear infinite;
+}
+
+.work-scene .ws-send {
+  animation: ws-send 4s ease-in-out infinite;
+}
+
+.work-scene .ws-frames {
+  animation: ws-frames 3s linear infinite;
+}
+
+.work-scene .ws-glass {
+  animation: ws-glass 3s ease-in-out infinite;
+}
+
+.work-scene .ws-highlight {
+  opacity: 0.35;
+  animation: ws-highlight 3s steps(1, end) infinite;
+}
+
+.work-scene .ws-deal {
+  opacity: 0;
+  animation: ws-deal 3.5s ease-out infinite;
+}
+
+.work-scene .ws-scrape {
+  animation: ws-scrape 2s ease-in-out infinite;
+}
+
+.work-scene .ws-stamp {
+  transform: scale(0);
+  animation: ws-stamp 2s ease-out infinite;
+}
+
+.work-scene .ws-shuffle {
+  animation: ws-shuffle 2.4s ease-in-out infinite alternate;
+}
+
+.work-scene .ws-shuffle-2 {
+  animation-delay: 0.4s;
+}
+
+.work-scene .ws-shuffle-3 {
+  animation-delay: 0.8s;
+}
+
+@keyframes ws-shout {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-6deg) scale(1.05);
+  }
+}
+
+@keyframes ws-wave {
+  0% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+}
+
+@keyframes ws-send {
+  0%,
+  55% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  80% {
+    opacity: 0;
+    transform: translateX(110px) scale(0.4);
+  }
+  81%,
+  90% {
+    opacity: 0;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes ws-frames {
+  to {
+    transform: translateX(-60px);
+  }
+}
+
+@keyframes ws-glass {
+  0%,
+  100% {
+    transform: translateX(-20px);
+  }
+  50% {
+    transform: translateX(26px);
+  }
+}
+
+@keyframes ws-highlight {
+  0% {
+    transform: translateY(0);
+  }
+  33% {
+    transform: translateY(9px);
+  }
+  66% {
+    transform: translateY(18px);
+  }
+}
+
+@keyframes ws-deal {
+  0% {
+    opacity: 0;
+    transform: translate(180px, -6px) rotate(12deg);
+  }
+  30%,
+  85% {
+    opacity: 1;
+    transform: translate(var(--deal-x), 0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--deal-x), 0);
+  }
+}
+
+@keyframes ws-scrape {
+  0%,
+  20% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(60px, -2px) scale(0.9);
+  }
+  71%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes ws-stamp {
+  0%,
+  40% {
+    transform: scale(0);
+  }
+  55% {
+    transform: scale(1.3);
+  }
+  65%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ws-shuffle {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(8px, 4px);
+  }
+  100% {
+    transform: translate(-4px, -3px);
+  }
+}
+
+.work-scene .ws-type {
+  transform-origin: left center;
+  animation: ws-fill 2.1s steps(8, end) infinite;
+}
+
+.work-scene .ws-caret {
+  animation: ws-caret 0.8s steps(1, end) infinite;
+}
+
+@keyframes ws-caret {
+  50% {
+    opacity: 0;
+  }
 }
 
 .work-scene .ws-bounce {
@@ -3980,20 +4164,6 @@ textarea {
   }
 }
 
-@keyframes ws-check {
-  0%,
-  10% {
-    stroke-dashoffset: 10;
-  }
-  30%,
-  85% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: 10;
-  }
-}
-
 @keyframes ws-sort {
   0% {
     transform: translate(0, 0);
@@ -4013,24 +4183,6 @@ textarea {
 @keyframes ws-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes ws-slide {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-30px);
-  }
-}
-
-@keyframes ws-bar {
-  from {
-    transform: scaleY(0.3);
-  }
-  to {
-    transform: scaleY(1);
   }
 }
 
@@ -4070,24 +4222,6 @@ textarea {
   80%,
   100% {
     opacity: 0.85;
-  }
-}
-
-@keyframes ws-carousel {
-  0%,
-  20% {
-    transform: translateX(0);
-  }
-  33%,
-  53% {
-    transform: translateX(-40px);
-  }
-  66%,
-  86% {
-    transform: translateX(-80px);
-  }
-  100% {
-    transform: translateX(0);
   }
 }
 
@@ -4143,22 +4277,6 @@ textarea {
   70%,
   100% {
     transform: scale(1);
-  }
-}
-
-@keyframes ws-compass {
-  0% {
-    transform: rotate(-40deg);
-  }
-  40% {
-    transform: rotate(70deg);
-  }
-  60% {
-    transform: rotate(30deg);
-  }
-  80%,
-  100% {
-    transform: rotate(45deg);
   }
 }
 

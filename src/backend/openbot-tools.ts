@@ -437,7 +437,7 @@ export const OPENBOT_TOOL_DEFINITIONS: readonly OpenBotToolDefinition[] = [
   {
     name: "delete_agent",
     description:
-      'Delete a Reel Worker you spawned with create_agent once its job is finished or failed, it has sent its summary, and the lessons are written. It removes the agent, its chat and its sidebar entry for good. Only the Producer, the Reels Producer and COS can use it, only on agents named "Reel Worker ...", and never while the worker runs a turn or has queued messages: wait and call it again.',
+      'Delete a worker you spawned with create_agent (named "<Your role> Worker ...") once its job is finished or failed and it has sent its summary. It removes the agent, its chat and its sidebar entry for good. Only the role\'s main agent and COS can use it, only on workers create_agent spawned (never on agents the user made), and never while the worker runs a turn or has queued messages: wait and call it again.',
     shape: {
       agentId: z
         .string()
