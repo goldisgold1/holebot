@@ -65,117 +65,117 @@ interface Outfit {
   waves?: boolean;
 }
 
-// The eyes sit near (23, 27), so glasses go there and hats just above the head; held items go at the
-// lower right.
+// Measured on the round body: it spans x 2.6-44.4 and y 8-41 of the 48 box, and its eyes centre near
+// (25, 20.5). Hats sit with their brim on the brow, glasses on the eyes, and held items stay inside the
+// body's lower right. Each box keeps its item's own proportions, so nothing stretches or floats.
 const OUTFITS: Partial<Record<AgentWorkRole, Outfit>> = {
   reel: {
     items: [
-      { src: headphones, x: 1, y: 6, w: 44, h: 30 },
-      { src: clapperboard, x: 28, y: 29, w: 20, h: 19, motion: "snap" },
+      { src: headphones, x: 3.5, y: -7, w: 40, h: 42.8 },
+      { src: clapperboard, x: 30, y: 28, w: 15, h: 17, motion: "snap" },
     ],
   },
   producer: {
     items: [
-      { src: beret, x: 6, y: 1, w: 30, h: 17 },
-      { src: directorSunglasses, x: 11, y: 22, w: 24, h: 10 },
-      { src: megaphone, x: 28, y: 30, w: 19, h: 16, motion: "shout" },
+      { src: beret, x: 8, y: -3.4, w: 28, h: 17.4 },
+      { src: directorSunglasses, x: 14, y: 16.8, w: 22, h: 7.5 },
+      { src: megaphone, x: 29, y: 30, w: 17, h: 13.8, motion: "shout" },
     ],
     waves: true,
   },
   cos: {
     items: [
-      { src: headset, x: 1, y: 5, w: 44, h: 32 },
-      { src: clipboard, x: 31, y: 27, w: 17, h: 21, motion: "tilt" },
+      { src: headset, x: 5.5, y: -6, w: 36, h: 46 },
+      { src: clipboard, x: 33, y: 27, w: 12, h: 17.4, motion: "tilt" },
     ],
   },
   coo: {
     items: [
-      { src: hairBow, x: 28, y: 6, w: 15, h: 10 },
-      { src: readingGlasses, x: 11, y: 22, w: 24, h: 10 },
-      { src: laptop, x: 28, y: 31, w: 20, h: 16, motion: "tap" },
-      { src: paperPlane, x: 36, y: 18, w: 12, h: 10, motion: "throw" },
+      { src: hairBow, x: 31, y: 4, w: 11, h: 11.4 },
+      { src: readingGlasses, x: 15, y: 16.7, w: 20, h: 7.6 },
+      { src: laptop, x: 30, y: 31, w: 16, h: 12.8, motion: "tap" },
     ],
   },
   analyst: {
     items: [
-      { src: deerstalker, x: 6, y: 1, w: 34, h: 19 },
-      { src: magnifyingGlass, x: 27, y: 27, w: 21, h: 21, motion: "scan" },
+      { src: deerstalker, x: 10.5, y: -6.3, w: 26, h: 21.3 },
+      { src: magnifyingGlass, x: 30, y: 30, w: 16, h: 14.2, motion: "scan" },
     ],
   },
   strategist: {
-    items: [{ src: generalCap, x: 6, y: 1, w: 34, h: 19 }],
+    items: [{ src: generalCap, x: 9.5, y: -4.6, w: 28, h: 19.6 }],
   },
   story: {
     items: [
-      { src: beanie, x: 8, y: 0, w: 30, h: 20 },
-      { src: smartphone, x: 33, y: 26, w: 14, h: 22, motion: "tilt" },
+      { src: beanie, x: 13.5, y: -8.8, w: 20, h: 25.8 },
+      { src: smartphone, x: 35, y: 26, w: 9, h: 18.3, motion: "tilt" },
     ],
-    flash: { x: 40, y: 32 },
+    flash: { x: 39.5, y: 33 },
   },
   carousel: {
     items: [
-      { src: painterBeret, x: 8, y: 2, w: 30, h: 16 },
-      { src: photoStack, x: 28, y: 29, w: 20, h: 19, motion: "deal" },
+      { src: painterBeret, x: 9.5, y: -3.9, w: 28, h: 17.9 },
+      { src: photoStack, x: 30, y: 31, w: 16, h: 12.6, motion: "deal" },
     ],
   },
   image: {
     items: [
-      { src: bucketHat, x: 5, y: 2, w: 36, h: 18 },
-      { src: instantCamera, x: 28, y: 29, w: 20, h: 19, motion: "beat" },
+      { src: bucketHat, x: 7.5, y: -6.8, w: 32, h: 21.8 },
+      { src: instantCamera, x: 34, y: 27, w: 11, h: 17, motion: "beat" },
     ],
-    flash: { x: 38, y: 34 },
+    flash: { x: 39.5, y: 32 },
   },
   publisher: {
     items: [
-      { src: mailCap, x: 7, y: 2, w: 32, h: 17 },
-      { src: paperPlane, x: 29, y: 30, w: 19, h: 16, motion: "throw" },
+      { src: mailCap, x: 9.5, y: -5.4, w: 28, h: 20.4 },
+      { src: paperPlane, x: 30, y: 33, w: 16, h: 10, motion: "throw" },
     ],
   },
   coder: {
     items: [
-      { src: squareGlasses, x: 11, y: 22, w: 24, h: 10 },
-      { src: keyboard, x: 25, y: 34, w: 23, h: 13, motion: "tap" },
+      { src: squareGlasses, x: 15, y: 17.1, w: 20, h: 6.8 },
+      { src: keyboard, x: 26, y: 35, w: 20, h: 9.4, motion: "tap" },
     ],
   },
   warmup: {
     items: [
-      { src: sweatband, x: 6, y: 10, w: 34, h: 10 },
-      { src: dumbbell, x: 29, y: 35, w: 19, h: 12, motion: "lift" },
+      { src: sweatband, x: 6.5, y: 3.2, w: 34, h: 15.6 },
+      { src: dumbbell, x: 30, y: 37, w: 16, h: 6.6, motion: "lift" },
     ],
   },
   growth: {
     items: [
-      { src: aviatorGoggles, x: 8, y: 7, w: 30, h: 13 },
-      { src: rocket, x: 33, y: 24, w: 14, h: 23, motion: "launch" },
+      { src: aviatorGoggles, x: 11.5, y: 4, w: 24, h: 11 },
+      { src: rocket, x: 37, y: 27, w: 8, h: 16.5, motion: "launch" },
     ],
   },
   finances: {
     items: [
-      { src: greenVisor, x: 5, y: 6, w: 36, h: 15 },
-      { src: coinStack, x: 30, y: 32, w: 18, h: 15, motion: "beat" },
+      { src: greenVisor, x: 7.5, y: -8, w: 32, h: 25 },
+      { src: coinStack, x: 32, y: 32, w: 13, h: 12, motion: "beat" },
     ],
   },
   voice: {
-    items: [{ src: microphone, x: 30, y: 23, w: 18, h: 25, motion: "tilt" }],
+    items: [{ src: microphone, x: 37, y: 26, w: 7, h: 18.7, motion: "tilt" }],
   },
   thinking: {
-    items: [{ src: lightBulb, x: 33, y: 0, w: 14, h: 18, motion: "glow" }],
+    items: [{ src: lightBulb, x: 36, y: -3, w: 9, h: 15.8, motion: "glow" }],
   },
   chinese: {
-    items: [{ src: calligraphyBrush, x: 26, y: 28, w: 22, h: 20, motion: "tilt" }],
+    items: [{ src: calligraphyBrush, x: 31, y: 29, w: 15, h: 15.2, motion: "tilt" }],
   },
   english: {
     items: [
-      { src: mortarboard, x: 6, y: 0, w: 34, h: 19 },
-      { src: openBook, x: 27, y: 32, w: 21, h: 15, motion: "tilt" },
+      { src: mortarboard, x: 8.5, y: -5.8, w: 30, h: 19.8 },
+      { src: openBook, x: 30, y: 31, w: 16, h: 13.6, motion: "tilt" },
     ],
   },
   selfie: {
     items: [
-      { src: starClip, x: 6, y: 9, w: 11, h: 11 },
-      { src: selfieStick, x: 30, y: 20, w: 18, h: 28, motion: "tilt" },
+      { src: starClip, x: 8, y: 9, w: 8, h: 7.3 },
+      { src: selfieStick, x: 36, y: 25, w: 9, h: 19, motion: "tilt" },
     ],
-    flash: { x: 41, y: 26 },
+    flash: { x: 40.5, y: 29 },
   },
 };
 
@@ -211,8 +211,8 @@ export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
             )}
           </For>
           <Show when={outfit().waves}>
-            <path class="ao-wave" d="M47 35a6 6 0 0 1 0 8" />
-            <path class="ao-wave ao-late" d="M49.5 32.5a10 10 0 0 1 0 13" />
+            <path class="ao-wave" d="M47 33a5 5 0 0 1 0 7" />
+            <path class="ao-wave ao-late" d="M49.5 31a8 8 0 0 1 0 11" />
           </Show>
           <Show when={outfit().flash}>
             {(flash) => <circle class="ao-flash" cx={flash().x} cy={flash().y} r="6" />}
