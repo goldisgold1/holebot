@@ -667,6 +667,11 @@ export function createConversationViewScope(props: ConversationProps) {
   // The open side thread has its own search. It finds text only in the thread rows on the page, because
   // the host search (`onSearchMessages`) finds messages of the agent's own chat. The thread shows all
   // the messages that its snapshot has.
+  /** HoleA.I: the share of the files the joined server has, while an import runs. */
+  const [uploadProgress, setUploadProgress] = createSignal<number | null>(null);
+  createEffect(attachmentBusy, (busy) => {
+    if (!busy) setUploadProgress(null);
+  });
   const [threadSearchOpen, setThreadSearchOpen] = createSignal(false);
   const [threadSearchQuery, setThreadSearchQuery] = createSignal("");
   const [threadSearchMatches, setThreadSearchMatches] = createSignal<ChatSearchMatch[]>([]);
@@ -1115,6 +1120,10 @@ export function createConversationViewScope(props: ConversationProps) {
         }
       }
     });
+    const unsubscribeUploadProgress = conversationRuntime(props).agent.onUploadProgress?.((progress) => {
+      if (!attachmentBusy() || progress.totalBytes <= 0) return;
+      setUploadProgress(Math.min(1, progress.sentBytes / progress.totalBytes));
+    });
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
       // An open popover or menu, such as a routine chip, the model picker or the side panel's add
@@ -1233,6 +1242,7 @@ export function createConversationViewScope(props: ConversationProps) {
       scrollResizeObserver?.disconnect();
       scrollResizeObserver = undefined;
       unsubscribeImport();
+      unsubscribeUploadProgress?.();
       importSounds.dispose();
       keyboardTarget.removeEventListener("keydown", escapeListener);
       keyboardWindow.removeEventListener("keydown", closeActiveRemoteBrowserTab);
@@ -1980,6 +1990,7 @@ export function createConversationViewScope(props: ConversationProps) {
     browserTabOwner,
     attachmentAction,
     attachmentBusy,
+    uploadProgress,
     browserAddress,
     browserSidebarOpen,
     browserExpandedOpen,

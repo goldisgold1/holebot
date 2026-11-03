@@ -1912,18 +1912,28 @@ export class RemoteServerManager extends EventEmitter<RemoteServerEvents> {
       mimeType: string,
       bytes: Uint8Array,
       serverId = this.#store.activeServerId,
+      onProgress?: (acknowledged: number, size: number) => void,
     ): Effect.fn.Return<DraftAttachment, RemoteWorkflowError, RemoteRequest> {
       const server = yield* remoteDecode(() => this.#store.require(serverId));
       const url = new URL(TEAM_API_ROUTES.attachments, server.apiUrl);
       url.searchParams.set("name", name);
       url.searchParams.set("mime", mimeType || "application/octet-stream");
-      const response = yield* this.#client.fetch(server, url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/octet-stream",
+      // HoleA.I: a 100 MB file over a relay takes minutes, so it gets the upload deadline, not the
+      // 15 second one of a plain request.
+      const response = yield* this.#client.fetch(
+        server,
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/octet-stream",
+          },
+          body: Buffer.from(bytes),
         },
-        body: Buffer.from(bytes),
-      });
+        true,
+        AGENT_IMPORT_UPLOAD_TIMEOUT_MS,
+        onProgress,
+      );
       const json = yield* remoteCall(() => response.json());
       return yield* remoteDecode(() =>
         addRemotePreviewUrls(

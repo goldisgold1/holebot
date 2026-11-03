@@ -20,6 +20,7 @@ import {
   decodeWorkspaceDirectory,
   type FileAction,
   type ImportAttachmentsInput,
+  IPC_ENDPOINTS,
   LOCAL_SERVER_ID,
   type OpenAttachmentInput,
 } from "@openbot/contracts/ipc";
@@ -47,6 +48,7 @@ import { filePreviewPages } from "../file-preview-pages";
 import { decodeVoid } from "../remote-host-decoding";
 import type { RemoteServerManager } from "../remote-server-manager";
 import { remoteCall, remoteDecode } from "../remote-service-effects";
+import { sendToRenderer } from "../renderer-ipc";
 import {
   agentRequest,
   parseAttachmentData,
@@ -135,13 +137,17 @@ export function attachmentIpcHandlers({
     attachmentImports: {
       importAttachments: scopedHandler(parseImportAttachments, {
         local: (parsed) => runCauseEffect(service.prepareImportedAttachments(parsed.paths, parsed.data)),
-        remote: (parsed, serverId) => runCauseEffect(uploadRemoteImports(remoteServers, serverId, parsed)),
+        remote: (parsed, serverId) =>
+          runCauseEffect(uploadRemoteImports(remoteServers, serverId, parsed, uploadProgressReporter(getMainWindow))),
       }),
     },
     agentAttachments: {
       importAttachmentData: scopedHandler(parseAttachmentData, {
         local: (data) => runCauseEffect(service.prepareImportedAttachments([], data)),
-        remote: (data, serverId) => runCauseEffect(uploadRemoteImports(remoteServers, serverId, { paths: [], data })),
+        remote: (data, serverId) =>
+          runCauseEffect(
+            uploadRemoteImports(remoteServers, serverId, { paths: [], data }, uploadProgressReporter(getMainWindow)),
+          ),
       }),
       releaseFilePreview: payloadHandler(parseFilePreviewPageUrl, (pageUrl) => filePreviewPages.release(pageUrl)),
       chooseAttachments: payloadHandler(agentRequest(parseChooseAttachments), async (parsed) => {
@@ -181,7 +187,10 @@ export function attachmentIpcHandlers({
         if (result.canceled) return [];
         return routeToServer(serverId, {
           local: () => runCauseEffect(service.prepareAttachments(result.filePaths)),
-          remote: (target) => runCauseEffect(uploadRemotePaths(remoteServers, target, result.filePaths)),
+          remote: (target) =>
+            runCauseEffect(
+              uploadRemotePaths(remoteServers, target, result.filePaths, uploadProgressReporter(getMainWindow)),
+            ),
         });
       }),
       discardDraftAttachment: scopedHandler(parseAttachmentId, {
@@ -417,6 +426,7 @@ const uploadRemotePaths = Effect.fn("AttachmentIpc.uploadRemotePaths")(function*
   remoteServers: AttachmentIpcDependencies["remoteServers"],
   serverId: string,
   paths: string[],
+  report?: UploadProgressReport,
 ) {
   yield* remoteDecode(() => {
     if (paths.length > INPUT_LIMITS.attachments) {
@@ -441,13 +451,14 @@ const uploadRemotePaths = Effect.fn("AttachmentIpc.uploadRemotePaths")(function*
       ),
     { concurrency: "unbounded" },
   );
-  return yield* uploadRemoteFiles(remoteServers, serverId, files);
+  return yield* uploadRemoteFiles(remoteServers, serverId, files, report);
 });
 
 const uploadRemoteImports = Effect.fn("AttachmentIpc.uploadRemoteImports")(function* (
   remoteServers: AttachmentIpcDependencies["remoteServers"],
   serverId: string,
   input: ImportAttachmentsInput,
+  report?: UploadProgressReport,
 ) {
   yield* remoteDecode(() => {
     if (input.paths.length + input.data.length > INPUT_LIMITS.attachments) {
@@ -478,7 +489,7 @@ const uploadRemoteImports = Effect.fn("AttachmentIpc.uploadRemoteImports")(funct
       bytes: item.bytes,
     })),
   ];
-  return yield* uploadRemoteFiles(remoteServers, serverId, files);
+  return yield* uploadRemoteFiles(remoteServers, serverId, files, report);
 });
 
 /** Checks the names and sizes, then uploads every file at once, as one import. */
@@ -486,22 +497,53 @@ function uploadRemoteFiles(
   remoteServers: AttachmentIpcDependencies["remoteServers"],
   serverId: string,
   files: { name: string; mimeType: string; bytes: Uint8Array }[],
+  report?: UploadProgressReport,
 ) {
+  // HoleA.I: one figure for the whole import, so two files do not make the bar jump back.
+  const totalBytes = files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
+  const sent = files.map(() => 0);
   return remoteDecode(() => {
     for (const file of files) assertSupportedAttachmentName(file.name);
     if (files.some((file) => file.bytes.byteLength > ATTACHMENT_LIMITS.fileBytes)) {
       throw new Error(sourceText("error.attachment.fileTooLarge"));
     }
-    if (files.reduce((sum, file) => sum + file.bytes.byteLength, 0) > ATTACHMENT_LIMITS.totalBytes) {
+    if (totalBytes > ATTACHMENT_LIMITS.totalBytes) {
       throw new Error(sourceText("error.attachment.totalTooLarge"));
     }
   }).pipe(
     Effect.andThen(
-      Effect.forEach(files, (file) => remoteServers.uploadAttachment(file.name, file.mimeType, file.bytes, serverId), {
-        concurrency: "unbounded",
-      }),
+      Effect.forEach(
+        files,
+        (file, index) =>
+          remoteServers.uploadAttachment(file.name, file.mimeType, file.bytes, serverId, (acknowledged) => {
+            sent[index] = acknowledged;
+            report?.(
+              serverId,
+              sent.reduce((sum, bytes) => sum + bytes, 0),
+              totalBytes,
+            );
+          }),
+        { concurrency: "unbounded" },
+      ),
     ),
   );
+}
+
+type UploadProgressReport = (serverId: string, sentBytes: number, totalBytes: number) => void;
+
+/** At most four updates a second, and always the last one. */
+function uploadProgressReporter(getMainWindow: () => BrowserWindow | null): UploadProgressReport {
+  let lastAt = 0;
+  return (serverId, sentBytes, totalBytes) => {
+    const now = Date.now();
+    if (sentBytes < totalBytes && now - lastAt < 250) return;
+    lastAt = now;
+    sendToRenderer(getMainWindow(), IPC_ENDPOINTS.agentAttachments.uploadProgress, {
+      serverId,
+      sentBytes,
+      totalBytes,
+    });
+  };
 }
 
 function assertRemoteAttachmentSupport(

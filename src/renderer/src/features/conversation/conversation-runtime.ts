@@ -37,7 +37,9 @@ export interface ConversationRuntime {
     | "setMessageReaction"
   > &
     // A joined server's sign-in link that the host relays. Absent, a link opens with `openUrl`.
-    Partial<Pick<OpenBotDesktopApi["agent"], "openMessageLink" | "pasteMessageLink" | "cancelMessageLink">>;
+    Partial<Pick<OpenBotDesktopApi["agent"], "openMessageLink" | "pasteMessageLink" | "cancelMessageLink">> &
+    // HoleA.I: how far an upload to a joined server is. Only the desktop app sends it.
+    Partial<Pick<OpenBotDesktopApi["agent"], "onUploadProgress">>;
   browser: Pick<
     OpenBotDesktopApi["browser"],
     | "capturePreview"

@@ -66,6 +66,13 @@ export type AttachmentImportEvent =
   | { type: "completed"; requestId: string; serverId: string; attachments: DraftAttachment[] }
   | { type: "error"; requestId: string; serverId: string; message: string };
 
+/** HoleA.I: how much of the files being uploaded to a joined server the host has. */
+export interface AttachmentUploadProgress {
+  serverId: string;
+  sentBytes: number;
+  totalBytes: number;
+}
+
 export interface DownloadAttachmentsInput {
   attachments: { id: string; name: string }[];
 }

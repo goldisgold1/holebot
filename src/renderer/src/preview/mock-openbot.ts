@@ -2619,6 +2619,7 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
         attachmentListeners.add(listener);
         return () => attachmentListeners.delete(listener);
       },
+      onUploadProgress: () => () => undefined,
       discardDraftAttachment: async () => undefined,
       downloadAttachments: async () => {
         throw new Error("ZIP downloads are available in the desktop app.");

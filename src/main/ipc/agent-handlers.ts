@@ -24,7 +24,6 @@ import {
   decodeChannel,
   decodeChannelPage,
   decodeChannelSummaries,
-  decodeQuotaShares,
   decodeSaveAgentProfileResult,
   hostAnalyticsQuery,
   isAgentModelOption,
@@ -98,6 +97,7 @@ import {
   decodeInstalledSkillsFromHost,
   decodeQueuedMessageReceipt,
   decodeQueueSnapshot,
+  decodeQuotaSharesFromHost,
   decodeRemoteAgentTask,
   decodeRemoteAgentTasks,
   decodeRemoteAgentThreadBranches,
@@ -239,12 +239,10 @@ export function agentIpcHandlers({
         remote: (input, serverId) =>
           remoteServers.supportsCapability(serverId, AGENT_QUOTA_SHARES_CAPABILITY)
             ? runCauseEffect(
-                remoteServers.request(
-                  serverId,
-                  AGENT_QUOTA_SHARES_ROUTES.read,
-                  (value) => decodeQuotaShares(isDynamicRecord(value) ? value.shares : undefined) ?? [],
-                  { method: "POST", body: input },
-                ),
+                remoteServers.request(serverId, AGENT_QUOTA_SHARES_ROUTES.read, decodeQuotaSharesFromHost, {
+                  method: "POST",
+                  body: input,
+                }),
               )
             : null,
       }),

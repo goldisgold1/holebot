@@ -174,6 +174,7 @@ import type {
 } from "./ipc-approvals";
 import type {
   AttachmentDataInput,
+  AttachmentUploadProgress,
   ChooseAttachmentsInput,
   DownloadAttachmentsInput,
   DraftAttachment,
@@ -1575,6 +1576,8 @@ export const IPC_ENDPOINTS = {
     listWorkspaceDirectory: scopedRequest<OpenWorkspaceFileInput, WorkspaceDirectory>()(
       "agent:list-workspace-directory",
     ),
+    /** HoleA.I: main sends it while files go to a joined server, about four times a second. */
+    uploadProgress: event<AttachmentUploadProgress>()("agent:upload-progress"),
   },
   // The folders a local agent can change besides its workspace. A joined server has no route for them:
   // the Team API does not carry them, as it does not carry `access`.

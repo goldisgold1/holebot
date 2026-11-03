@@ -79,6 +79,7 @@ export function ConversationComposer() {
     providerUpdateRequired,
     attachmentAction,
     attachmentBusy,
+    uploadProgress,
     awaitingReplies,
     dismissAwaitingReplies,
     composerFocusRequest,
@@ -1047,6 +1048,18 @@ export function ConversationComposer() {
                     usage={usage()}
                   />
                 )}
+              </Show>
+              <Show when={attachmentBusy()}>
+                {/* HoleA.I: a big file takes minutes to reach a joined server, so the composer says how far it is. */}
+                <span class="composer-upload-progress" role="status" aria-live="polite">
+                  <span
+                    class="composer-upload-progress-bar"
+                    style={{ "--upload-progress": `${Math.round((uploadProgress() ?? 0) * 100)}%` }}
+                  />
+                  {uploadProgress() === null
+                    ? t("composer.upload.preparing")
+                    : t("composer.upload.progress", { progress: Math.round((uploadProgress() ?? 0) * 100) })}
+                </span>
               </Show>
               <Show when={attachmentBusy() && props.runtime?.cancelImportFiles} keyed>
                 {(cancelImportFiles) => (

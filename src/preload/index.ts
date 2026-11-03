@@ -1,4 +1,4 @@
-import type { ChannelMute } from "@openbot/contracts/ipc";
+import type { AttachmentUploadProgress, ChannelMute } from "@openbot/contracts/ipc";
 import {
   type AgentIpcRequest,
   type AttachmentImportEvent,
@@ -499,6 +499,19 @@ window.addEventListener("change", (event) => {
   if (!(input instanceof HTMLInputElement) || input.dataset.openbotAttachmentPicker !== "true") return;
   void importFiles([...(input.files ?? [])]);
 });
+
+/** HoleA.I: how far an upload to a joined server is. */
+function decodeUploadProgress(value: unknown): AttachmentUploadProgress {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("serverId" in value && typeof value.serverId === "string") ||
+    !("sentBytes" in value && typeof value.sentBytes === "number") ||
+    !("totalBytes" in value && typeof value.totalBytes === "number")
+  )
+    throw new Error("Invalid upload progress.");
+  return { serverId: value.serverId, sentBytes: value.sentBytes, totalBytes: value.totalBytes };
+}
 
 /** HoleA.I: the group chat mutes main keeps. */
 function decodeChannelMutes(value: unknown): ChannelMute[] {
@@ -1207,6 +1220,7 @@ const openbotApi: OpenBotDesktopApi = {
       previewWorkspaceFile: decodeFilePreview,
       releaseFilePreview: decodeVoid,
       listWorkspaceDirectory: decodeWorkspaceDirectory,
+      uploadProgress: decodeUploadProgress,
     }),
     ...agentFoldersGroup,
     ...bridgeGroup(IPC_ENDPOINTS.agentInstructions, {

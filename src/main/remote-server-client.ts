@@ -213,6 +213,7 @@ export class RemoteServerClient {
     init: RequestInit = {},
     affectsConnection = true,
     timeoutMs?: number,
+    onUploadProgress?: (acknowledged: number, size: number) => void,
   ): Effect.fn.Return<Response, RemoteWorkflowError> {
     return yield* Effect.gen({ self: this }, function* () {
       if (server.transport === "webrtc-v2") {
@@ -227,6 +228,7 @@ export class RemoteServerClient {
             ...(requestBody === undefined ? {} : { body: requestBody }),
             ...(contentType === undefined ? {} : { contentType }),
             ...(timeoutMs === undefined ? {} : { timeoutMs }),
+            ...(onUploadProgress === undefined ? {} : { onUploadProgress }),
             preserveSemanticTags: supportsTeamSemanticTags(compatibility.capabilities),
           });
           const headers = new Headers();

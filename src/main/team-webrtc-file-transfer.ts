@@ -55,6 +55,8 @@ interface OutgoingTransfer {
   acknowledgementGeneration: number;
   lastProgressAt: number;
   cancelled: Error | null;
+  /** HoleA.I: the bytes the peer has, so the composer can show how far an upload is. */
+  onProgress?: ((acknowledged: number, size: number) => void) | undefined;
 }
 
 export interface ReceivedWebRtcFile {
@@ -120,7 +122,7 @@ export class TeamWebRtcFileTransfer {
   readonly send = Effect.fn("TeamFileTransfer.send")(function* (
     this: TeamWebRtcFileTransfer,
     peerId: string,
-    input: { name: string; mimeType: string; bytes: Uint8Array },
+    input: { name: string; mimeType: string; bytes: Uint8Array; onProgress?: OutgoingTransfer["onProgress"] },
   ): Effect.fn.Return<string, RemoteWorkflowError> {
     return yield* this.#owned(
       Effect.gen({ self: this }, function* () {
@@ -132,6 +134,7 @@ export class TeamWebRtcFileTransfer {
           size: bytes.byteLength,
           sha256: createHash("sha256").update(bytes).digest("hex"),
           read: async (offset, length) => bytes.subarray(offset, offset + length),
+          onProgress: input.onProgress,
         });
       }),
     );
@@ -232,7 +235,7 @@ export class TeamWebRtcFileTransfer {
   readonly #sendOutgoingEffect = Effect.fn("TeamFileTransfer.sendOutgoing")(function* (
     this: TeamWebRtcFileTransfer,
     peerId: string,
-    input: Pick<OutgoingTransfer, "name" | "mimeType" | "size" | "sha256" | "read">,
+    input: Pick<OutgoingTransfer, "name" | "mimeType" | "size" | "sha256" | "read" | "onProgress">,
   ): Effect.fn.Return<string, RemoteWorkflowError> {
     const transferId = randomUUID();
     const transfer: OutgoingTransfer = {
@@ -247,6 +250,7 @@ export class TeamWebRtcFileTransfer {
       acknowledgementGeneration: 0,
       lastProgressAt: Date.now(),
       cancelled: null,
+      onProgress: input.onProgress,
     };
     this.#outgoing.set(transferKey(peerId, transferId), transfer);
     recordRestartActivity();
@@ -468,6 +472,7 @@ export class TeamWebRtcFileTransfer {
         if (frame.receivedThrough > outgoing.acknowledged) outgoing.lastProgressAt = Date.now();
         outgoing.acknowledged = frame.receivedThrough;
         outgoing.acknowledgementGeneration += 1;
+        outgoing.onProgress?.(outgoing.acknowledged, outgoing.size);
         this.#notifyStateChange();
       } else if (frame.type === "file-complete") {
         const transfer = this.#incoming.get(key);

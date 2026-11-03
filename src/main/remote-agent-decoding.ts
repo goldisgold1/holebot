@@ -6,6 +6,7 @@ import {
   decodeInstalledSkills,
   decodeProviderUsageResetOutcome,
   decodeProviderUsageResets,
+  decodeQuotaShares,
   type HostProviderAccounts,
   isAgentHostSettings,
   isAgentNotificationLevelsSnapshot,
@@ -15,6 +16,7 @@ import {
   isAgentTasksSnapshot,
   isConversationSnapshot,
   isHiddenAgentsSnapshot,
+  type QuotaShare,
 } from "@openbot/contracts/ipc";
 // Agent-shaped wire payloads: summaries, status, models, skills, memories, routines, queue.
 // See `remote-host-decoding.ts` for why the `FromHost` suffix exists and must not be merged away.
@@ -156,6 +158,11 @@ export function decodeHostProviderAccountsFromHost(value: unknown): HostProvider
 export function decodeProviderUsageResetsFromHost(value: unknown): ProviderUsageResets[] {
   if (!isDynamicRecord(value)) throw new Error("Invalid provider usage resets.");
   return decodeProviderUsageResets(value.accounts);
+}
+
+/** HoleA.I: the `agent-quota-shares-v1` split. A share the client cannot read is left out. */
+export function decodeQuotaSharesFromHost(value: unknown): QuotaShare[] {
+  return decodeQuotaShares(isDynamicRecord(value) ? value.shares : undefined) ?? [];
 }
 
 export function decodeProviderUsageResetOutcomeFromHost(value: unknown): ProviderUsageResetOutcome {

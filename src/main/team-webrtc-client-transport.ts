@@ -454,6 +454,8 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
       preserveSemanticTags?: boolean | undefined;
       agentCreateModel?: boolean | undefined;
       timeoutMs?: number | undefined;
+      /** HoleA.I: the bytes of a binary body the host has so far. */
+      onUploadProgress?: ((acknowledged: number, size: number) => void) | undefined;
     } = {},
   ): Effect.fn.Return<
     {
@@ -489,6 +491,7 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
               name: "upload",
               mimeType: init.contentType ?? "application/octet-stream",
               bytes: binary,
+              onProgress: init.onUploadProgress,
             })
           : null;
         const requestId = crypto.randomUUID();
