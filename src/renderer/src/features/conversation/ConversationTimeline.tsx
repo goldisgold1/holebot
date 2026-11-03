@@ -322,6 +322,8 @@ export function ConversationTimeline() {
       kind: "member",
       name: (member ? teamMemberName(member) : sender.name.trim()) || t("chat.message.memberFallback"),
       avatarSeed: sender.id,
+      // HoleA.I: the person's own profile picture, from live presence, beside their messages.
+      avatarUrl: member?.avatarUrl ?? null,
     };
   };
   /** The agent messages of the chat by their exchange id, so a marker finds its text and its request. */

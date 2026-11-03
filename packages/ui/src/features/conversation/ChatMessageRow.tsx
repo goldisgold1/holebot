@@ -25,9 +25,9 @@ import { conversationBubbleVariant, MessageBody } from "./MessageRendering";
  * Who wrote a message, as much as a row needs to draw it.
  *
  * `you` draws neither a face nor a name: a chat does not tell the reader who they are. `member` is
- * another person in an agent chat. People stand on the right and agents on the left, so a member
- * row stands with the reader's own and adds a name, and a bubble in that person's colour. Everything else is an author with an
- * identity, whether it is an agent of this chat or a member of a channel.
+ * another person in the chat. HoleA.I: as in a messenger, a member stands on the left with their face
+ * and name, like an agent, and keeps a bubble in that person's colour. Everything else is an author
+ * with an identity, whether it is an agent of this chat or a member of a channel.
  */
 export interface ChatMessageAuthor {
   kind: "you" | "agent" | "member";
@@ -36,6 +36,8 @@ export interface ChatMessageAuthor {
   agent?: AgentProfile | undefined;
   /** The face to draw when the profile is gone: the author id keeps deleted agents apart. */
   avatarSeed?: string | undefined;
+  /** HoleA.I: a member's own profile picture; without one the face comes from `avatarSeed`. */
+  avatarUrl?: string | null | undefined;
 }
 
 export interface ChatMessageRowProps {
@@ -126,9 +128,12 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
     "message-entry",
     {
       "message-entry-animated": props.animate === true,
-      "message-entry-user": person(),
-      "message-entry-agent": !person(),
-      "message-entry-with-author": props.showAuthor === true && !person(),
+      // HoleA.I: as in a messenger, only the reader stands on the right; another person stands on the
+      // left with their face and name, like an agent, and keeps their own bubble colour.
+      "message-entry-user": own(),
+      "message-entry-agent": !own(),
+      "message-entry-member": member(),
+      "message-entry-with-author": props.showAuthor === true && !own(),
     },
     props.class,
   ];
@@ -174,12 +179,12 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
     );
   };
   // A row in a chat with faces draws the face, or keeps its column empty so the bubbles stay in line.
-  const face = () => (props.showAuthor === undefined || person() ? undefined : (props.showFace ?? props.showAuthor));
+  const face = () => (props.showAuthor === undefined || own() ? undefined : (props.showFace ?? props.showAuthor));
   const body = (): JSX.Element => (
     <>
       <Show when={face()}>
         <MessageAvatar class="message-author-avatar">
-          <Show when={props.author.agent} fallback={<AgentAvatar seed={seed()} />}>
+          <Show when={props.author.agent} fallback={<AgentAvatar seed={seed()} url={props.author.avatarUrl ?? null} />}>
             {(agent) => (
               <Button
                 variant="ghost"
@@ -222,7 +227,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
         <div class="message-shell">
           <Bubble
             class={member() ? "message-bubble-member" : undefined}
-            align={person() ? "end" : "start"}
+            align={own() ? "end" : "start"}
             variant={variant()}
             data-author={person() ? "user" : "assistant"}
             data-streaming={props.message.streaming === true ? "" : undefined}
@@ -255,7 +260,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             <Show when={(props.groupReactions?.length ?? 0) > 0}>
               <BubbleReactions
                 class="message-reaction-anchor"
-                align={person() ? "start" : "end"}
+                align={own() ? "start" : "end"}
                 overflowCount={Math.max(0, (props.groupReactions?.length ?? 0) - CHANNEL_REACTION_GROUPS_SHOWN)}
                 role="group"
                 aria-label={t("chat.row.reactions", {
@@ -285,7 +290,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             <Show when={!props.groupReactions && (props.reactions?.length ?? 0) > 0}>
               <BubbleReactions
                 class="message-reaction-anchor"
-                align={person() ? "start" : "end"}
+                align={own() ? "start" : "end"}
                 overflowCount={props.reactionOverflowCount}
                 role="group"
                 aria-label={t("chat.row.reactions", {
@@ -346,7 +351,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
       fallback={
         <Message
           role="article"
-          align={person() ? "end" : "start"}
+          align={own() ? "end" : "start"}
           aria-label={t("chat.row.label", { name: props.author.name })}
           data-author={person() ? "user" : "assistant"}
           data-chat-search-message={props["data-chat-search-message"]}
@@ -380,7 +385,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             // The trigger is the row, so it draws the `Message` primitive's element itself:
             // `as={Message}` would spread Kobalte's own props onto the DOM.
             data-slot="message"
-            data-align={person() ? "end" : "start"}
+            data-align={own() ? "end" : "start"}
             aria-label={t("chat.row.label", { name: props.author.name })}
             data-author={person() ? "user" : "assistant"}
             data-chat-search-message={props["data-chat-search-message"]}
