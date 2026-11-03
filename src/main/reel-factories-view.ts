@@ -15,6 +15,7 @@ import { type BrowserWindow, shell, WebContentsView } from "electron";
 export function createReelFactoriesView(getWindow: () => BrowserWindow | null) {
   let view: WebContentsView | null = null;
   let host: BrowserWindow | null = null;
+  let signingIn = false;
 
   const ensure = (window: BrowserWindow): WebContentsView => {
     if (view && host === window && !view.webContents.isDestroyed()) return view;
@@ -34,6 +35,21 @@ export function createReelFactoriesView(getWindow: () => BrowserWindow | null) {
     next.webContents.on("will-navigate", (event, url) => {
       if (!url.startsWith("https://")) event.preventDefault();
     });
+    // After Sign in, the dashboard opens its own home page. Once the sign-in form is gone, the view goes
+    // back to the board, so nobody has to press Reload.
+    const returnAfterSignIn = () => {
+      if (!signingIn || next.webContents.isDestroyed()) return;
+      void next.webContents
+        .executeJavaScript('document.querySelector("input[type=password]") === null')
+        .then((signedIn) => {
+          if (!signedIn || !signingIn || next.webContents.isDestroyed()) return;
+          signingIn = false;
+          void next.webContents.loadURL(REELS_FACTORY_BOARD_URL);
+        })
+        .catch(() => undefined);
+    };
+    next.webContents.on("did-finish-load", returnAfterSignIn);
+    next.webContents.on("did-navigate-in-page", returnAfterSignIn);
     window.contentView.addChildView(next);
     window.once("closed", () => {
       if (view === next) {
@@ -70,12 +86,15 @@ export function createReelFactoriesView(getWindow: () => BrowserWindow | null) {
     /** Reloads the board, or goes back to it from the sign-in or any other dashboard page. */
     reload(): void {
       if (!view || view.webContents.isDestroyed()) return;
+      signingIn = false;
       if (view.webContents.getURL().startsWith(REELS_FACTORY_BOARD_URL)) view.webContents.reload();
       else void view.webContents.loadURL(REELS_FACTORY_BOARD_URL);
     },
     /** Opens the dashboard sign-in in the board's own session; Reload goes back to the board after. */
     signIn(): void {
-      if (view && !view.webContents.isDestroyed()) void view.webContents.loadURL(REELS_FACTORY_SIGN_IN_URL);
+      if (!view || view.webContents.isDestroyed()) return;
+      signingIn = true;
+      void view.webContents.loadURL(REELS_FACTORY_SIGN_IN_URL);
     },
   };
 }
