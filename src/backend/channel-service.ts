@@ -1000,6 +1000,21 @@ export class ChannelService {
       .filter((agentId) => live.some((agent) => agent.id === agentId) && !this.hooks.hidden?.(agentId));
   }
 
+  /** HoleA.I: the member among `members` whose message is the latest in the chat. */
+  private lastSpeaker(channelId: string, members: readonly string[]): string | undefined {
+    let recent: ChannelMessage[];
+    try {
+      recent = this.store.messages(channelId, undefined, ROUTING_RECENT_MESSAGES * 4);
+    } catch {
+      return undefined;
+    }
+    for (let index = recent.length - 1; index >= 0; index -= 1) {
+      const author = recent[index]?.author;
+      if (author?.kind === "agent" && members.includes(author.id)) return author.id;
+    }
+    return undefined;
+  }
+
   /** The other members that answer the same request in tasks of their own, by name. */
   #peers(tasks: readonly ChannelTask[], task: ChannelTask): string[] {
     if (task.parentTaskId !== null) return [];
@@ -1067,8 +1082,17 @@ export class ChannelService {
         // so it runs only when there is a choice to make. This is silent on purpose: a dispatch
         // message exists to make a model's choice auditable, and no model was asked here.
         const [onlyMember, ...otherMembers] = this.eligibleMembers(channel);
-        if (onlyMember && otherMembers.length === 0) {
-          task = { ...task, ownerAgentId: onlyMember };
+        // HoleA.I: with no lead there is nobody to choose, and the request used to stop with "Choose a
+        // lead". It goes to the member who spoke last in the chat instead, or the first member.
+        const leadAvailable = this.hooks.agents().some((agent) => agent.id === channel.leadAgentId);
+        const owner =
+          onlyMember && otherMembers.length === 0
+            ? onlyMember
+            : !leadAvailable && onlyMember
+              ? (this.lastSpeaker(channelId, [onlyMember, ...otherMembers]) ?? onlyMember)
+              : undefined;
+        if (owner) {
+          task = { ...task, ownerAgentId: owner };
           yield* channelSync(() => this.store.update(channel, { tasks: [task] }));
           channel = yield* channelSync(() => this.store.get(channelId));
         }
