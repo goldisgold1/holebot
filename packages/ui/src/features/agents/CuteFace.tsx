@@ -1,4 +1,4 @@
-import { botClosedEyes, botInset, botToken } from "@openbot/brand/cute-face";
+import { botClosedEyes, botInset, botToken, SIDE_LOOK_POSE, SIDE_LOOK_SHAPE } from "@openbot/brand/cute-face";
 import { createEffect, createMemo, For, onCleanup, Show } from "solid-js";
 import type { AvatarFaceMood, SupportedAvatarSilhouetteId } from "../../bloub-avatar";
 import { startFaceMotion } from "./face-motion";
@@ -17,7 +17,7 @@ export function CuteFace(props: {
   animated: boolean;
   delay?: number | undefined;
 }) {
-  const token = createMemo(() => botToken(props.seed));
+  const token = createMemo(() => botToken(props.seed, SIDE_LOOK_SHAPE, SIDE_LOOK_POSE));
   // The turn is CSS (holeai-clean.css): every slice steps by its depth times the live yaw and pitch, so the
   // token turns in 3D as the moods animate them. These are its resting numbers.
   const style = () => ({

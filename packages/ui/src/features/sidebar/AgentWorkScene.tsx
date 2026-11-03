@@ -29,6 +29,7 @@ export type AgentWorkRole =
   | "chinese"
   | "english"
   | "selfie"
+  | "chef"
   | "general";
 
 const ROLE_NAMES: ReadonlyArray<readonly [RegExp, AgentWorkRole]> = [
@@ -51,6 +52,7 @@ const ROLE_NAMES: ReadonlyArray<readonly [RegExp, AgentWorkRole]> = [
   [/^chinese coach\b/i, "chinese"],
   [/^english coach\b/i, "english"],
   [/^selfie\b/i, "selfie"],
+  [/^chef\b/i, "chef"],
 ];
 
 /** The role of an agent, from its name. */

@@ -15,6 +15,7 @@ import beanie from "./outfit-items/beanie.webp";
 import beret from "./outfit-items/beret.webp";
 import bucketHat from "./outfit-items/bucket_hat.webp";
 import calligraphyBrush from "./outfit-items/calligraphy_brush.webp";
+import chefHat from "./outfit-items/chef_hat.webp";
 import clapperboard from "./outfit-items/clapperboard.webp";
 import clipboard from "./outfit-items/clipboard.webp";
 import coinStack from "./outfit-items/coin_stack.webp";
@@ -46,6 +47,7 @@ import smartphone from "./outfit-items/smartphone.webp";
 import squareGlasses from "./outfit-items/square_glasses.webp";
 import starClip from "./outfit-items/star_clip.webp";
 import sweatband from "./outfit-items/sweatband.webp";
+import whisk from "./outfit-items/whisk.webp";
 
 /** One item on the 48 x 48 box laid over the avatar; `motion` is how it moves while the agent works. */
 interface OutfitItem {
@@ -177,19 +179,21 @@ const OUTFITS: Partial<Record<AgentWorkRole, Outfit>> = {
     ],
     flash: { x: 40.5, y: 29 },
   },
+  chef: {
+    items: [
+      { src: chefHat, x: 16, y: -12, w: 17, h: 27.2 },
+      { src: whisk, x: 31, y: 30, w: 14, h: 12.8, motion: "deal" },
+    ],
+  },
 };
 
-/**
- * A dressed agent wears the same soft pebble body, so its hat sits on top and its glasses on its eyes;
- * the house, crown and cloud silhouettes put them in the wrong place.
- */
-// Every dressed agent wears the same round teal body (Vincent's pick), so the outfit is what tells roles apart.
+// Every dressed agent wears the round body (Vincent's pick) in its own colour; the outfit tells roles apart.
 export const outfitBodyShape = (role: AgentWorkRole) => (OUTFITS[role] ? ("cercle" as const) : undefined);
-export const outfitBodyHue = (role: AgentWorkRole) => (OUTFITS[role] ? (185 as const) : undefined);
 
+/** The outfit goes on only while the agent works (Vincent): an idle agent is just its round body. */
 export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
   return (
-    <Show when={OUTFITS[props.role]}>
+    <Show when={props.working ? OUTFITS[props.role] : undefined}>
       {(outfit) => (
         <svg
           class="agent-outfit"
@@ -331,6 +335,7 @@ const WORK_STRIPS: Partial<Record<AgentWorkRole, WorkStripScene>> = {
     trail: "sparkle",
     pops: { chars: ["♥", "✦", "♥"], motion: "float" },
   },
+  chef: { actor: { src: whisk, move: "stay" }, trail: "sparkle", pops: { chars: ["♨", "✦", "♨"], motion: "float" } },
 };
 
 export const hasWorkStrip = (role: AgentWorkRole) => WORK_STRIPS[role] !== undefined;

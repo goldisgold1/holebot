@@ -168,6 +168,17 @@ const POSES: readonly [BotPose, ...BotPose[]] = [
   { yaw: -0.28, pitch: 0.15 },
 ];
 
+/**
+ * HoleA.I (Vincent): every agent is the same round body, turned a little to its right with its eyes up on
+ * that side, as a face looks when it glances at something. The colour still tells agents apart.
+ */
+export const SIDE_LOOK_POSE: BotPose = { yaw: 0.3, pitch: 0.22 };
+
+export const SIDE_LOOK_SHAPE: BotShape = (() => {
+  const round = BOT_SHAPES.find((candidate) => candidate.id === "round") ?? BOT_SHAPES[0];
+  return { ...round, eyes: { ...round.eyes, x: 61, y: 38 } };
+})();
+
 const SLICES = 12;
 
 export interface BotSlice {
@@ -226,8 +237,11 @@ export function botShapeFor(seed: string): BotShape {
   return pick(BOT_SHAPES, seed, "shape");
 }
 
-export function botToken(seed: string, shape: BotShape = botShapeFor(seed)): BotToken {
-  const pose = pick(POSES, seed, "pose");
+export function botToken(
+  seed: string,
+  shape: BotShape = botShapeFor(seed),
+  pose: BotPose = pick(POSES, seed, "pose"),
+): BotToken {
   const middle = (SLICES - 1) / 2;
   const slices = Array.from({ length: SLICES }, (_, index) => {
     const rim = Math.min(index, SLICES - 1 - index);
