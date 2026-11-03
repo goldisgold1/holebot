@@ -17,8 +17,9 @@ import {
 import { showMainWindow } from "./main-window";
 import { sendToRenderer } from "./renderer-ipc";
 import { playFace } from "./tray/face-animation";
-import { type TrayAgent, type TrayState, trayState } from "./tray/tray-agents";
+import { sentRosterTrayState, type TrayAgent, type TrayState, trayState } from "./tray/tray-agents";
 import { createTrayImages, overlayBadge, type TrayFace, trayAssetsDirectory, withBadge } from "./tray/tray-images";
+import { onTrayRoster, trayRoster } from "./tray/tray-roster";
 
 export interface BackgroundTray {
   /** Shows the icon when OpenBot keeps running after its window closes, and removes it otherwise. */
@@ -252,9 +253,14 @@ export function createBackgroundTray(options: {
   }
 
   function refresh(): void {
-    if (disposed || !options.agents) return;
+    const sent = trayRoster();
+    if (disposed || (!options.agents && !sent)) return;
     try {
-      state = trayState(options.agents.snapshot(), options.agents.reads(), busySince, Date.now());
+      state = sent
+        ? sentRosterTrayState(sent, busySince, Date.now())
+        : options.agents
+          ? trayState(options.agents.snapshot(), options.agents.reads(), busySince, Date.now())
+          : state;
     } catch {
       return;
     }
@@ -275,6 +281,7 @@ export function createBackgroundTray(options: {
   }
 
   const unsubscribe = options.agents?.subscribe(scheduleRefresh);
+  const unsubscribeRoster = onTrayRoster(scheduleRefresh);
   // A new main window has no overlay yet; the next refresh paints it.
   const onWindowCreated = () => {
     overlayCount = -1;
@@ -319,6 +326,7 @@ export function createBackgroundTray(options: {
       if (refreshTimer !== null) clearTimeout(refreshTimer);
       refreshTimer = null;
       unsubscribe?.();
+      unsubscribeRoster();
       app.off("browser-window-created", onWindowCreated);
       destroyTray();
     },

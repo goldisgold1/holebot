@@ -20,6 +20,7 @@ export interface AppPort {
   reloadReelFactoriesView: OpenBotDesktopApi["reloadReelFactoriesView"];
   signInReelFactoriesView: OpenBotDesktopApi["signInReelFactoriesView"];
   getReelFactoryLive: OpenBotDesktopApi["getReelFactoryLive"];
+  setTrayRoster: OpenBotDesktopApi["setTrayRoster"];
   openChatWindow: OpenBotDesktopApi["openChatWindow"];
   getChatWindows: OpenBotDesktopApi["getChatWindows"];
   onChatWindows: OpenBotDesktopApi["onChatWindows"];

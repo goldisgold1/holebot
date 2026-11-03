@@ -15,6 +15,7 @@ import {
   externalLinkAppName,
   GROK_BOT_EXPORT_URL,
   isReelFactoriesViewBounds,
+  isTrayRoster,
 } from "@openbot/contracts/ipc";
 import { analyticsOnByDefault } from "@openbot/telemetry";
 import { app, type BrowserWindow, dialog, type OpenDialogOptions } from "electron";
@@ -42,6 +43,7 @@ import type { RemoteNetworkRoutePreferenceStore } from "../remote-network-route-
 import type { RemoteSessionCache } from "../remote-session-cache";
 import type { RemoteSessionReusePreferenceStore } from "../remote-session-reuse-preference-store";
 import { readSetupState, writeSetupState } from "../setup-store";
+import { setTrayRoster } from "../tray/tray-roster";
 import type { UpdateService } from "../update-service";
 import {
   parseAgentDefaults,
@@ -280,6 +282,13 @@ export function appIpcHandlers({
       reloadReelFactoriesView: handler(() => reelFactoriesView.reload()),
       signInReelFactoriesView: handler(() => reelFactoriesView.signIn()),
       getReelFactoryLive: handler(() => reelFactoriesView.live()),
+      setTrayRoster: payloadHandler(
+        (value) => {
+          if (value === null || isTrayRoster(value)) return value;
+          throw new Error("Invalid tray roster.");
+        },
+        (roster) => setTrayRoster(roster),
+      ),
       getExternalLinkPreference: handler(() => externalLinkPreference.get()),
       setExternalLinkPreference: payloadHandler(parseExternalLinkPreference, (parsed) =>
         runCauseEffect(externalLinkPreference.set(parsed)),

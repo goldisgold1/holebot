@@ -1,5 +1,5 @@
 import { avatarHeadColor } from "@openbot/brand/bloub-avatar";
-import type { AgentRuntimeSnapshot, ConversationReadState } from "@openbot/contracts/ipc";
+import type { AgentRuntimeSnapshot, ConversationReadState, TrayRosterAgent } from "@openbot/contracts/ipc";
 
 /**
  * HoleA.I (Vincent, Nov 3 2026): what the tray shows about the local agents, from the runtime snapshot
@@ -75,7 +75,10 @@ export interface TrayState {
 
 export const TRAY_RECENT_AGENTS = 5;
 
-type RosterEntry = AgentRuntimeSnapshot["agents"][number];
+type RosterEntry = Pick<
+  AgentRuntimeSnapshot["agents"][number],
+  "id" | "name" | "avatarSeed" | "avatarHue" | "avatarUrl" | "updatedAt" | "notifications"
+>;
 
 function avatarOf(agent: RosterEntry): TrayAvatar {
   const photo =
@@ -102,11 +105,28 @@ export function trayState(
 ): TrayState {
   const busy = new Set<string>(snapshot.activeTurns.map((turn) => turn.agentId));
   for (const item of snapshot.work) if (item.status !== "failed") busy.add(item.agentId);
+  return rosterTrayState(snapshot.agents, busy, (agentId) => (reads[agentId]?.unreadCount ?? 0) > 0, busySince, now);
+}
+
+/** The tray state of the agents a window sent, such as those of the hole.fm VPS. */
+export function sentRosterTrayState(roster: TrayRosterAgent[], busySince: Map<string, number>, now: number): TrayState {
+  const busy = new Set(roster.filter((agent) => agent.busy).map((agent) => agent.id));
+  const unread = new Set(roster.filter((agent) => agent.unread).map((agent) => agent.id));
+  return rosterTrayState(roster, busy, (agentId) => unread.has(agentId), busySince, now);
+}
+
+function rosterTrayState(
+  roster: readonly RosterEntry[],
+  busy: ReadonlySet<string>,
+  isUnread: (agentId: string) => boolean,
+  busySince: Map<string, number>,
+  now: number,
+): TrayState {
   for (const agentId of [...busySince.keys()]) if (!busy.has(agentId)) busySince.delete(agentId);
   for (const agentId of busy) if (!busySince.has(agentId)) busySince.set(agentId, now);
 
-  const recent = [...snapshot.agents].sort((left, right) => activityAt(right) - activityAt(left));
-  const unread = (agent: RosterEntry) => (reads[agent.id]?.unreadCount ?? 0) > 0;
+  const recent = [...roster].sort((left, right) => activityAt(right) - activityAt(left));
+  const unread = (agent: RosterEntry) => isUnread(agent.id);
   const agents = recent.slice(0, TRAY_RECENT_AGENTS).map(
     (agent, index): TrayAgent => ({
       agentId: agent.id,
@@ -120,13 +140,13 @@ export function trayState(
 
   let face: TrayState["face"] = null;
   let faceSince = Number.NEGATIVE_INFINITY;
-  for (const agent of snapshot.agents) {
+  for (const agent of roster) {
     const since = busySince.get(agent.id);
     if (since === undefined || since < faceSince) continue;
     faceSince = since;
     face = { agentId: agent.id, avatar: avatarOf(agent) };
   }
 
-  const unreadCount = snapshot.agents.filter((agent) => agent.notifications && unread(agent)).length;
+  const unreadCount = roster.filter((agent) => agent.notifications && unread(agent)).length;
   return { agents, face, unreadCount };
 }

@@ -91,4 +91,5 @@ export * from "./mcp-sign-in-events";
 export * from "./mobile-connect";
 export * from "./reel-factories";
 export * from "./skill-conversation-events";
+export * from "./tray-roster";
 export * from "./ui-blocks";

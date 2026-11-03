@@ -280,6 +280,33 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
     }),
   );
 
+  /* HoleA.I: the tray shows the agents of the server this window shows (the hole.fm VPS), not only
+   * those of this computer: their face while busy, the unread badge and the recent-agent menu. Sent
+   * only when it changes. */
+  let sentTrayRoster = "";
+  createEffect(
+    () =>
+      agentList().map((agent) => ({
+        id: agent.id,
+        name: agent.name,
+        avatarSeed: agent.avatarSeed,
+        avatarHue: agent.avatarHue,
+        avatarUrl: agent.avatarUrl?.startsWith("data:image/") ? agent.avatarUrl : null,
+        updatedAt: agent.updatedAt ?? null,
+        notifications: agent.notifications,
+        busy: sidebarAgentStates()[agent.id]?.kind === "working",
+        unread: (unreadReplies()[agent.id] ?? 0) > 0,
+      })),
+    (roster) => {
+      const key = JSON.stringify(roster);
+      if (key === sentTrayRoster) return;
+      sentTrayRoster = key;
+      void appPort()
+        .setTrayRoster(roster)
+        .catch(() => undefined);
+    },
+  );
+
   /* A wait in a channel thread goes to the channel instead. Selecting the channel opens the view
    * that answers it. */
   const channelWaits = createMemo(() => {

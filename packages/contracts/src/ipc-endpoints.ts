@@ -12,6 +12,7 @@ import type {
 } from "./ipc-agent-session-settings";
 import type { ChannelMute, SetChannelMutedInput } from "./ipc-chat-channels";
 import type { ReelFactoriesViewBounds, ReelFactoryLive } from "./reel-factories";
+import type { TrayRosterAgent } from "./tray-roster";
 // The one channel list. Each endpoint holds its wire value, the group it belongs to, and whether it
 // is a request the renderer invokes or an event the main process sends. That is what lets a
 // registrar bind its handlers as an object keyed by endpoint, so a channel with no handler, and a
@@ -724,6 +725,8 @@ export const IPC_ENDPOINTS = {
     reloadReelFactoriesView: request<undefined, void>()("app:reload-reel-factories-view"),
     signInReelFactoriesView: request<undefined, void>()("app:sign-in-reel-factories-view"),
     getReelFactoryLive: request<undefined, ReelFactoryLive | null>()("app:get-reel-factory-live"),
+    // HoleA.I: the window's server agents for the tray's face, badge and menu; null hands back to local.
+    setTrayRoster: request<TrayRosterAgent[] | null, void>()("app:set-tray-roster"),
     getExternalLinkPreference: request<undefined, ExternalLinkPreference>()("app:get-external-link-preference"),
     setExternalLinkPreference: request<ExternalLinkPreference, ExternalLinkPreference>()(
       "app:set-external-link-preference",
