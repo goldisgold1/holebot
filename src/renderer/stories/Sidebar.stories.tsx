@@ -1,5 +1,6 @@
 import type { ChannelSummary, HiddenAgent, SidebarLayoutAction, SidebarLayoutSnapshot } from "@openbot/contracts/ipc";
 import type { AvatarMood } from "@openbot/ui/bloub-avatar";
+import { holdSettlePose } from "@openbot/ui/features/agents/bot-mark/settle-pose";
 import { Sidebar } from "@openbot/ui/features/sidebar/Sidebar";
 import { SidebarCommunityCard } from "@openbot/ui/features/sidebar/SidebarCommunityCard";
 import { SidebarMachineCard } from "@openbot/ui/features/sidebar/SidebarMachineCard";
@@ -12,6 +13,7 @@ import { fn } from "storybook/test";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { defaultSidebarLayout } from "../src/features/sidebar/sidebar-sections";
 import { requireFixture, STORY_AGENTS, STORY_DIRECT_THREADS, STORY_PRESENCE, STORY_SERVERS } from "./fixtures";
+import { SettledArgs } from "./settled-args";
 
 const agentStates: Record<string, SidebarAgentState> = {
   chief: { kind: "working" },
@@ -292,7 +294,7 @@ function applyStoryLayoutAction(layout: SidebarLayoutSnapshot, action: SidebarLa
 const meta = {
   title: "Navigation/Sidebar",
   component: Sidebar,
-  render: (storyArgs) => <InteractiveSidebar {...storyArgs} />,
+  render: (storyArgs) => <SettledArgs>{() => <InteractiveSidebar {...storyArgs} />}</SettledArgs>,
   args,
   parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof Sidebar>;
@@ -301,6 +303,23 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Populated: Story = {
+  decorators: [(Story) => <div style={{ width: "280px", height: "100vh" }}>{Story()}</div>],
+};
+
+/**
+ * As in the bot app: a working agent's row says what it is doing now in place of the last message, and
+ * an agent that just finished says so for a while, its face showing the finish for a moment.
+ */
+export const LiveStep: Story = {
+  args: {
+    pinnedItems: [],
+    agentStates: { chief: { kind: "working" } },
+    agentMoods: { chief: "working", research: "idle", sales: "idle" },
+    agentActivity: { chief: "Reading the launch brief" },
+  },
+  beforeEach: () => {
+    holdSettlePose("sales-outbound", "finished");
+  },
   decorators: [(Story) => <div style={{ width: "280px", height: "100vh" }}>{Story()}</div>],
 };
 
