@@ -429,6 +429,18 @@ export const OPENBOT_TOOL_DEFINITIONS: readonly OpenBotToolDefinition[] = [
     shape: updateAgentsToolSchema.shape,
   },
   {
+    name: "read_usage",
+    description:
+      "Read your own usage: how full your chat's context is (tokens used, the window, and the share at which it compacts by itself) and how much of your provider plan's usage limits is used, with when each window resets. Read-only. Use it to decide when to call compact_chat or start_new_chat, and to slow down before a usage limit.",
+    shape: {},
+  },
+  {
+    name: "compact_chat",
+    description:
+      "Compact your own chat: the earlier messages are replaced by a summary, so each message sends less context but you keep the gist. Use it when this chat is long and you still need what happened in it; use start_new_chat instead when the earlier messages no longer matter. Compaction runs when this turn ends and your queue is empty. It works only in your own chat, and only when the user allows new chats in your settings.",
+    shape: {},
+  },
+  {
     name: "start_new_chat",
     description:
       "Start a new chat for yourself when this chat is long and its earlier messages no longer matter, or when a routine asks for it. Each message then sends less context. Before you call it, keep what you need: use remember, or write notes to a file in your workspace. The user still sees the earlier messages; you do not. The new chat starts when this turn ends and your queue is empty. When a queued message runs in this chat first, the request ends; call it again if you still need it. It works only in your own chat, and only when the user allows it in your settings.",

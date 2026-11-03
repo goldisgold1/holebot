@@ -177,6 +177,10 @@ export interface OpenBotToolRouterHooks {
   reportRoutineFailure(agentId: string, turnId: string, reason: string): boolean;
   /** Starts a new chat with the agent when its turn ends and its queue is empty. */
   requestNewChat(agentId: string): void;
+  /** HoleA.I: compacts the agent's own chat when its turn ends and its queue is empty. */
+  requestCompact(agentId: string): void;
+  /** HoleA.I: the agent's own context fill and provider plan usage, for `read_usage`. */
+  readUsage(agentId: string): Effect.Effect<unknown>;
   /**
    * Takes a message from another agent into the recipient's running chat turn when the recipient's
    * busy-message mode is "steer". Otherwise the message waits in the queue.
@@ -934,6 +938,26 @@ export class OpenBotToolRouter {
     if (params.tool === "update_profile") return yield* this.#updateProfile(params, senderAgentId);
 
     if (params.tool === "update_agents") return yield* handleUpdateAgentsTool(params, senderAgentId, this.#hooks);
+
+    if (params.tool === "read_usage") {
+      const payload = yield* this.#hooks.readUsage(senderAgentId);
+      return { success: true, contentItems: [{ type: "inputText", text: redactText(JSON.stringify(payload)) }] };
+    }
+
+    if (params.tool === "compact_chat") {
+      const agent = this.#store.list().find((candidate) => candidate.id === senderAgentId);
+      if (!agent || !agentNewChatAllowed(agent, this.#store.agentDefaults()))
+        return openBotToolFailure(
+          "The user has not allowed you to manage your own chat. Ask the user to turn on new chats in your settings.",
+        );
+      if (agent.threadId !== this.#conversation.publicThreadId(senderAgentId, params.threadId))
+        return openBotToolFailure("You can compact only your own chat, not a task or a channel.");
+      this.#hooks.requestCompact(senderAgentId);
+      return openBotToolResult({
+        status: "requested",
+        note: "Your chat compacts when this turn ends and your queue is empty. Finish your answer now.",
+      });
+    }
 
     if (params.tool === "start_new_chat") {
       const agent = this.#store.list().find((candidate) => candidate.id === senderAgentId);

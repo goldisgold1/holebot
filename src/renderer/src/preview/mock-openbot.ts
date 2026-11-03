@@ -49,6 +49,7 @@ import {
   agentComputerUseEnabled,
   agentExclusionCoverage,
   agentFolderCoverage,
+  agentNewChatAllowed,
   agentQuickAcknowledgementEnabled,
   agentTaskLimit,
   type BackgroundProcess,
@@ -2032,6 +2033,15 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
       updateAgentPlanCard: async (input) => {
         await api.agent.updateAgent(input);
         return api.agent.getAgentPlanCard(input.agentId);
+      },
+      getAgentNewChat: async (agentId) => {
+        const agent = agents.find((candidate) => candidate.id === agentId);
+        if (!agent) throw new Error("Agent not found");
+        return { allowNewChat: agentNewChatAllowed(agent, agentDefaults) };
+      },
+      updateAgentNewChat: async (input) => {
+        await api.agent.updateAgent(input);
+        return api.agent.getAgentNewChat(input.agentId);
       },
       listBrowserProfiles: async () => ({
         profiles: browserProfiles.map(browserProfileSummary),

@@ -14,6 +14,7 @@ import {
   canAdministerServer,
   decodeAgentBackupModelSettings,
   decodeAgentHostSettings,
+  decodeAgentNewChatSettings,
   decodeAgentPlanCardSettings,
   decodeAgentTaskLimitSettings,
   type ServerConnectionState,
@@ -23,6 +24,7 @@ import type { MarketplaceListingLink } from "@openbot/contracts/marketplace-link
 import { AGENT_BACKUP_MODELS_ROUTES } from "@openbot/contracts/team-protocol/agent-backup-models-v1";
 import { AGENT_HOST_SETTINGS_ROUTES } from "@openbot/contracts/team-protocol/agent-host-settings-v1";
 import { AGENT_IMPORT_CAPABILITY } from "@openbot/contracts/team-protocol/agent-import-v1";
+import { AGENT_NEW_CHAT_ROUTES } from "@openbot/contracts/team-protocol/agent-new-chat-v1";
 import { AGENT_PLAN_CARD_ROUTES } from "@openbot/contracts/team-protocol/agent-plan-card-v1";
 import { AGENT_TASK_LIMIT_ROUTES } from "@openbot/contracts/team-protocol/agent-task-limit-v1";
 import { AGENT_TASKS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-tasks-v1";
@@ -805,6 +807,13 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
           agentId,
           quickAcknowledgement,
         }),
+      getAgentNewChat: (agentId, serverId) =>
+        hostRequest(serverId)("POST", AGENT_NEW_CHAT_ROUTES.settings, decodeAgentNewChatSettings, { agentId }),
+      updateAgentNewChat: ({ agentId, allowNewChat }, serverId) =>
+        hostRequest(serverId)("POST", AGENT_NEW_CHAT_ROUTES.update, decodeAgentNewChatSettings, {
+          agentId,
+          allowNewChat,
+        }),
       getAgentAdminSettings: (agentId, serverId) =>
         runTeamEffect(
           getAgentAdminSettings(hostRequest(serverId), agentId).pipe(Effect.mapError((error) => error.cause)),
@@ -827,6 +836,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
     const usageLimitReturn = remoteAgentAdmin.usageLimitReturn();
     const taskLimit = remoteAgentAdmin.taskLimit();
     const quickAcknowledgement = remoteAgentAdmin.quickAcknowledgement();
+    const allowNewChat = remoteAgentAdmin.allowNewChat();
     return agent
       ? {
           ...agent,
@@ -837,6 +847,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
           ...(usageLimitReturn ? { usageLimitReturn } : {}),
           ...(typeof taskLimit === "number" ? { taskLimit } : {}),
           ...(quickAcknowledgement === undefined ? {} : { quickAcknowledgement }),
+          ...(allowNewChat === undefined ? {} : { allowNewChat }),
         }
       : agent;
   });
@@ -2716,6 +2727,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                   remoteBackupModelsLoaded={remoteAgentAdmin.backupModels() !== undefined}
                   remoteTaskLimitLoaded={remoteAgentAdmin.taskLimit() !== undefined}
                   remotePlanCardLoaded={remoteAgentAdmin.quickAcknowledgement() !== undefined}
+                  remoteNewChatLoaded={remoteAgentAdmin.allowNewChat() !== undefined}
                   remoteBusyMessageModeLoaded={remoteAgentAdmin.busyMessageMode() !== undefined}
                   defaultBusyMessageMode={remoteAgentAdmin.defaultBusyMessageMode()}
                   onUpdateAgentPermissions={remoteAgentAdmin.settings() ? remoteAgentAdmin.update : undefined}

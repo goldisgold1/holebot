@@ -10,6 +10,7 @@ import {
   decodeAgentAdminSettings,
   decodeAgentBackupModelSettings,
   decodeAgentBrowserProfile,
+  decodeAgentNewChatSettings,
   decodeAgentPlanCardSettings,
   decodeAgentTaskLimitSettings,
   decodeBrowserProfileList,
@@ -25,6 +26,7 @@ import {
   parseUpdateAgentBackupModelsInput,
   parseUpdateAgentBrowserProfileInput,
   parseUpdateAgentHostSettingsInput,
+  parseUpdateAgentNewChatInput,
   parseUpdateAgentPlanCardInput,
   parseUpdateAgentTaskLimitInput,
   parseUpdateBrowserProfileInput,
@@ -39,6 +41,7 @@ import {
   AGENT_HOST_SETTINGS_ROUTES,
 } from "@openbot/contracts/team-protocol/agent-host-settings-v1";
 import { AGENT_INSTALL_CAPABILITY, AGENT_INSTALL_ROUTES } from "@openbot/contracts/team-protocol/agent-install-v1";
+import { AGENT_NEW_CHAT_CAPABILITY, AGENT_NEW_CHAT_ROUTES } from "@openbot/contracts/team-protocol/agent-new-chat-v1";
 import {
   AGENT_PLAN_CARD_CAPABILITY,
   AGENT_PLAN_CARD_ROUTES,
@@ -174,6 +177,14 @@ export function agentAdminIpcHandlers({
         local: (input) => runCauseEffect(hostSettings.updatePlanCard(input)),
         remote: (input, serverId) => remotePlanCard(serverId, AGENT_PLAN_CARD_ROUTES.update, input),
       }),
+      getAgentNewChat: scopedHandler((value) => requireString(value, "agentId"), {
+        local: (agentId) => hostSettings.readNewChat(agentId),
+        remote: (agentId, serverId) => remoteNewChat(serverId, AGENT_NEW_CHAT_ROUTES.settings, { agentId }),
+      }),
+      updateAgentNewChat: scopedHandler(parseUpdateAgentNewChatInput, {
+        local: (input) => runCauseEffect(hostSettings.updateNewChat(input)),
+        remote: (input, serverId) => remoteNewChat(serverId, AGENT_NEW_CHAT_ROUTES.update, input),
+      }),
       listBrowserProfiles: scopedQueryHandler({
         local: () => browserProfiles.list(),
         remote: (serverId) =>
@@ -288,6 +299,12 @@ export function agentAdminIpcHandlers({
     return runCauseEffect(
       remoteServers.request(serverId, path, decodeAgentTaskLimitSettings, { method: "POST", body }),
     );
+  }
+
+  function remoteNewChat(serverId: string, path: string, body: unknown) {
+    if (!remoteServers.supportsCapability(serverId, AGENT_NEW_CHAT_CAPABILITY))
+      throw new Error(sourceText("error.team.agentSettingsUnsupported"));
+    return runCauseEffect(remoteServers.request(serverId, path, decodeAgentNewChatSettings, { method: "POST", body }));
   }
 
   function remotePlanCard(serverId: string, path: string, body: unknown) {

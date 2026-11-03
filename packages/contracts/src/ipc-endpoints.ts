@@ -46,11 +46,13 @@ import type {
   AgentAdminSettings,
   AgentBackupModelSettings,
   AgentHostSettings,
+  AgentNewChatSettings,
   AgentPlanCardSettings,
   AgentTaskLimitSettings,
   UpdateAgentAdminSettingsInput,
   UpdateAgentBackupModelsInput,
   UpdateAgentHostSettingsInput,
+  UpdateAgentNewChatInput,
   UpdateAgentPlanCardInput,
   UpdateAgentTaskLimitInput,
 } from "./ipc-agent-admin";
@@ -1702,6 +1704,9 @@ export const IPC_ENDPOINTS = {
     updateAgentPlanCard: scopedRequest<UpdateAgentPlanCardInput, AgentPlanCardSettings>()(
       "agent:admin:update-plan-card",
     ),
+    // HoleA.I: the agent's own new chats, `agent-new-chat-v1` on a joined server.
+    getAgentNewChat: scopedRequest<string, AgentNewChatSettings>()("agent:admin:get-new-chat"),
+    updateAgentNewChat: scopedRequest<UpdateAgentNewChatInput, AgentNewChatSettings>()("agent:admin:update-new-chat"),
     // Browser profiles of the computer that runs the agents, and the profile of one agent.
     listBrowserProfiles: scopedQuery<BrowserProfileList>()("agent:admin:list-browser-profiles"),
     createBrowserProfile: scopedRequest<string, BrowserProfileSummary>()("agent:admin:create-browser-profile"),

@@ -3,6 +3,7 @@ import type {
   AgentBackupModelSettings,
   AgentBackupModels,
   AgentHostSettings,
+  AgentNewChatSettings,
   AgentPlanCardSettings,
   AgentTaskLimitSettings,
   AgentUsageLimitReturn,
@@ -15,6 +16,7 @@ import type {
 import { AGENT_ADMIN_CAPABILITY } from "@openbot/contracts/team-protocol/agent-admin-v1";
 import { AGENT_BACKUP_MODELS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-backup-models-v1";
 import { AGENT_HOST_SETTINGS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-host-settings-v1";
+import { AGENT_NEW_CHAT_CAPABILITY } from "@openbot/contracts/team-protocol/agent-new-chat-v1";
 import { AGENT_PLAN_CARD_CAPABILITY } from "@openbot/contracts/team-protocol/agent-plan-card-v1";
 import { AGENT_TASK_LIMIT_CAPABILITY } from "@openbot/contracts/team-protocol/agent-task-limit-v1";
 import { currentText } from "@openbot/ui/text";
@@ -35,6 +37,8 @@ export type RemoteAgentAdminCalls = Pick<
   | "updateAgentTaskLimit"
   | "getAgentPlanCard"
   | "updateAgentPlanCard"
+  | "getAgentNewChat"
+  | "updateAgentNewChat"
 >;
 
 /** A joined server where this account may change agent access and auto-approve. */
@@ -53,6 +57,8 @@ interface RemoteAgentAdminState {
   taskLimit: AgentTaskLimitSettings | null;
   planCardKey: string | null;
   planCard: AgentPlanCardSettings | null;
+  newChatKey: string | null;
+  newChat: AgentNewChatSettings | null;
 }
 
 /**
@@ -75,6 +81,8 @@ export function createRemoteAgentAdmin(
     taskLimit: null,
     planCardKey: null,
     planCard: null,
+    newChatKey: null,
+    newChat: null,
   });
   const hostKey = createMemo(() => {
     const current = target();
@@ -220,6 +228,41 @@ export function createRemoteAgentAdmin(
         .catch(() => undefined);
     },
   );
+  // HoleA.I: whether the agent may start its own new chats, read like the plan card above.
+  const newChatKey = createMemo(() => {
+    const current = target();
+    if (current?.server.kind !== "remote" || !serverCanAdminister(current.server, AGENT_NEW_CHAT_CAPABILITY))
+      return null;
+    return JSON.stringify([current.server.id, current.agentId]);
+  });
+  function acceptNewChat(requestKey: string, settings: AgentNewChatSettings): void {
+    if (newChatKey() !== requestKey) return;
+    setState((draft) => {
+      draft.newChatKey = requestKey;
+      draft.newChat = settings;
+    });
+  }
+  let newChatReadGeneration = 0;
+  createEffect(
+    createMemo(() => JSON.stringify([newChatKey(), target()?.updatedAt])),
+    () => {
+      const requestKey = untrack(newChatKey);
+      const generation = ++newChatReadGeneration;
+      if (untrack(() => state.newChatKey) !== requestKey)
+        setState((draft) => {
+          draft.newChatKey = null;
+          draft.newChat = null;
+        });
+      const current = untrack(target);
+      if (!requestKey || !current) return;
+      calls()
+        .getAgentNewChat(current.agentId, current.server.id)
+        .then((settings) => {
+          if (generation === newChatReadGeneration) acceptNewChat(requestKey, settings);
+        })
+        .catch(() => undefined);
+    },
+  );
   const key = createMemo(() => {
     const current = target();
     if (current?.server.kind !== "remote" || !serverCanAdministerAgents(current.server)) return null;
@@ -301,6 +344,17 @@ export function createRemoteAgentAdmin(
       if (planCardKey() === JSON.stringify([server.id, agentId])) planCardReadGeneration += 1;
       acceptPlanCard(JSON.stringify([server.id, agentId]), settings);
     },
+    /** Undefined for a local agent, before the host answers, and without the capability. */
+    allowNewChat: (): boolean | undefined =>
+      state.newChatKey !== null && state.newChatKey === newChatKey() ? state.newChat?.allowNewChat : undefined,
+    async updateNewChat(agentId: string, allowNewChat: boolean): Promise<void> {
+      const server = target()?.server;
+      if (server?.kind !== "remote" || !serverCanAdminister(server, AGENT_NEW_CHAT_CAPABILITY))
+        throw new Error(currentText().t("agent.error.adminOnly"));
+      const settings = await calls().updateAgentNewChat({ agentId, allowNewChat }, server.id);
+      if (newChatKey() === JSON.stringify([server.id, agentId])) newChatReadGeneration += 1;
+      acceptNewChat(JSON.stringify([server.id, agentId]), settings);
+    },
     /** Null for a local agent, before the first answer, and when the host does not serve the capability. */
     settings: (): AgentAdminSettings | null => (state.key !== null && state.key === key() ? state.settings : null),
     /** Undefined until the host answers. A released host with Turbo mode on locks every agent to auto-approve. */
@@ -331,7 +385,7 @@ export function createRemoteAgentAdmin(
 export async function updateRemoteAgent(
   admin: Pick<
     RemoteAgentAdmin,
-    "update" | "updateHostSettings" | "updateBackupModels" | "updateTaskLimit" | "updatePlanCard"
+    "update" | "updateHostSettings" | "updateBackupModels" | "updateTaskLimit" | "updatePlanCard" | "updateNewChat"
   >,
   input: UpdateAgentInput,
   updateProfile: (input: UpdateAgentInput) => Promise<void>,
@@ -343,6 +397,7 @@ export async function updateRemoteAgent(
     backupModels,
     taskLimit,
     quickAcknowledgement,
+    allowNewChat,
     agentId,
     ...fields
   } = input;
@@ -351,6 +406,7 @@ export async function updateRemoteAgent(
   // It comes before the first write, so that a wrong call changes nothing.
   if (allowAutomation === null) throw new Error("A joined server has no default for Local scripts.");
   if (quickAcknowledgement === null) throw new Error("A joined server has no default for the plan card.");
+  if (allowNewChat === null) throw new Error("A joined server has no default for new chats.");
   if (access !== undefined) await admin.update({ agentId, access });
   // Null busy-message mode is valid here: the agent follows the host default.
   if (allowAutomation !== undefined || busyMessageMode !== undefined)
@@ -362,6 +418,7 @@ export async function updateRemoteAgent(
   if (backupModels !== undefined) await admin.updateBackupModels(agentId, backupModels);
   if (taskLimit !== undefined) await admin.updateTaskLimit(agentId, taskLimit);
   if (quickAcknowledgement !== undefined) await admin.updatePlanCard(agentId, quickAcknowledgement);
+  if (allowNewChat !== undefined) await admin.updateNewChat(agentId, allowNewChat);
   if (Object.keys(fields).length) await updateProfile({ agentId, ...fields });
 }
 

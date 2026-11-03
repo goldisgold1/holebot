@@ -487,6 +487,8 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
 
   /** The agents that asked for a new chat with `start_new_chat`. A restart forgets the request. */
   readonly #requestedNewChats = new Set<string>();
+  /** HoleA.I: the agents that asked to compact their chat with `compact_chat`. A restart forgets it. */
+  readonly #requestedCompacts = new Set<string>();
   /** A turn that ends with open plan steps runs again, at most 3 times for one request. */
   readonly #planContinuation = new PlanContinuation({ limit: 3 });
   #initialized = false;
@@ -1301,6 +1303,7 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
         turnRestarting: (turnId) => this.#turn.forgetEnded(turnId),
         startRequestedNewChat: (agentId) => this.#startRequestedNewChat(agentId),
         dropRequestedNewChat: (agentId) => {
+          this.#requestedCompacts.delete(agentId);
           if (this.#requestedNewChats.delete(agentId))
             logger.info(`Agent ${agentId} dropped its new chat request: a turn in its chat started first.`);
         },
@@ -1541,6 +1544,10 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
         requestNewChat: (agentId) => {
           this.#requestedNewChats.add(agentId);
         },
+        requestCompact: (agentId) => {
+          this.#requestedCompacts.add(agentId);
+        },
+        readUsage: (agentId) => this.#readOwnUsage(agentId),
         steerAgentMessage: (recipientAgentId, deliveryId) => this.#steerAgentMessage(recipientAgentId, deliveryId),
       },
     });
@@ -3374,7 +3381,8 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
    * the setting off while the request waits.
    */
   #startRequestedNewChat(agentId: string): Effect.Effect<void> {
-    if (!this.#requestedNewChats.has(agentId)) return Effect.void;
+    if (!this.#requestedNewChats.has(agentId)) return this.#startRequestedCompact(agentId);
+    this.#requestedCompacts.delete(agentId);
     const agent = this.#store.list().find((candidate) => candidate.id === agentId);
     if (!agent || !agentNewChatAllowed(agent, this.#store.agentDefaults())) {
       this.#requestedNewChats.delete(agentId);
@@ -3393,6 +3401,40 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
           this.#requestedNewChats.delete(agentId);
           this.#emitError("agent_new_chat_failed", failure.cause, agentId);
         }),
+      ),
+    );
+  }
+
+  /** HoleA.I: what `read_usage` shows an agent: its chat's context fill and its provider plan's limits. */
+  #readOwnUsage(agentId: string): Effect.Effect<unknown> {
+    const state = this.#compaction.snapshot().find((entry) => entry.agentId === agentId);
+    const usage = state?.usage ?? null;
+    const context = usage
+      ? {
+          usedTokens: usage.usedTokens,
+          contextWindow: usage.windowTokens,
+          percentUsed: usage.windowTokens > 0 ? Math.round((usage.usedTokens / usage.windowTokens) * 100) : null,
+          autoCompactAtPercent: usage.autoCompactAt === null ? null : Math.round(usage.autoCompactAt * 100),
+          compaction: state?.compaction?.status ?? null,
+        }
+      : { note: "No context reading yet: it appears after your first reply in this chat." };
+    return this.getUsage(agentId).pipe(
+      Effect.map((plan) => ({ context, plan })),
+      Effect.catch((failure) =>
+        Effect.succeed({ context, plan: { error: `Plan usage is not available: ${String(failure)}` } }),
+      ),
+    );
+  }
+
+  /** HoleA.I: the compaction the agent asked for with `compact_chat`, run by the same drain as a new chat. */
+  #startRequestedCompact(agentId: string): Effect.Effect<void> {
+    if (!this.#requestedCompacts.delete(agentId)) return Effect.void;
+    const agent = this.#store.list().find((candidate) => candidate.id === agentId);
+    if (!agent || !agentNewChatAllowed(agent, this.#store.agentDefaults())) return Effect.void;
+    return this.compactAgentContext(agentId).pipe(
+      Effect.tap(() => Effect.sync(() => logger.info(`Agent ${agentId} compacted its chat.`))),
+      Effect.catch((failure) =>
+        Effect.sync(() => logger.warn(`Agent ${agentId} could not compact its chat: ${String(failure)}`)),
       ),
     );
   }
