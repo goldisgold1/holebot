@@ -526,11 +526,15 @@ export class TeamWebRtcFileTransfer {
     const chunk = yield* remoteDecode(() => decodeTeamProtocolV2FileChunk(data));
     const key = transferKey(peerId, chunk.transferId);
     const transfer = this.#incoming.get(key);
-    if (!transfer || chunk.offset !== transfer.received || transfer.received + chunk.bytes.byteLength > transfer.size) {
+    // HoleA.I: after a reconnect the sender resumes from the last offset it saw acknowledged, which
+    // can be behind what arrived, so a chunk may repeat bytes this side has. Those are written again
+    // (the same bytes, and the SHA-256 at the end checks the file); only a gap is refused.
+    const end = chunk.offset + chunk.bytes.byteLength;
+    if (!transfer || chunk.offset > transfer.received || end > transfer.size) {
       return yield* new RemoteWorkflowError({ cause: new Error("The WebRTC file offset is invalid.") });
     }
     yield* remoteCall(() => transfer.file.write(chunk.bytes, 0, chunk.bytes.byteLength, chunk.offset));
-    transfer.received += chunk.bytes.byteLength;
+    transfer.received = Math.max(transfer.received, end);
     this.#scheduleExpiration(key);
     if (transfer.received === transfer.size || transfer.received - transfer.lastAcknowledged >= ACK_INTERVAL_BYTES) {
       transfer.lastAcknowledged = transfer.received;

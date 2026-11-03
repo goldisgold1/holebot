@@ -370,7 +370,8 @@ export function ChannelEditor(props: ChannelEditorProps) {
                             }
                             onClick={() =>
                               void commit((draft) => {
-                                draft.leadAgentId = entry.agentId;
+                                // HoleA.I: the lit crown turns the lead off, so an untagged message wakes nobody.
+                                draft.leadAgentId = draft.leadAgentId === entry.agentId ? null : entry.agentId;
                               })
                             }
                           >

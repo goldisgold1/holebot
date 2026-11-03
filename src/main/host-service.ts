@@ -276,6 +276,7 @@ export class HostService extends EventEmitter<HostEvents> {
       localDevelopmentHost: options.localDevelopmentHost ?? false,
     };
     this.#status = initialHostStatus(options.store.getIdentity(), options.unattended ?? false);
+    options.store.onUnknownRemoteMember = () => this.#syncDirectoryForNewMember();
     const logDirectory = options.logDirectory;
     this.#remoteScreen = new RemoteScreenGateway({
       platform: options.platform ?? normalizeRemoteDesktopPlatform(process.platform),
@@ -1445,8 +1446,8 @@ export class HostService extends EventEmitter<HostEvents> {
     members: RemoteDirectoryMember[],
   ): Effect.fn.Return<void, RemoteWorkflowError> {
     const closed = yield* this.#options.store.syncRemoteDirectory(hostId, members);
-    if (closed.length === 0) return;
     for (const sessionId of closed) yield* this.#closeLocalSession(sessionId);
+    // HoleA.I: names and addresses may have changed too, so presence always reads the new directory.
     this.#api.refreshPresence();
   });
 
@@ -1648,6 +1649,21 @@ export class HostService extends EventEmitter<HostEvents> {
         ),
       );
     });
+  }
+
+  /** HoleA.I: reads the directory once for a person who connected before it listed them. */
+  #syncDirectoryForNewMember(): void {
+    const hostId = this.#options.store.getIdentity()?.serverId;
+    const list = this.#options.listRemoteMembers;
+    if (!hostId || !list || !this.#usesAccountDirectory()) return;
+    this.#dispatch(
+      list(hostId).pipe(
+        Effect.flatMap((members) =>
+          this.#isActiveHost(hostId) ? this.#syncRemoteDirectory(hostId, members) : Effect.void,
+        ),
+        Effect.catch(() => Effect.void),
+      ),
+    );
   }
 
   // Native audit callbacks own these background operations; shutdown drains them.

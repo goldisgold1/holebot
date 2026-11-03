@@ -92,7 +92,7 @@ export async function routeChannels(
   return json(
     200,
     await runCauseEffect(
-      channels.command(input, { id: member.id, name: member.name ?? "Team member" }, (queued) =>
+      channels.command(input, { id: member.id, name: member.name ?? member.email ?? "Team member" }, (queued) =>
         keepHiddenMembers(queued, channels, hiddenAgentIds),
       ),
     ),

@@ -187,6 +187,13 @@
   font-size: var(--openbot-text-sm);
   line-height: var(--openbot-leading-sm);
 }
+/* HoleA.I: the lead's crown is lit, so a chat that wakes an agent on untagged messages shows it. */
+.channel-lead-toggle[aria-pressed="true"] {
+  color: var(--openbot-warning);
+}
+.channel-lead-toggle[aria-pressed="false"] {
+  color: var(--openbot-text-muted);
+}
 /* A row action reads as state until it is asked for: the crown stays on the lead, and Remove waits
    for the pointer or the keyboard. Hover is the condition, so a touch screen keeps both visible. */
 @media (hover: hover) and (pointer: fine) {

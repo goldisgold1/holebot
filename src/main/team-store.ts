@@ -212,6 +212,12 @@ export class TeamStore {
   >();
   #writeChain: Deferred.Deferred<void> | null = null;
   /**
+   * HoleA.I: called when a session opens for a membership the directory here has not recorded yet,
+   * such as someone the organization domain just added. The host reads the directory then, so the
+   * person has a name and an address rather than their account id.
+   */
+  onUnknownRemoteMember: (() => void) | null = null;
+  /**
    * The file exists but is neither a v2 envelope nor a v1 record - a file a newer build
    * wrote, or a damaged one. `#file` is empty only because something else owns this path,
    * so writing would destroy the user's only copy. Nothing here is backed up.
@@ -982,7 +988,12 @@ export class TeamStore {
       );
       const closed: string[] = [];
       for (const [tokenHash, session] of this.#remoteSessions) {
-        if (activeRoles.get(session.member.id) === session.member.role) continue;
+        if (activeRoles.get(session.member.id) === session.member.role) {
+          // A session opened before the directory knew the person carries only their account id.
+          const stored = state.members.find((member) => member.id === session.member.id);
+          if (stored) session.member = { ...publicMember(stored), role: session.member.role, disabled: false };
+          continue;
+        }
         this.#remoteSessions.delete(tokenHash);
         closed.push(session.sessionId);
       }
@@ -1020,6 +1031,7 @@ export class TeamStore {
       createdAt: new Date().toISOString(),
       sessionExpiresAt,
     });
+    if (!stored) this.onUnknownRemoteMember?.();
     return { member: structuredClone(member), sessionToken, sessionExpiresAt };
   }
 

@@ -42,7 +42,7 @@ export const messages = defineMessages("channel", {
   "channel.members.unavailable": "Unavailable member {id}",
   "channel.members.isLead": "{name} is the group chat lead",
   "channel.members.makeLeadLabel": "Make {name} the group chat lead",
-  "channel.members.lead": "Group chat lead",
+  "channel.members.lead": "Group chat lead. Click to turn off, so untagged messages wake nobody",
   "channel.members.makeLead": "Make group chat lead",
   "channel.members.remove": "Remove {name}",
   "channel.members.removeUnavailable": "Remove unavailable member {id}",
