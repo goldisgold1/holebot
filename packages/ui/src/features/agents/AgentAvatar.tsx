@@ -3,7 +3,7 @@ import { type AvatarFaceMood, avatarMoodIsBusy, avatarMoodPresentation } from "@
 import type { AvatarHue } from "@openbot/contracts/ipc";
 import { prefersReducedMotion } from "@openbot/ui/utils";
 import type { JSX } from "@solidjs/web";
-import { createEffect, createMemo, createSignal, createUniqueId, For, onSettled, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, createUniqueId, For, onCleanup, onSettled, Show } from "solid-js";
 import {
   type AvatarMotion,
   avatarHeadColor,
@@ -16,6 +16,9 @@ import { CuteFace } from "./CuteFace";
 // Cap avatar animation at 30fps: uncapped bloub clocks measured 30% renderer / 24% GPU
 // for two visible avatars. The shape is 24-40px, so the eye cannot see the difference.
 const AVATAR_FPS = 30;
+// HoleA.I: photo retries after a failed load: 3 s, 6 s, 12 s, 24 s, 48 s.
+const AVATAR_IMAGE_RETRIES = 5;
+const AVATAR_IMAGE_RETRY_MS = 3_000;
 
 // HoleA.I: now and then one resting avatar on screen comes alive for a short burst, so a quiet sidebar does
 // not look frozen. One shared clock picks a single avatar every 6-12 s, and only while the window has the
@@ -90,9 +93,22 @@ export function AgentAvatar(props: AgentAvatarProps) {
   const mood = (): AvatarFaceMood => props.mood ?? "idle";
   const presentation = () => avatarMoodPresentation(mood());
   const [imageFailed, setImageFailed] = createSignal(false);
+  // HoleA.I: a server photo can fail while the server is still connecting, and a tile drawn then kept
+  // the generated face for good. Retry a few times with a growing wait before settling on it.
+  let failures = 0;
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  const imageLoadFailed = () => {
+    setImageFailed(true);
+    if (failures >= AVATAR_IMAGE_RETRIES) return;
+    retryTimer = setTimeout(() => setImageFailed(false), AVATAR_IMAGE_RETRY_MS * 2 ** failures);
+    failures += 1;
+  };
+  onCleanup(() => clearTimeout(retryTimer));
   createEffect(
     () => url(),
     () => {
+      clearTimeout(retryTimer);
+      failures = 0;
       setImageFailed(false);
     },
   );
@@ -136,7 +152,7 @@ export function AgentAvatar(props: AgentAvatarProps) {
             A working agent used to hide behind three dots, which hid the one thing the person
             chose; it now keeps its face and flies the same rings the generated avatar does. */}
         <AvatarRings when={presentation().rings}>
-          <AvatarImage url={url()} onFailed={() => setImageFailed(true)} />
+          <AvatarImage url={url()} onFailed={imageLoadFailed} />
         </AvatarRings>
       </span>
     </Show>
