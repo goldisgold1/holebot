@@ -8,7 +8,7 @@
  * kind they have.
  */
 
-import { Badge, buttonVariants, ContextMenu } from "@openbot/ui";
+import { Badge, Button, buttonVariants, ContextMenu, Factory } from "@openbot/ui";
 import { For, Match, Show, Switch } from "solid-js";
 import { useText } from "../../text";
 import { ChannelAvatar } from "../channels/ChannelAvatar";
@@ -201,6 +201,27 @@ export function SidebarPinnedGroup() {
         <For each={resolvedPinnedItems().filter((item) => item.chat.kind === "channel")}>
           {(item) => (item.chat.kind === "channel" ? <SidebarChannelRow channel={item.chat.channel} pinned /> : null)}
         </For>
+        <Show when={props.onOpenReelFactories}>
+          {(open) => (
+            <Button
+              variant="ghost"
+              class="agent-row reel-factories-row"
+              aria-label={t("sidebar.reelFactories.label")}
+              title={t("sidebar.reelFactories.hint")}
+              onClick={() => open()()}
+            >
+              <span class="agent-row-avatar reel-factories-avatar" aria-hidden="true">
+                <Factory class="size-5" />
+              </span>
+              <span class="agent-row-copy">
+                <span class="agent-row-heading">
+                  <span class="agent-row-title">{t("sidebar.reelFactories.title")}</span>
+                </span>
+                <span class="agent-row-preview">{t("sidebar.reelFactories.preview")}</span>
+              </span>
+            </Button>
+          )}
+        </Show>
       </section>
     </Show>
   );

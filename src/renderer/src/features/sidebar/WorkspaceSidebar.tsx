@@ -7,6 +7,7 @@ import { SidebarMachineCard } from "@openbot/ui/features/sidebar/SidebarMachineC
 import { SidebarMobileAppCard } from "@openbot/ui/features/sidebar/SidebarMobileAppCard";
 import { SidebarStorageCard } from "@openbot/ui/features/sidebar/SidebarStorageCard";
 import { computeSidebarAgentStates, sidebarChannelWaits } from "@openbot/ui/features/sidebar/sidebar-agent-states";
+import { REELS_FACTORY_BOARD_URL } from "@openbot/ui/features/sidebar/sidebar-types";
 import { teamMemberName } from "@openbot/ui/features/team/TeamPersonAvatar";
 import { useText } from "@openbot/ui/text";
 import { createEffect, createMemo, createSignal, onSettled, Show } from "solid-js";
@@ -291,6 +292,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       onRestoreChannel={channels.deletionSupported() ? channels.restore : undefined}
       showingArchivedChannels={channelsListed() && channels.state.archived}
       onToggleArchivedChannels={channelsListed() ? channels.toggleArchived : undefined}
+      onOpenReelFactories={() => void appPort().openUrl(REELS_FACTORY_BOARD_URL)}
       onCreateChannel={channelsListed() ? channels.create : undefined}
       onMarkAllRead={() => {
         void markAllAgentMessagesRead();

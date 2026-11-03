@@ -57,6 +57,7 @@ export { default as Eraser } from "lucide-solid/icons/eraser";
 export { default as ExternalLink } from "lucide-solid/icons/external-link";
 export { default as Eye } from "lucide-solid/icons/eye";
 export { default as EyeOff } from "lucide-solid/icons/eye-off";
+export { default as Factory } from "lucide-solid/icons/factory";
 export { default as File } from "lucide-solid/icons/file";
 export { default as FileDiff } from "lucide-solid/icons/file-diff";
 export { default as FileInput } from "lucide-solid/icons/file-input";
