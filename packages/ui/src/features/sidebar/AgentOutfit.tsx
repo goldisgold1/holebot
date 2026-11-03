@@ -67,122 +67,122 @@ interface Outfit {
   waves?: boolean;
 }
 
-// Measured on the round body: it spans x 2.6-44.4 and y 8-41 of the 48 box, and its eyes centre near
-// (25, 20.5). Hats sit with their brim on the brow, glasses on the eyes, and held items stay inside the
+// Measured on the round side-looking body: it spans x 5-44 and y 11-50 of the 48 box, and its eyes centre
+// near (31.5, 24.5). Hats sit with their brim on the brow, glasses on the eyes, and held items stay inside the
 // body's lower right. Each box keeps its item's own proportions, so nothing stretches or floats.
 const OUTFITS: Partial<Record<AgentWorkRole, Outfit>> = {
   reel: {
     items: [
-      { src: headphones, x: 3.5, y: -7, w: 40, h: 42.8 },
-      { src: clapperboard, x: 30, y: 28, w: 15, h: 17, motion: "snap" },
+      { src: headphones, x: 4.5, y: -4, w: 40, h: 42.8 },
+      { src: clapperboard, x: 30, y: 32, w: 15, h: 17, motion: "snap" },
     ],
   },
   producer: {
     items: [
-      { src: beret, x: 8, y: -3.4, w: 28, h: 17.4 },
-      { src: directorSunglasses, x: 14, y: 16.8, w: 22, h: 7.5 },
-      { src: megaphone, x: 29, y: 30, w: 17, h: 13.8, motion: "shout" },
+      { src: beret, x: 10, y: -0.9, w: 28, h: 17.4 },
+      { src: directorSunglasses, x: 20.5, y: 17.8, w: 22, h: 7.5 },
+      { src: megaphone, x: 29, y: 34, w: 17, h: 13.8, motion: "shout" },
     ],
     waves: true,
   },
   cos: {
     items: [
-      { src: headset, x: 5.5, y: -6, w: 36, h: 46 },
-      { src: clipboard, x: 33, y: 27, w: 12, h: 17.4, motion: "tilt" },
+      { src: headset, x: 6.5, y: -3, w: 36, h: 46 },
+      { src: clipboard, x: 33, y: 31, w: 12, h: 17.4, motion: "tilt" },
     ],
   },
   coo: {
     items: [
-      { src: hairBow, x: 31, y: 4, w: 11, h: 11.4 },
-      { src: readingGlasses, x: 15, y: 16.7, w: 20, h: 7.6 },
-      { src: laptop, x: 30, y: 31, w: 16, h: 12.8, motion: "tap" },
+      { src: hairBow, x: 33, y: 6.5, w: 11, h: 11.4 },
+      { src: readingGlasses, x: 21.5, y: 17.7, w: 20, h: 7.6 },
+      { src: laptop, x: 30, y: 35, w: 16, h: 12.8, motion: "tap" },
     ],
   },
   analyst: {
     items: [
-      { src: deerstalker, x: 10.5, y: -6.3, w: 26, h: 21.3 },
-      { src: magnifyingGlass, x: 30, y: 30, w: 16, h: 14.2, motion: "scan" },
+      { src: deerstalker, x: 12.5, y: -3.8, w: 26, h: 21.3 },
+      { src: magnifyingGlass, x: 30, y: 34, w: 16, h: 14.2, motion: "scan" },
     ],
   },
   strategist: {
-    items: [{ src: generalCap, x: 9.5, y: -4.6, w: 28, h: 19.6 }],
+    items: [{ src: generalCap, x: 11.5, y: -2.1, w: 28, h: 19.6 }],
   },
   story: {
     items: [
-      { src: beanie, x: 13.5, y: -8.8, w: 20, h: 25.8 },
-      { src: smartphone, x: 35, y: 26, w: 9, h: 18.3, motion: "tilt" },
+      { src: beanie, x: 15.5, y: -6.3, w: 20, h: 25.8 },
+      { src: smartphone, x: 35, y: 30, w: 9, h: 18.3, motion: "tilt" },
     ],
-    flash: { x: 39.5, y: 33 },
+    flash: { x: 39.5, y: 37 },
   },
   carousel: {
     items: [
-      { src: painterBeret, x: 9.5, y: -3.9, w: 28, h: 17.9 },
-      { src: photoStack, x: 30, y: 31, w: 16, h: 12.6, motion: "deal" },
+      { src: painterBeret, x: 11.5, y: -1.4, w: 28, h: 17.9 },
+      { src: photoStack, x: 30, y: 35, w: 16, h: 12.6, motion: "deal" },
     ],
   },
   image: {
     items: [
-      { src: bucketHat, x: 7.5, y: -6.8, w: 32, h: 21.8 },
-      { src: instantCamera, x: 34, y: 27, w: 11, h: 17, motion: "beat" },
+      { src: bucketHat, x: 9.5, y: -4.3, w: 32, h: 21.8 },
+      { src: instantCamera, x: 34, y: 31, w: 11, h: 17, motion: "beat" },
     ],
-    flash: { x: 39.5, y: 32 },
+    flash: { x: 39.5, y: 36 },
   },
   publisher: {
     items: [
-      { src: mailCap, x: 9.5, y: -5.4, w: 28, h: 20.4 },
-      { src: paperPlane, x: 30, y: 33, w: 16, h: 10, motion: "throw" },
+      { src: mailCap, x: 11.5, y: -2.9, w: 28, h: 20.4 },
+      { src: paperPlane, x: 30, y: 37, w: 16, h: 10, motion: "throw" },
     ],
   },
   coder: {
     items: [
-      { src: squareGlasses, x: 15, y: 17.1, w: 20, h: 6.8 },
-      { src: keyboard, x: 26, y: 35, w: 20, h: 9.4, motion: "tap" },
+      { src: squareGlasses, x: 21.5, y: 18.1, w: 20, h: 6.8 },
+      { src: keyboard, x: 26, y: 39, w: 20, h: 9.4, motion: "tap" },
     ],
   },
   warmup: {
     items: [
-      { src: sweatband, x: 6.5, y: 3.2, w: 34, h: 15.6 },
-      { src: dumbbell, x: 30, y: 37, w: 16, h: 6.6, motion: "lift" },
+      { src: sweatband, x: 7.5, y: 6.2, w: 34, h: 15.6 },
+      { src: dumbbell, x: 30, y: 41, w: 16, h: 6.6, motion: "lift" },
     ],
   },
   growth: {
     items: [
-      { src: aviatorGoggles, x: 11.5, y: 4, w: 24, h: 11 },
-      { src: rocket, x: 37, y: 27, w: 8, h: 16.5, motion: "launch" },
+      { src: aviatorGoggles, x: 19.5, y: 6.5, w: 24, h: 11 },
+      { src: rocket, x: 37, y: 31, w: 8, h: 16.5, motion: "launch" },
     ],
   },
   finances: {
     items: [
-      { src: greenVisor, x: 7.5, y: -8, w: 32, h: 25 },
-      { src: coinStack, x: 32, y: 32, w: 13, h: 12, motion: "beat" },
+      { src: greenVisor, x: 9.5, y: -5.5, w: 32, h: 25 },
+      { src: coinStack, x: 32, y: 36, w: 13, h: 12, motion: "beat" },
     ],
   },
   voice: {
-    items: [{ src: microphone, x: 37, y: 26, w: 7, h: 18.7, motion: "tilt" }],
+    items: [{ src: microphone, x: 37, y: 30, w: 7, h: 18.7, motion: "tilt" }],
   },
   thinking: {
-    items: [{ src: lightBulb, x: 36, y: -3, w: 9, h: 15.8, motion: "glow" }],
+    items: [{ src: lightBulb, x: 38, y: -0.5, w: 9, h: 15.8, motion: "glow" }],
   },
   chinese: {
-    items: [{ src: calligraphyBrush, x: 31, y: 29, w: 15, h: 15.2, motion: "tilt" }],
+    items: [{ src: calligraphyBrush, x: 31, y: 33, w: 15, h: 15.2, motion: "tilt" }],
   },
   english: {
     items: [
-      { src: mortarboard, x: 8.5, y: -5.8, w: 30, h: 19.8 },
-      { src: openBook, x: 30, y: 31, w: 16, h: 13.6, motion: "tilt" },
+      { src: mortarboard, x: 10.5, y: -3.3, w: 30, h: 19.8 },
+      { src: openBook, x: 30, y: 35, w: 16, h: 13.6, motion: "tilt" },
     ],
   },
   selfie: {
     items: [
-      { src: starClip, x: 8, y: 9, w: 8, h: 7.3 },
-      { src: selfieStick, x: 36, y: 25, w: 9, h: 19, motion: "tilt" },
+      { src: starClip, x: 10, y: 11.5, w: 8, h: 7.3 },
+      { src: selfieStick, x: 36, y: 29, w: 9, h: 19, motion: "tilt" },
     ],
-    flash: { x: 40.5, y: 29 },
+    flash: { x: 40.5, y: 33 },
   },
   chef: {
     items: [
-      { src: chefHat, x: 16, y: -12, w: 17, h: 27.2 },
-      { src: whisk, x: 31, y: 30, w: 14, h: 12.8, motion: "deal" },
+      { src: chefHat, x: 18, y: -9.5, w: 17, h: 27.2 },
+      { src: whisk, x: 31, y: 34, w: 14, h: 12.8, motion: "deal" },
     ],
   },
 };
