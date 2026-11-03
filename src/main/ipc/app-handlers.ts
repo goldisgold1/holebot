@@ -14,6 +14,7 @@ import {
   type ExternalLinkBrowser,
   externalLinkAppName,
   GROK_BOT_EXPORT_URL,
+  isReelFactoriesViewBounds,
 } from "@openbot/contracts/ipc";
 import { analyticsOnByDefault } from "@openbot/telemetry";
 import { app, type BrowserWindow, dialog, type OpenDialogOptions } from "electron";
@@ -36,6 +37,7 @@ import type { LogoColorService } from "../logo-color-service";
 import { MAC_PERMISSION_URLS } from "../mac-permission-urls";
 import { exportDiagnostics, exportOpenBotData } from "../maintenance-service";
 import { isTailscaleConnected } from "../private-network-detection";
+import { createReelFactoriesView } from "../reel-factories-view";
 import type { RemoteNetworkRoutePreferenceStore } from "../remote-network-route-preference-store";
 import type { RemoteSessionCache } from "../remote-session-cache";
 import type { RemoteSessionReusePreferenceStore } from "../remote-session-reuse-preference-store";
@@ -162,6 +164,7 @@ export function appIpcHandlers({
   trace,
   resources,
 }: AppIpcDependencies): Pick<IpcGroupHandlers, "app" | "maintenance"> {
+  const reelFactoriesView = createReelFactoriesView(getMainWindow);
   return {
     app: {
       getAppInfo: handler((): AppInfo => {
@@ -267,6 +270,14 @@ export function appIpcHandlers({
       }),
       openExternal: payloadHandler(parseExternalDestination, (parsed) => openLink(EXTERNAL_DESTINATIONS[parsed])),
       openUrl: payloadHandler(stringPayload("URL", INPUT_LIMITS.browserUrl), (url) => openHttpLink(url, openLink)),
+      setReelFactoriesView: payloadHandler(
+        (value) => {
+          if (value === null || isReelFactoriesViewBounds(value)) return value;
+          throw new Error("Invalid Reel Factories bounds.");
+        },
+        (bounds) => reelFactoriesView.set(bounds),
+      ),
+      reloadReelFactoriesView: handler(() => reelFactoriesView.reload()),
       getExternalLinkPreference: handler(() => externalLinkPreference.get()),
       setExternalLinkPreference: payloadHandler(parseExternalLinkPreference, (parsed) =>
         runCauseEffect(externalLinkPreference.set(parsed)),

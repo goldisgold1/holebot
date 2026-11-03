@@ -305,6 +305,8 @@ export interface AgentSummary {
   avatarSeed: string;
   avatarHue: AvatarHue | null;
   avatarUrl: string | null;
+  /** HoleA.I: the agent whose create_agent call made this one; the sidebar nests it under that agent. */
+  spawnedBy?: string;
   marketplaceSource?: {
     listingId: string;
     versionId: string;
@@ -363,7 +365,8 @@ function hasAgentSummaryFields(value: DynamicRecord): boolean {
     isAvatarSeed(value.avatarSeed) &&
     (value.avatarHue === null || isAvatarHue(value.avatarHue)) &&
     (value.avatarUrl === null || isBoundedString(value.avatarUrl, INPUT_LIMITS.avatarUrl)) &&
-    (value.marketplaceSource === undefined || isAgentMarketplaceSource(value.marketplaceSource))
+    (value.marketplaceSource === undefined || isAgentMarketplaceSource(value.marketplaceSource)) &&
+    (value.spawnedBy === undefined || isIdentifier(value.spawnedBy))
   );
 }
 

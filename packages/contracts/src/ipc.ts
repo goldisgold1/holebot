@@ -89,5 +89,6 @@ export * from "./ipc-workflows";
 export * from "./marketplace-suggestion-events";
 export * from "./mcp-sign-in-events";
 export * from "./mobile-connect";
+export * from "./reel-factories";
 export * from "./skill-conversation-events";
 export * from "./ui-blocks";

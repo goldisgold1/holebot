@@ -699,6 +699,8 @@ const openbotApi: OpenBotDesktopApi = {
     openUpdateSettings: decodeVoid,
     openExternal: decodeVoid,
     openUrl: decodeVoid,
+    setReelFactoriesView: decodeVoid,
+    reloadReelFactoriesView: decodeVoid,
     getExternalLinkPreference: decodeExternalLinkPreference,
     setExternalLinkPreference: decodeExternalLinkPreference,
     listExternalLinkBrowsers: decodeExternalLinkBrowsers,

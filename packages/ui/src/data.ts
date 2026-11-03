@@ -290,6 +290,7 @@ export interface AgentProfile {
   avatarHue: AvatarHue | null;
   avatarUrl: string | null;
   marketplaceSource?: NonNullable<ClientAgentSummary["marketplaceSource"]>;
+  spawnedBy?: string;
   updatedAt?: string | null;
   time: string;
   preview: string;

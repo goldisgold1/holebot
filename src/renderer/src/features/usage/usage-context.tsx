@@ -6,7 +6,8 @@ import { useServers } from "../servers/servers-context";
  * The host pane over the middle of the workspace: the usage report, the routine schedule, the
  * tasks or the workflows. One state holds them, so each path that uncovers the conversation closes any of them.
  */
-type HostPaneView = "usage" | "schedule" | "tasks" | "workflows";
+// HoleA.I: "reel-factories" shows the hole.fm Reels Factory board inside the window.
+type HostPaneView = "usage" | "schedule" | "tasks" | "workflows" | "reel-factories";
 
 const context = createSimpleContext({
   name: "UsageProvider",
@@ -48,6 +49,10 @@ const context = createSimpleContext({
       open("workflows", serverId, source);
     }
 
+    function openReelFactories(serverId: string, source: HTMLElement | null) {
+      open("reel-factories", serverId, source);
+    }
+
     /**
      * An open report follows the host the user switches to.
      *
@@ -85,6 +90,7 @@ const context = createSimpleContext({
       openSchedule,
       openTasks,
       openWorkflows,
+      openReelFactories,
       closeUsage() {
         clear();
         queueMicrotask(() => {

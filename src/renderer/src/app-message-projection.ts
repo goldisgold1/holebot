@@ -63,6 +63,7 @@ export function toAgentProfile(stored: ClientAgentSummary): AgentProfile {
     avatarHue: stored.avatarHue,
     avatarUrl: stored.avatarUrl,
     ...(stored.marketplaceSource === undefined ? {} : { marketplaceSource: stored.marketplaceSource }),
+    ...(stored.spawnedBy === undefined ? {} : { spawnedBy: stored.spawnedBy }),
     updatedAt: stored.updatedAt,
     time: stored.updatedAt ? formatTime(stored.updatedAt) : currentText().t("chat.day.now"),
     preview: cleanPreview(stored.preview),
@@ -252,6 +253,7 @@ export function agentProfilesEqual(left: AgentProfile, right: AgentProfile): boo
     left.avatarHue === right.avatarHue &&
     left.avatarUrl === right.avatarUrl &&
     marketplaceSourcesEqual(left.marketplaceSource, right.marketplaceSource) &&
+    left.spawnedBy === right.spawnedBy &&
     left.updatedAt === right.updatedAt &&
     left.time === right.time &&
     left.preview === right.preview

@@ -11,6 +11,7 @@ import type {
   SetAgentSessionSettingInput,
 } from "./ipc-agent-session-settings";
 import type { ChannelMute, SetChannelMutedInput } from "./ipc-chat-channels";
+import type { ReelFactoriesViewBounds } from "./reel-factories";
 // The one channel list. Each endpoint holds its wire value, the group it belongs to, and whether it
 // is a request the renderer invokes or an event the main process sends. That is what lets a
 // registrar bind its handlers as an object keyed by endpoint, so a channel with no handler, and a
@@ -718,6 +719,9 @@ export const IPC_ENDPOINTS = {
     openUpdateSettings: event<undefined>()("app:open-update-settings"),
     openExternal: request<ExternalDestination, void>()("app:open-external"),
     openUrl: request<string, void>()("app:open-url"),
+    // HoleA.I: shows or hides the Reels Factory board over the Reel Factories page, and reloads it.
+    setReelFactoriesView: request<ReelFactoriesViewBounds | null, void>()("app:set-reel-factories-view"),
+    reloadReelFactoriesView: request<undefined, void>()("app:reload-reel-factories-view"),
     getExternalLinkPreference: request<undefined, ExternalLinkPreference>()("app:get-external-link-preference"),
     setExternalLinkPreference: request<ExternalLinkPreference, ExternalLinkPreference>()(
       "app:set-external-link-preference",

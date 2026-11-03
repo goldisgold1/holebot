@@ -1398,6 +1398,8 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
     }),
     providerRuntimes: mockProviderRuntimes.providerRuntimes,
     openUrl: async () => undefined,
+    setReelFactoriesView: async () => undefined,
+    reloadReelFactoriesView: async () => undefined,
     voice: mockVoice.voice,
     routineFlows: mockRoutineFlows(
       { routines, routineRuns, links: options.routineFlowLinks, steps: options.routineFlowSteps },

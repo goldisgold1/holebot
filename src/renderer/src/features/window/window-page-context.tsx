@@ -12,6 +12,7 @@ export type WindowPage =
   | "tasks"
   | "schedule"
   | "workflows"
+  | "reel-factories"
   | "usage"
   | "marketplace"
   | "settings"
@@ -140,6 +141,10 @@ const context = createSimpleContext({
       openWorkflows(source: HTMLElement | null) {
         const serverId = activeServerId();
         if (serverId) usage.openWorkflows(serverId, source);
+      },
+      openReelFactories(source: HTMLElement | null) {
+        const serverId = activeServerId();
+        if (serverId) usage.openReelFactories(serverId, source);
       },
       openUsage(source: HTMLElement | null) {
         const serverId = activeServerId();

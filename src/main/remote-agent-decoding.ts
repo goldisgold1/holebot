@@ -113,6 +113,7 @@ export function decodeAgentSummary(value: unknown): ClientAgentSummary {
     avatarHue: candidate.avatarHue,
     avatarUrl: candidate.avatarUrl,
     ...(marketplaceSource === undefined ? {} : { marketplaceSource }),
+    ...(typeof candidate.spawnedBy === "string" ? { spawnedBy: candidate.spawnedBy } : {}),
   };
 }
 

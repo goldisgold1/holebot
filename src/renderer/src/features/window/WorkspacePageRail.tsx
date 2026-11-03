@@ -61,7 +61,8 @@ export function WorkspacePageRail(props: { hidden: boolean }) {
   const current = (): PageRailPage | null => {
     const page = windowPage.page();
     if (page === "agents") return layout.sidebarView();
-    return page === "server-settings" ? null : page;
+    // HoleA.I: the Reel Factories page opens from the sidebar, so no rail button is current.
+    return page === "server-settings" || page === "reel-factories" ? null : page;
   };
   return (
     <PageRail

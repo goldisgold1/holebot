@@ -1551,6 +1551,7 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
         },
         readUsage: (agentId) => this.#readOwnUsage(agentId),
         deleteAgent: (agentId) => this.deleteAgent(agentId).pipe(toToolOperationFailed),
+        setSpawnedBy: (agentId, parentAgentId) => this.setSpawnedBy(agentId, parentAgentId),
         queuedMessages: (agentId) =>
           this.listQueue(agentId).deliveries.filter((delivery) => delivery.status === "queued").length,
         steerAgentMessage: (recipientAgentId, deliveryId) => this.#steerAgentMessage(recipientAgentId, deliveryId),
@@ -2653,6 +2654,13 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
   /** Refuses new work for a hidden agent. A turn that already runs is not affected. */
   #requireNotHidden(agentId: string): void {
     if (this.#store.isHidden(agentId)) throw new Error(sourceText("error.backend.recipientHidden"));
+  }
+
+  /** HoleA.I: see `AgentStore.setSpawnedBy`. */
+  setSpawnedBy(agentId: string, parentAgentId: string): AgentSummary {
+    const agent = this.#store.setSpawnedBy(agentId, parentAgentId);
+    this.#emit({ type: "agents-changed", agents: this.listAgents() });
+    return agent;
   }
 
   setMarketplaceSource(agentId: string, source: NonNullable<AgentSummary["marketplaceSource"]>): AgentSummary {

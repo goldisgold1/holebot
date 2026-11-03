@@ -7,7 +7,6 @@ import { SidebarMachineCard } from "@openbot/ui/features/sidebar/SidebarMachineC
 import { SidebarMobileAppCard } from "@openbot/ui/features/sidebar/SidebarMobileAppCard";
 import { SidebarStorageCard } from "@openbot/ui/features/sidebar/SidebarStorageCard";
 import { computeSidebarAgentStates, sidebarChannelWaits } from "@openbot/ui/features/sidebar/sidebar-agent-states";
-import { REELS_FACTORY_BOARD_URL } from "@openbot/ui/features/sidebar/sidebar-types";
 import { teamMemberName } from "@openbot/ui/features/team/TeamPersonAvatar";
 import { useText } from "@openbot/ui/text";
 import { createEffect, createMemo, createSignal, onSettled, Show } from "solid-js";
@@ -37,6 +36,7 @@ import { serversPort } from "../servers/servers-port";
 import { useSettings } from "../settings/settings-context";
 import { usePresence } from "../team/team-context";
 import { SidebarUpdateIsland } from "../updates/SidebarUpdateIsland";
+import { useWindowPage } from "../window/window-page-context";
 import { createCommunityCardVisibility } from "./community-card";
 import { createMachineCard } from "./machine-card";
 import { SidebarAccountRow } from "./SidebarAccountRow";
@@ -89,6 +89,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
   };
   const { t } = useText();
   const layout = useLayout();
+  const windowPage = useWindowPage();
   const platform = usePlatform();
   const channels = useChannels();
   const serverScope = useServerScope();
@@ -292,7 +293,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       onRestoreChannel={channels.deletionSupported() ? channels.restore : undefined}
       showingArchivedChannels={channelsListed() && channels.state.archived}
       onToggleArchivedChannels={channelsListed() ? channels.toggleArchived : undefined}
-      onOpenReelFactories={() => void appPort().openUrl(REELS_FACTORY_BOARD_URL)}
+      onOpenReelFactories={() => windowPage.openReelFactories(null)}
       onCreateChannel={channelsListed() ? channels.create : undefined}
       onMarkAllRead={() => {
         void markAllAgentMessagesRead();

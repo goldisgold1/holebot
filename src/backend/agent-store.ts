@@ -917,6 +917,15 @@ export class AgentStore {
     return { ...agent, marketplaceSource: structuredClone(source) };
   }
 
+  /** HoleA.I: records the agent that spawned this one with create_agent. */
+  setSpawnedBy(agentId: string, parentAgentId: string): AgentSummary {
+    const agent = this.#requireAgent(agentId);
+    agent.spawnedBy = parentAgentId;
+    agent.updatedAt = new Date().toISOString();
+    this.#persist("agent.spawned-by-updated");
+    return { ...agent };
+  }
+
   setAvatar(agentId: string, image: AvatarImageInput | null) {
     return this.#avatarUpdateQueue.withPermit(this.#setAvatar(agentId, image));
   }
@@ -1893,7 +1902,8 @@ function isStoredAgent(value: unknown): value is PersistedStoredAgent {
     (record.hiddenAt === undefined || isHiddenAt(record.hiddenAt)) &&
     isAvatarSeed(record.avatarSeed) &&
     (record.avatarHue === null || isAvatarHue(record.avatarHue)) &&
-    isMarketplaceSource(record.marketplaceSource)
+    isMarketplaceSource(record.marketplaceSource) &&
+    (record.spawnedBy === undefined || isString(record.spawnedBy))
   );
 }
 
@@ -2066,6 +2076,7 @@ function readStoredAgent(value: unknown): ReadStoredAgent | UnreadableStoredAgen
     ...(sessionSettingOverrides === undefined ? {} : { sessionSettingOverrides }),
     ...(sessionSettingResets === undefined ? {} : { sessionSettingResets }),
     ...(marketplaceSource === undefined ? {} : { marketplaceSource }),
+    ...(isString(value.spawnedBy) ? { spawnedBy: value.spawnedBy } : {}),
   };
   return { agent, repaired };
 }

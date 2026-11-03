@@ -188,6 +188,3 @@ export type ResolvedPinnedItem = { ref: SidebarPinnedItem; chat: SidebarChatItem
 export type SidebarChatItem =
   | { kind: "agent"; id: string; agent: AgentProfile }
   | { kind: "channel"; id: string; channel: ChannelSummary };
-
-/** HoleA.I: the hole.fm Reels Factory board. It stays on the hole.fm VPS, where its readers are. */
-export const REELS_FACTORY_BOARD_URL = "https://ai.holeacquisition.com/bridge/jobs";

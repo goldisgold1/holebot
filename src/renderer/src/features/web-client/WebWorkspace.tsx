@@ -17,6 +17,7 @@ import {
   decodeAgentNewChatSettings,
   decodeAgentPlanCardSettings,
   decodeAgentTaskLimitSettings,
+  REELS_FACTORY_BOARD_URL,
   type ServerConnectionState,
   type ServerSummary,
 } from "@openbot/contracts/ipc";
@@ -102,7 +103,6 @@ import {
   sidebarChannelWaits,
 } from "@openbot/ui/features/sidebar/sidebar-agent-states";
 import type { SidebarView } from "@openbot/ui/features/sidebar/sidebar-types";
-import { REELS_FACTORY_BOARD_URL } from "@openbot/ui/features/sidebar/sidebar-types";
 import { PageRail, type PageRailPage } from "@openbot/ui/features/window/PageRail";
 import { useText } from "@openbot/ui/text";
 import { Effect } from "effect";
@@ -1721,7 +1721,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
   const railPage = (): PageRailPage | null => {
     const current = page();
     if (current === "agents") return layout.sidebarView();
-    return current === "server-settings" ? null : current;
+    return current === "server-settings" || current === "reel-factories" ? null : current;
   };
   /** The settings page on screen, if any. */
   const settingsKind = (): SettingsKind | null =>

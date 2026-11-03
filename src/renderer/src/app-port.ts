@@ -16,6 +16,8 @@ export interface AppPort {
   onAppLogoColorPreference: OpenBotDesktopApi["onAppLogoColorPreference"];
   openExternal: OpenBotDesktopApi["openExternal"];
   openUrl: OpenBotDesktopApi["openUrl"];
+  setReelFactoriesView: OpenBotDesktopApi["setReelFactoriesView"];
+  reloadReelFactoriesView: OpenBotDesktopApi["reloadReelFactoriesView"];
   openChatWindow: OpenBotDesktopApi["openChatWindow"];
   getChatWindows: OpenBotDesktopApi["getChatWindows"];
   onChatWindows: OpenBotDesktopApi["onChatWindows"];

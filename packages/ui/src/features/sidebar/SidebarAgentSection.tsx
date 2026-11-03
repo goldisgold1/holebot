@@ -7,7 +7,8 @@
  */
 
 import { SIDEBAR_UNASSIGNED_SECTION_ID } from "@openbot/contracts/ipc";
-import { For, Match, Show, Switch } from "solid-js";
+import { createMemo, For, Match, Show, Switch } from "solid-js";
+import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { SidebarAgentRow } from "./SidebarAgentRow";
 import { SidebarChannelRow } from "./SidebarChannelRow";
@@ -24,6 +25,18 @@ export function SidebarAgentSection(sectionProps: { sectionId: string }) {
   const name = () =>
     sectionId() === SIDEBAR_UNASSIGNED_SECTION_ID ? t("sidebar.section.unassigned") : (custom()?.name ?? "");
   const headed = () => Boolean(custom()) || props.layout.sections.length > 0;
+  // HoleA.I: an agent that another agent spawned sits under that agent's row, wherever its own
+  // section is. A pinned or hidden parent has no row here, so its workers keep their own place.
+  const sectionAgents = createMemo(() => {
+    const agents = new Map<string, AgentProfile>();
+    for (const list of filteredChatsBySection().values())
+      for (const chat of list) if (chat.kind === "agent") agents.set(chat.agent.id, chat.agent);
+    return agents;
+  });
+  const nestedUnderParent = (agent: AgentProfile) =>
+    agent.spawnedBy !== undefined && agent.spawnedBy !== agent.id && sectionAgents().has(agent.spawnedBy);
+  const spawnedBy = (parentId: string) =>
+    [...sectionAgents().values()].filter((agent) => agent.spawnedBy === parentId && agent.id !== parentId);
   const collapsed = () => headed() && sectionIsCollapsed(sectionId());
   return (
     <Show when={name() && (chats().length > 0 || custom())}>
@@ -47,7 +60,25 @@ export function SidebarAgentSection(sectionProps: { sectionId: string }) {
               {(chat) => (
                 <Switch>
                   <Match when={chat.kind === "agent" ? chat.agent : undefined}>
-                    {(agent) => <SidebarAgentRow agent={agent()} />}
+                    {(agent) => (
+                      <Show when={!nestedUnderParent(agent())}>
+                        <SidebarAgentRow agent={agent()} />
+                        <Show when={spawnedBy(agent().id).length > 0}>
+                          <ul
+                            class="sidebar-spawned-agents"
+                            aria-label={t("sidebar.spawned.label", { name: agent().name })}
+                          >
+                            <For each={spawnedBy(agent().id)}>
+                              {(child) => (
+                                <li class="sidebar-spawned-agent">
+                                  <SidebarAgentRow agent={child} />
+                                </li>
+                              )}
+                            </For>
+                          </ul>
+                        </Show>
+                      </Show>
+                    )}
                   </Match>
                   <Match when={chat.kind === "channel" ? chat.channel : undefined}>
                     {(channel) => <SidebarChannelRow channel={channel()} />}

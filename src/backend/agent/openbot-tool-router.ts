@@ -190,6 +190,8 @@ export interface OpenBotToolRouterHooks {
   readUsage(agentId: string): Effect.Effect<unknown>;
   /** HoleA.I: deletes an agent the way the server's own delete route does, for `delete_agent`. */
   deleteAgent(agentId: string): Effect.Effect<void, ToolOperationFailed>;
+  /** HoleA.I: records which agent spawned a new one, so the sidebar nests it under its parent. */
+  setSpawnedBy(agentId: string, parentAgentId: string): AgentSummary;
   /** HoleA.I: messages waiting in the agent's queue, so `delete_agent` never drops work. */
   queuedMessages(agentId: string): number;
   /**
@@ -1569,6 +1571,7 @@ export class OpenBotToolRouter {
           },
           (agent) =>
             Effect.gen({ self: this }, function* () {
+              this.#hooks.setSpawnedBy(agent.id, senderAgentId);
               if (assign) yield* assign(agent.id).pipe(toToolOperationFailed);
               if (lateEffort !== undefined) {
                 const models = this.#hooks.listModels();
