@@ -32,10 +32,24 @@
   --holeai-bubble: #252525;
   --holeai-bubble-rim: rgb(240 240 240 / 0.08);
   --holeai-bubble-shine: rgb(240 240 240 / 0.04);
-  --holeai-composer: #181818;
-  --holeai-composer-border: rgb(240 240 240 / 0.12);
+  --holeai-composer: #252525;
+  --holeai-composer-border: rgb(240 240 240 / 0.08);
+  --holeai-composer-border-hover: rgb(240 240 240 / 0.12);
   --holeai-user-bubble: #363636;
   --holeai-user-bubble-text: var(--openbot-text-primary);
+  /* The bot app's controls and floating panels: menus on the pane colour, fills at 6/8/14%, a 20% focus line. */
+  --openbot-bg-sheet: #181818;
+  --openbot-bg-sheet-inset: #141414;
+  --openbot-bg-control: #252525;
+  --openbot-bg-control-hover: #292929;
+  --openbot-bg-control-active: #363636;
+  --openbot-shadow-menu: rgba(0, 0, 0, 0.2);
+  --openbot-shadow-popover-ambient: rgba(0, 0, 0, 0.2);
+  --holeai-input-field: rgb(240 240 240 / 0.03);
+  --holeai-stroke-focus: rgb(240 240 240 / 0.2);
+  /* Sidebar rows: 6% under the pointer, 8% when open, over the #141414 sidebar. */
+  --holeai-row-hover: #212121;
+  --holeai-row-active: #252525;
 }
 
 :root {
@@ -48,19 +62,22 @@
   --holeai-text-preview: 12px;
   --holeai-text-bubble: 14px;
   --holeai-text-emoji: 32px;
+  --holeai-row-hover: var(--openbot-bg-control);
+  --holeai-row-active: var(--openbot-bg-surface);
   --holeai-radius-row: 10px;
   /* Half the one-line height, so a one-line bubble is a pill; the joined corner inside a run is small. */
   --holeai-radius-bubble: 18px;
   --holeai-radius-bubble-joined: 6px;
   /* Half the 44px one-line height; the grown box is a little squarer. */
-  /* The bot app's composer is a rounded box at every height, not a pill. */
-  --holeai-radius-composer: 16px;
-  --holeai-radius-composer-open: 16px;
+  /* The bot app's composer: a 20px rounded box at every height, rows 6px apart, no shadow. */
+  --holeai-radius-composer: 20px;
+  --holeai-composer-gap: 6px;
+  --holeai-radius-composer-open: 20px;
   --holeai-radius-file-card: 22px;
   --holeai-shadow-file-card:
     0 0 0 0.5px rgba(127, 127, 127, 0.16), 0 1px 4px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.035);
   --holeai-radius-pill: 999px;
-  --holeai-shadow-composer: 0 6px 24px rgba(0, 0, 0, 0.18);
+  --holeai-shadow-composer: none;
   /* Grok Bot's switches: 32x20, the small one 26x16. */
   --openbot-switch-width: 32px;
   --openbot-switch-sm-width: 26px;
@@ -81,6 +98,8 @@
 }
 
 :root[data-openbot-color-scheme="light"] {
+  --holeai-input-field: rgba(20, 20, 20, 0.03);
+  --holeai-stroke-focus: rgba(20, 20, 20, 0.2);
   --openbot-bg-frame: #ffffff;
   --openbot-bg-sidebar: #f7f7f8;
   --openbot-bg-native-sidebar: #f7f7f8;
@@ -93,6 +112,7 @@
   --holeai-bubble-shine: rgb(255 255 255 / 0.5);
   --holeai-composer: #f4f4f5;
   --holeai-composer-border: rgba(20, 20, 20, 0.06);
+  --holeai-composer-border-hover: rgba(20, 20, 20, 0.12);
   --holeai-user-bubble: #e6e6e9;
   --holeai-user-bubble-text: var(--openbot-text-primary);
 }

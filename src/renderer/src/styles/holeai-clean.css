@@ -21,6 +21,25 @@
   border-radius: var(--holeai-radius-row);
 }
 
+.agent-row:hover {
+  --agent-avatar-outline: var(--holeai-row-hover);
+
+  background: var(--holeai-row-hover);
+}
+
+.agent-row-active,
+.agent-row.agent-row-active:hover {
+  --agent-avatar-outline: var(--holeai-row-active);
+
+  background: var(--holeai-row-active);
+}
+
+.agent-list[data-sidebar-dragging] .agent-row:not(.agent-row-active):hover {
+  --agent-avatar-outline: inherit;
+
+  background: transparent;
+}
+
 .agent-row + .agent-row {
   margin-top: 2px;
 }
@@ -160,35 +179,40 @@
 }
 
 /*
- * The composer, as Grok Bot draws it: a 44px pill while it holds one line, a rounder box once it grows, a
- * hairline border that only darkens on focus (no ring), and a soft shadow. The text scrolls after 120px.
+ * The composer, as the bot app draws it (its prompt input): a 20px rounded box at every height, filled with
+ * the base colour at 6%, a hairline at 8% that rises to 12% on hover and focus, no shadow. The text area
+ * starts at 36px and scrolls after 200px; the rows inside sit 6px apart.
  */
 .composer {
   min-height: 0;
-  border: 0.5px solid var(--holeai-composer-border);
-  border-radius: var(--holeai-radius-composer-open);
+  gap: var(--holeai-composer-gap);
+  border: 1px solid var(--holeai-composer-border);
+  border-radius: var(--holeai-radius-composer);
   background: var(--holeai-composer);
-  padding: 10px 12px;
+  padding: 8px 10px;
   box-shadow: var(--holeai-shadow-composer);
-  transition:
-    border-color var(--openbot-duration-fast) ease,
-    border-radius var(--holeai-duration-tray) var(--holeai-ease-standard);
+  transition: border-color var(--openbot-duration-fast) ease;
 }
 
 .composer[data-compact] {
-  min-height: 44px;
+  min-height: 0;
   border-radius: var(--holeai-radius-composer);
-  padding: 8px;
+  padding: 6px 8px;
 }
 
+.composer:hover,
 .composer:focus-within {
-  border-color: var(--openbot-text-dim);
+  border-color: var(--holeai-composer-border-hover);
   box-shadow: var(--holeai-shadow-composer);
 }
 
 .composer-input-label,
 .composer-editor-root {
-  --composer-editor-max-height: 120px;
+  --composer-editor-max-height: 200px;
+}
+
+.composer-editor-root {
+  min-height: 36px;
 }
 
 .composer-input-label {
@@ -739,22 +763,74 @@
   }
 }
 
-/* Menus as Grok Bot draws them: 30px rows with small corners, a hairline separator, a quicker open. */
+/* Menus as the bot app draws them: a 12px panel on the pane colour with an 8% edge and a soft drop, 30px rows
+ * with 6px corners and 13px text, an 8% highlight, a quick open. */
 .ui-action-menu {
   --openbot-control-md: 30px;
+  --ui-menu-radius: var(--openbot-radius-lg);
+  --ui-menu-padding: 6px;
   --ui-menu-item-radius: var(--openbot-radius-sm);
+  --ui-menu-edge: var(--openbot-border);
+  --ui-menu-highlight: transparent;
+  --ui-menu-item-hover: var(--openbot-hover);
+  --ui-menu-row-highlight: color-mix(in srgb, var(--openbot-text-primary) 8%, var(--ui-menu-bg));
+  --ui-menu-panel-shadow: 0 0 0 1px var(--ui-menu-edge), 0 8px 24px var(--openbot-shadow-menu);
   --ui-menu-duration: var(--openbot-duration-fast);
+  font-size: var(--holeai-text-row);
 }
 
 .ui-action-menu > hr {
   height: 0.5px;
 }
 
-/* Tooltips: regular weight, a little more air and rounder. */
+/* Select lists match the menus. */
+.ui-select-content {
+  border-radius: var(--openbot-radius-lg);
+  background: var(--openbot-bg-sheet);
+  box-shadow:
+    0 0 0 1px var(--openbot-border),
+    0 8px 24px var(--openbot-shadow-menu);
+}
+
+.ui-select-listbox {
+  padding: 6px;
+}
+
+.ui-select-item {
+  min-height: 30px;
+  border-radius: var(--openbot-radius-sm);
+  font-size: var(--holeai-text-row);
+}
+
+/* Tooltips: small, 12px text, 6px corners. */
 .ui-tooltip {
-  border-radius: var(--openbot-radius-md);
-  padding: 6px 10px;
+  border-radius: var(--openbot-radius-sm);
+  padding: 4px 8px;
+  font-size: var(--holeai-text-preview);
   font-weight: var(--openbot-weight-regular);
+}
+
+/* Fields: a faint 3% fill and an 8% line that firms to 12% on hover and 20% on focus. */
+:where(.ui-input, .ui-textarea, .ui-native-select),
+.ui-select-trigger {
+  border-color: var(--openbot-border);
+  background: var(--holeai-input-field);
+  box-shadow: none;
+}
+
+:where(.ui-input, .ui-textarea, .ui-native-select):hover,
+.ui-select-trigger:hover {
+  border-color: var(--openbot-border-strong);
+}
+
+:where(.ui-input, .ui-textarea, .ui-native-select):focus-visible,
+.ui-select-trigger:focus-visible {
+  border-color: var(--holeai-stroke-focus);
+}
+
+/* A switch that is on fills with the accent. */
+.ui-switch[data-checked] {
+  background: var(--openbot-accent);
 }
 
 /* Thin, quiet scrollbars everywhere. */
