@@ -435,6 +435,19 @@ export const OPENBOT_TOOL_DEFINITIONS: readonly OpenBotToolDefinition[] = [
     shape: {},
   },
   {
+    name: "delete_agent",
+    description:
+      'Delete a Reel Worker you spawned with create_agent once its job is finished or failed, it has sent its summary, and the lessons are written. It removes the agent, its chat and its sidebar entry for good. Only the Producer and COS can use it, only on agents named "Reel Worker ...", and never while the worker runs a turn or has queued messages: wait and call it again.',
+    shape: {
+      agentId: z
+        .string()
+        .trim()
+        .min(1)
+        .max(INPUT_LIMITS.identifier)
+        .describe("Stable id of the Reel Worker, from list_agents."),
+    },
+  },
+  {
     name: "compact_chat",
     description:
       "Compact your own chat: the earlier messages are replaced by a summary, so each message sends less context but you keep the gist. Use it when this chat is long and you still need what happened in it; use start_new_chat instead when the earlier messages no longer matter. Compaction runs when this turn ends and your queue is empty. It works only in your own chat, and only when the user allows new chats in your settings.",

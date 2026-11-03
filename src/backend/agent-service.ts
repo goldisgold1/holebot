@@ -1550,6 +1550,9 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
           this.#requestedCompacts.add(agentId);
         },
         readUsage: (agentId) => this.#readOwnUsage(agentId),
+        deleteAgent: (agentId) => this.deleteAgent(agentId).pipe(toToolOperationFailed),
+        queuedMessages: (agentId) =>
+          this.listQueue(agentId).deliveries.filter((delivery) => delivery.status === "queued").length,
         steerAgentMessage: (recipientAgentId, deliveryId) => this.#steerAgentMessage(recipientAgentId, deliveryId),
       },
     });

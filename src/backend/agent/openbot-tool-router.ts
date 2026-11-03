@@ -119,8 +119,15 @@ import { isDynamicToolCall } from "./thread-items";
 import { toolCallIdempotencyKey } from "./tool-call-idempotency";
 import { discoverTools, namesInSearch, resolveDeferredTool } from "./tool-catalog";
 import { ToolOperationFailed, toolStep, toToolOperationFailed } from "./tool-operation";
+
 import type { AgentBrowserHost } from "./turn-lifecycle";
 import { handleUpdateAgentsTool } from "./update-agents-tool";
+
+// HoleA.I: the Producer spawns a Reel Worker per job and deletes it when the job is done.
+const SPAWNED_REEL_WORKER_TITLE = "Spawned Reel Worker";
+const SPAWNED_REEL_WORKER_CAP = 2;
+const isReelWorkerName = (name: string) => /^reel worker\b/i.test(name.trim());
+const mayManageReelWorkers = (name: string) => /^(producer|cos)\b/i.test(name.trim());
 
 const logger = createOpenBotLogger("openbot-tool-router");
 
@@ -181,6 +188,10 @@ export interface OpenBotToolRouterHooks {
   requestCompact(agentId: string): void;
   /** HoleA.I: the agent's own context fill and provider plan usage, for `read_usage`. */
   readUsage(agentId: string): Effect.Effect<unknown>;
+  /** HoleA.I: deletes an agent the way the server's own delete route does, for `delete_agent`. */
+  deleteAgent(agentId: string): Effect.Effect<void, ToolOperationFailed>;
+  /** HoleA.I: messages waiting in the agent's queue, so `delete_agent` never drops work. */
+  queuedMessages(agentId: string): number;
   /**
    * Takes a message from another agent into the recipient's running chat turn when the recipient's
    * busy-message mode is "steer". Otherwise the message waits in the queue.
@@ -939,6 +950,8 @@ export class OpenBotToolRouter {
 
     if (params.tool === "update_agents") return yield* handleUpdateAgentsTool(params, senderAgentId, this.#hooks);
 
+    if (params.tool === "delete_agent") return yield* this.#deleteReelWorker(params, senderAgentId);
+
     if (params.tool === "read_usage") {
       const payload = yield* this.#hooks.readUsage(senderAgentId);
       return { success: true, contentItems: [{ type: "inputText", text: redactText(JSON.stringify(payload)) }] };
@@ -1465,6 +1478,35 @@ export class OpenBotToolRouter {
     return result;
   }, Effect.uninterruptible);
 
+  /** HoleA.I: removes a spawned Reel Worker; only the Producer and COS, and only an idle worker. */
+  readonly #deleteReelWorker = Effect.fn("OpenBotToolRouter.deleteReelWorker")(
+    function* (
+      this: OpenBotToolRouter,
+      params: DynamicToolCallParams,
+      senderAgentId: string,
+    ): Effect.fn.Return<OpenBotToolResponse, ToolOperationFailed> {
+      const args = z
+        .object({ agentId: z.string().trim().min(1) })
+        .strict()
+        .parse(params.arguments);
+      const caller = this.#requireAgent(senderAgentId);
+      if (!mayManageReelWorkers(caller.name))
+        return openBotToolFailure("Only the Producer and COS can delete Reel Workers.");
+      const target = this.#store.list().find((agent) => agent.id === args.agentId);
+      if (!target) return openBotToolFailure(`No agent has the id ${args.agentId}.`);
+      if (target.id === senderAgentId || !isReelWorkerName(target.name))
+        return openBotToolFailure('delete_agent removes only agents named "Reel Worker ...".');
+      if (this.#hooks.runsTurn(target.id) || this.#hooks.queuedMessages(target.id) > 0)
+        return openBotToolFailure(
+          `${target.name} is still working or has queued messages. Delete it after it has sent its summary.`,
+        );
+      yield* this.#hooks.deleteAgent(target.id);
+      if (this.#sidebarLayout) yield* this.#sidebarLayout.removeAgent(target.id).pipe(toToolOperationFailed);
+      return openBotToolResult({ status: "deleted", agentId: target.id, name: target.name });
+    },
+    Effect.catchDefect((cause) => Effect.fail(new ToolOperationFailed({ cause }))),
+  );
+
   readonly #createAgent = Effect.fn("OpenBotToolRouter.createAgent")(
     function* (
       this: OpenBotToolRouter,
@@ -1472,6 +1514,18 @@ export class OpenBotToolRouter {
       senderAgentId: string,
     ): Effect.fn.Return<OpenBotToolResponse, ToolOperationFailed> {
       const args = createAgentToolSchema.parse(params.arguments, { reportInput: true });
+      // HoleA.I: a Reel Worker is spawned per job by the Producer or COS, at most two alive at once,
+      // and marked by its title so the cap leaves the workers the user made alone.
+      if (isReelWorkerName(args.name)) {
+        if (!mayManageReelWorkers(this.#requireAgent(senderAgentId).name))
+          return openBotToolFailure("Only the Producer and COS can spawn Reel Workers.");
+        const alive = this.#store.list().filter((agent) => agent.title === SPAWNED_REEL_WORKER_TITLE).length;
+        if (alive >= SPAWNED_REEL_WORKER_CAP)
+          return openBotToolFailure(
+            `${alive} spawned Reel Workers are alive, the cap is ${SPAWNED_REEL_WORKER_CAP}. Delete a finished one first.`,
+          );
+        args.title = SPAWNED_REEL_WORKER_TITLE;
+      }
       const hue = args.avatarHue ?? null;
       const caller = this.#requireAgent(senderAgentId);
       const listed = this.#hooks.listModels();
