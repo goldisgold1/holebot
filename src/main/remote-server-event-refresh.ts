@@ -40,6 +40,9 @@ interface QueueRefresh {
 
 const FALLBACK_CONVERSATION_LIMIT = 1;
 const INVALIDATED_CONVERSATION_LIMIT = 50;
+// HoleA.I: retries after a failed conversation page fetch: 1 s, then 2 s.
+const CONVERSATION_REFRESH_RETRIES = 2;
+const CONVERSATION_REFRESH_RETRY_MS = 1_000;
 
 export interface RemoteEventRefreshOptions {
   request: RemoteRequestFn;
@@ -219,6 +222,7 @@ export class RemoteEventRefresh {
     const request = { revision, sequence: 0 };
     this.#conversations.set(key, request);
     yield* Effect.gen({ self: this }, function* () {
+      let failures = 0;
       while (this.#hasServer(serverId)) {
         const requestedRevision = request.revision;
         const requestedSequence = request.sequence;
@@ -227,7 +231,12 @@ export class RemoteEventRefresh {
         );
         if (Result.isFailure(result)) {
           if (request.sequence !== requestedSequence || request.revision !== requestedRevision) continue;
-          return;
+          // HoleA.I: a failed fetch used to end the refresh, and the open chat froze mid-reply until a
+          // restart. Try again a couple of times first.
+          if (failures >= CONVERSATION_REFRESH_RETRIES) return;
+          failures += 1;
+          yield* Effect.sleep(CONVERSATION_REFRESH_RETRY_MS * failures);
+          continue;
         }
         const page = result.success;
         if (request.sequence !== requestedSequence) continue;
@@ -235,7 +244,13 @@ export class RemoteEventRefresh {
           this.#emit(serverId, { type: "conversation-page", page });
           return;
         }
-        if (request.revision === requestedRevision) return;
+        // HoleA.I: the notice's revision can come from another thread of the agent, which the main
+        // thread's page never reaches, so dropping it froze the chat. With no newer notice, send what the
+        // host has; the renderer still refuses a page older than the one it shows.
+        if (request.revision === requestedRevision) {
+          this.#emit(serverId, { type: "conversation-page", page });
+          return;
+        }
       }
     }).pipe(
       Effect.ensuring(
