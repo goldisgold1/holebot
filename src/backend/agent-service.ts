@@ -5,6 +5,8 @@ import { sortConversationMessages } from "@openbot/contracts/conversation-order"
 import { developmentStartingModel } from "@openbot/contracts/development-defaults";
 import { INPUT_LIMITS } from "@openbot/contracts/input-limits";
 import type {
+  AccountUsage,
+  AccountUsageWindow,
   AgentAccessLevel,
   AgentAnalyticsInput,
   AgentEvent,
@@ -3418,12 +3420,63 @@ export class AgentService extends EventEmitter<AgentServiceEvents> {
           compaction: state?.compaction?.status ?? null,
         }
       : { note: "No context reading yet: it appears after your first reply in this chat." };
+    const agent = this.#store.list().find((candidate) => candidate.id === agentId);
     return this.getUsage(agentId).pipe(
-      Effect.map((plan) => ({ context, plan })),
+      Effect.map((usage) => ({
+        context,
+        plan: {
+          scope:
+            "accountUsedPercent is the WHOLE provider account, not you. The same account is also used by Vincent " +
+            "in his own Claude apps (Claude Code, desktop, phone) and by every other agent on this server. " +
+            "Only yourSpend is yours. otherAgentsSpend is the rest of this server; the remainder of " +
+            "accountUsedPercent is people outside HoleBot, which this server cannot see.",
+          guidance:
+            "Do not slow down or stop because accountUsedPercent is high while yourSpend is small: that usage is " +
+            "someone else's. Only act on accountUsedPercent itself when it is at 90 or more, because then the " +
+            "account is near its limit for everyone; tell Vincent instead of guessing whose it is.",
+          windows: agent ? this.#planWindows(agentId, agent.provider, usage) : [],
+        },
+      })),
       Effect.catch((failure) =>
         Effect.succeed({ context, plan: { error: `Plan usage is not available: ${String(failure)}` } }),
       ),
     );
+  }
+
+  /** HoleA.I: each plan window with this agent's spend beside the rest of the server's, for `read_usage`. */
+  #planWindows(agentId: string, provider: string, usage: AccountUsage) {
+    const windows: Array<{ name: string; window: AccountUsageWindow }> = [];
+    for (const limit of usage.limits) {
+      if (limit.primary) windows.push({ name: `${limit.id} primary`, window: limit.primary });
+      if (limit.secondary) windows.push({ name: `${limit.id} secondary`, window: limit.secondary });
+    }
+    return windows.map(({ name, window }) => {
+      const minutes = window.windowDurationMins;
+      const label =
+        minutes === null
+          ? name
+          : minutes >= 1440
+            ? `${Math.round(minutes / 1440)}-day`
+            : `${Math.round(minutes / 60)}-hour`;
+      const base = {
+        window: label,
+        accountUsedPercent: Math.round(window.usedPercent),
+        resetsAt: window.resetsAt === null ? null : new Date(window.resetsAt * 1_000).toISOString(),
+      };
+      if (window.resetsAt === null || minutes === null) return base;
+      const since = new Date((window.resetsAt - minutes * 60) * 1_000).toISOString();
+      const [share] = this.getQuotaShares({ windows: [{ provider, since }] });
+      if (!share) return base;
+      const mine = share.agents.find((entry) => entry.agentId === agentId)?.amount ?? 0;
+      const round = (value: number) => (share.basis === "cost" ? Math.round(value * 100) / 100 : Math.round(value));
+      return {
+        ...base,
+        spendUnit: share.basis === "cost" ? "estimated USD" : "tokens",
+        yourSpend: round(mine),
+        otherAgentsSpend: round(share.total - mine),
+        yourShareOfThisServerPercent: share.total > 0 ? Math.round((mine / share.total) * 100) : 0,
+      };
+    });
   }
 
   /** HoleA.I: the compaction the agent asked for with `compact_chat`, run by the same drain as a new chat. */
