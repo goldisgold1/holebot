@@ -8,16 +8,14 @@
  * and shows when the user hid it in place of the last message.
  */
 
-/** HoleA.I: the frames of a spawned worker's editing strip. */
-const EDIT_STRIP_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7];
-
-import { AppWindow, Badge, buttonVariants, Clock3, ContextMenu, Lock } from "@openbot/ui";
+import { AppWindow, Badge, buttonVariants, Clapperboard, Clock3, ContextMenu, Lock } from "@openbot/ui";
 import type { JSX } from "@solidjs/web";
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import { agentAccessLockLabel } from "../agents/agent-access";
+import { AgentWorkScene, agentWorkRole, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarWaitChip, SidebarWaitTooltip } from "./SidebarAgentIndicator";
 import { sidebarAgentStateLabel, sidebarMessageTime, sidebarUsageResetTime } from "./sidebar-filtering";
@@ -26,14 +24,9 @@ import { useSidebarScope } from "./sidebar-scope";
 /**
  * `waiting` is set by the "Needs you" group. The row reads it rather than the agent's state, because
  * the group holds its members still during a drag while the state moves on. `userHidden` is set by
- * the "Hidden" group. `spawned` is set under the agent that spawned it, and draws its editing strip.
+ * the "Hidden" group.
  */
-export function SidebarAgentRow(rowProps: {
-  agent: AgentProfile;
-  waiting?: boolean;
-  userHidden?: boolean;
-  spawned?: boolean;
-}) {
+export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boolean; userHidden?: boolean }) {
   const {
     dragOffset,
     draggedChatId,
@@ -71,6 +64,10 @@ export function SidebarAgentRow(rowProps: {
   // The state label already reads the question, so the label does not say it twice.
   const labelDetail = () => (wait()?.detail ? "" : `. ${hiddenLabel()}${detail()}`);
   const [menuOpen, setMenuOpen] = createSignal(false);
+  // HoleA.I: a working agent plays the scene of its role, and a Reel Worker lists the Reels it makes.
+  const role = () => agentWorkRole(rowProps.agent.name);
+  const working = () => state()?.kind === "working";
+  const reels = () => (role() === "reel" ? reelWorkerReels(rowProps.agent.name, props.reelFactoryLive) : []);
   const limit = () => {
     const current = state();
     return current?.kind === "limited" ? current : undefined;
@@ -111,7 +108,11 @@ export function SidebarAgentRow(rowProps: {
         }}
       >
         <span class="agent-row-avatar">
-          <AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} />
+          <Show when={role() === "reel"} fallback={<AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} />}>
+            <span class="reel-creator-avatar" data-working={working() ? "" : undefined} aria-hidden="true">
+              <Clapperboard />
+            </span>
+          </Show>
           <SidebarAgentIndicator state={state} />
         </span>
         <span class="agent-row-copy">
@@ -166,21 +167,11 @@ export function SidebarAgentRow(rowProps: {
             </Show>
           </span>
           <span class="agent-row-preview">{detail()}</span>
-          {/* HoleA.I: a spawned worker cuts its Reel on a little timeline; it plays while the worker works. */}
-          <Show when={rowProps.spawned}>
-            <span
-              class="spawned-edit-strip"
-              data-working={state()?.kind === "working" ? "" : undefined}
-              aria-hidden="true"
-            >
-              <span class="spawned-edit-track">
-                <For each={[...EDIT_STRIP_FRAMES, ...EDIT_STRIP_FRAMES]}>
-                  {(frame) => <span class="spawned-edit-frame" style={`--frame: ${frame};`} />}
-                </For>
-              </span>
-              <span class="spawned-edit-cut" />
-              <span class="spawned-edit-playhead" />
-            </span>
+          <Show when={working()}>
+            <AgentWorkScene role={role()} />
+          </Show>
+          <Show when={reels().length > 0}>
+            <ReelStepRows reels={reels()} stages={props.reelFactoryLive?.stages ?? []} />
           </Show>
         </span>
         <Show when={state()}>

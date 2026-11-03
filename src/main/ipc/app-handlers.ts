@@ -279,6 +279,7 @@ export function appIpcHandlers({
       ),
       reloadReelFactoriesView: handler(() => reelFactoriesView.reload()),
       signInReelFactoriesView: handler(() => reelFactoriesView.signIn()),
+      getReelFactoryLive: handler(() => reelFactoriesView.live()),
       getExternalLinkPreference: handler(() => externalLinkPreference.get()),
       setExternalLinkPreference: payloadHandler(parseExternalLinkPreference, (parsed) =>
         runCauseEffect(externalLinkPreference.set(parsed)),

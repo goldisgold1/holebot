@@ -3,6 +3,7 @@ import type {
   ChannelSummary,
   DirectThreadSummary,
   HiddenAgent,
+  ReelFactoryLive,
   SidebarLayoutAction,
   SidebarLayoutSnapshot,
   TeamPresenceMember,
@@ -75,6 +76,8 @@ export interface SidebarProps {
   directThreads: DirectThreadSummary[];
   activeDirectMemberId: string | null;
   agentStates: Record<string, SidebarAgentState>;
+  /** HoleA.I: the Reels Factory board's live jobs; null while the board is not signed in. */
+  reelFactoryLive?: ReelFactoryLive | null | undefined;
   /** The wait of each channel that waits for the user, from `sidebarChannelWaits`. A missing entry does not wait. */
   channelWaits?: Record<string, SidebarChannelWait> | undefined;
   /** The channel rows come from a saved frame, which holds no last message. A row with none shows no preview and no time. */

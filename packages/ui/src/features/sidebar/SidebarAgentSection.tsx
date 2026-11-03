@@ -71,7 +71,7 @@ export function SidebarAgentSection(sectionProps: { sectionId: string }) {
                             <For each={spawnedBy(agent().id)}>
                               {(child) => (
                                 <li class="sidebar-spawned-agent">
-                                  <SidebarAgentRow agent={child} spawned />
+                                  <SidebarAgentRow agent={child} />
                                 </li>
                               )}
                             </For>

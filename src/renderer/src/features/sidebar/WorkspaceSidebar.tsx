@@ -1,4 +1,9 @@
-import { type ChannelMute, type ChatWindowTarget, canAdministerServer } from "@openbot/contracts/ipc";
+import {
+  type ChannelMute,
+  type ChatWindowTarget,
+  canAdministerServer,
+  type ReelFactoryLive,
+} from "@openbot/contracts/ipc";
 import { AGENT_HIDDEN_CAPABILITY } from "@openbot/contracts/team-protocol/current";
 import { computeAgentAvatarMoods } from "@openbot/ui/features/agents/agent-avatar-mood";
 import { Sidebar } from "@openbot/ui/features/sidebar/Sidebar";
@@ -69,6 +74,8 @@ function readHiddenChannels(): string[] {
   }
 }
 
+const REEL_FACTORY_LIVE_POLL_MS = 15_000;
+
 export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
   const [hiddenChannelIds, setHiddenChannelIds] = createSignal(readHiddenChannels());
   const [channelMutes, setChannelMutes] = createSignal<ChannelMute[]>([]);
@@ -103,6 +110,19 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       .then(setChatWindows)
       .catch(() => undefined);
     return unsubscribe;
+  });
+  // HoleA.I: the Reels Factory board's live jobs, for the Reel Worker steps and the Reel Factories row.
+  // Read every 15 s; null while the board is not signed in.
+  const [reelFactoryLive, setReelFactoryLive] = createSignal<ReelFactoryLive | null>(null);
+  onSettled(() => {
+    const read = () =>
+      void appPort()
+        .getReelFactoryLive()
+        .then(setReelFactoryLive)
+        .catch(() => undefined);
+    read();
+    const timer = window.setInterval(read, REEL_FACTORY_LIVE_POLL_MS);
+    return () => window.clearInterval(timer);
   });
   const windowAgentIds = createMemo(
     () => new Set(chatWindows().flatMap((target) => (target.serverId === activeServerId() ? [target.agentId] : []))),
@@ -343,6 +363,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       directThreads={directThreads()}
       activeDirectMemberId={activeDirectMemberId()}
       agentStates={sidebarAgentStates()}
+      reelFactoryLive={reelFactoryLive()}
       channelWaits={channelWaits()}
       channelPreviewsPending={!channels.state.listed}
       agentMoods={agentMoods()}

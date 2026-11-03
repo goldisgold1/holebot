@@ -1,7 +1,8 @@
-import type { AttachmentUploadProgress, ChannelMute } from "@openbot/contracts/ipc";
 import {
   type AgentIpcRequest,
   type AttachmentImportEvent,
+  type AttachmentUploadProgress,
+  type ChannelMute,
   decodeAddedAgent,
   decodeAgentAccessSnapshot,
   decodeAgentAdminSettings,
@@ -66,8 +67,10 @@ import {
   type ImportAttachmentsInput,
   IPC_ENDPOINTS,
   type IpcEndpointGroup,
+  isReelFactoryLive,
   LOCAL_SERVER_ID,
   type OpenBotDesktopApi,
+  type ReelFactoryLive,
   type RequestEndpoint,
   type ServerScope,
   type ServerSummary,
@@ -514,6 +517,13 @@ function decodeUploadProgress(value: unknown): AttachmentUploadProgress {
   return { serverId: value.serverId, sentBytes: value.sentBytes, totalBytes: value.totalBytes };
 }
 
+/** HoleA.I: the Reels Factory board's live jobs, or null while the board is not signed in. */
+function decodeReelFactoryLive(value: unknown): ReelFactoryLive | null {
+  if (value === null) return null;
+  if (!isReelFactoryLive(value)) throw new Error("Invalid Reel Factories feed.");
+  return value;
+}
+
 /** HoleA.I: the group chat mutes main keeps. */
 function decodeChannelMutes(value: unknown): ChannelMute[] {
   if (!Array.isArray(value)) throw new Error("Invalid channel mutes.");
@@ -702,6 +712,7 @@ const openbotApi: OpenBotDesktopApi = {
     setReelFactoriesView: decodeVoid,
     reloadReelFactoriesView: decodeVoid,
     signInReelFactoriesView: decodeVoid,
+    getReelFactoryLive: decodeReelFactoryLive,
     getExternalLinkPreference: decodeExternalLinkPreference,
     setExternalLinkPreference: decodeExternalLinkPreference,
     listExternalLinkBrowsers: decodeExternalLinkBrowsers,

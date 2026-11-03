@@ -12,6 +12,7 @@ import { Badge, Button, buttonVariants, ContextMenu, Factory } from "@openbot/ui
 import { For, Match, Show, Switch } from "solid-js";
 import { useText } from "../../text";
 import { ChannelAvatar } from "../channels/ChannelAvatar";
+import { isReelWorkerName } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarPinnedAvatar } from "./SidebarAgentIndicator";
 import { SidebarChannelContextMenu } from "./SidebarChannelContextMenu";
@@ -35,11 +36,15 @@ export function SidebarPinnedGroup() {
     stopSidebarDragging,
   } = useSidebarScope();
   const { t, format } = useText();
-  // HoleA.I: a Reel is in production while any Reel Worker works, and the Reel Factories row runs.
+  // HoleA.I: the Reels in production, from the board's live feed, or, while the board is not signed
+  // in, the Reel Workers that work. The Reel Factories row runs while there is one.
   const reelsWorking = () =>
-    props.agents.filter(
-      (agent) => /^reel worker\b/i.test(agent.name.trim()) && props.agentStates[agent.id]?.kind === "working",
-    ).length;
+    props.reelFactoryLive
+      ? props.reelFactoryLive.jobs
+          .filter((job) => !/blocked|queued|waiting|paused|hold/i.test(job.state))
+          .reduce((count, job) => count + Math.max(1, job.reels.length), 0)
+      : props.agents.filter((agent) => isReelWorkerName(agent.name) && props.agentStates[agent.id]?.kind === "working")
+          .length;
   const chatName = (chat: SidebarChatItem) => (chat.kind === "agent" ? chat.agent.name : chat.channel.name);
   const chatIsActive = (chat: SidebarChatItem) =>
     chat.kind === "agent" ? props.activeAgentId === chat.id : props.activeChannelId === chat.id;

@@ -40,6 +40,7 @@ export { default as CirclePause } from "lucide-solid/icons/circle-pause";
 export { default as CirclePlus } from "lucide-solid/icons/circle-plus";
 export { default as CircleQuestionMark } from "lucide-solid/icons/circle-question-mark";
 export { default as CircleX } from "lucide-solid/icons/circle-x";
+export { default as Clapperboard } from "lucide-solid/icons/clapperboard";
 export { default as ClipboardPaste } from "lucide-solid/icons/clipboard-paste";
 export { default as Clock3 } from "lucide-solid/icons/clock-3";
 export { default as Cloud } from "lucide-solid/icons/cloud";

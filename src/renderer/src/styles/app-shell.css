@@ -3608,100 +3608,618 @@ textarea {
   }
 }
 
-/* HoleA.I: a spawned worker's editing strip. Frames roll under a playhead and a cut flashes while it
- * works; idle, the strip holds still and dims. */
-.spawned-edit-strip {
+/* HoleA.I: the Reel Creator avatar every Reel Worker wears. */
+.reel-creator-avatar {
+  display: grid;
+  width: var(--agent-row-avatar-size, 40px);
+  height: var(--agent-row-avatar-size, 40px);
+  place-items: center;
+  border-radius: var(--openbot-radius-md);
+  background: linear-gradient(135deg, var(--openbot-file-orange), var(--openbot-beam-pink));
+  color: var(--openbot-action-foreground);
+}
+
+.reel-creator-avatar svg {
+  width: 55%;
+  height: 55%;
+}
+
+.reel-creator-avatar[data-working] {
+  animation: reel-factories-glow 2s ease-in-out infinite;
+}
+
+/* HoleA.I: what a working agent does, drawn under its row. Shapes take their color from the theme. */
+.work-scene {
+  display: block;
+  margin-top: 6px;
+}
+
+.work-scene-art {
+  display: block;
+  width: 100%;
+  height: 40px;
+  overflow: visible;
+}
+
+.work-scene :is(rect, circle, ellipse, path, g) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.work-scene .ws-a {
+  fill: var(--openbot-file-orange);
+}
+
+.work-scene .ws-b {
+  fill: var(--openbot-beam-pink);
+}
+
+.work-scene .ws-fg {
+  fill: var(--openbot-action-foreground);
+}
+
+.work-scene .ws-muted {
+  fill: var(--openbot-text-muted);
+}
+
+.work-scene .ws-soft {
+  opacity: 0.55;
+}
+
+.work-scene :is(.ws-frame, .ws-ring) {
+  fill: none;
+  stroke: var(--openbot-text-muted);
+  stroke-width: 1.5;
+}
+
+.work-scene .ws-line {
+  stroke: var(--openbot-border);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.work-scene .ws-trail {
+  fill: none;
+  stroke: var(--openbot-beam-pink);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  stroke-linecap: round;
+  animation: ws-trail 1.2s linear infinite;
+}
+
+.work-scene .ws-ink {
+  stroke: var(--openbot-bg-sidebar);
+  stroke-width: 2;
+}
+
+.work-scene :is(.ws-check, .ws-check-static) {
+  fill: none;
+  stroke: var(--openbot-action-foreground);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.work-scene .ws-check {
+  stroke: var(--openbot-beam-pink);
+  stroke-dasharray: 10;
+  stroke-dashoffset: 10;
+  animation: ws-check 3s ease-out infinite;
+}
+
+.work-scene .ws-check-1 {
+  animation-delay: 0.6s;
+}
+
+.work-scene .ws-check-2 {
+  animation-delay: 1.2s;
+}
+
+.work-scene .ws-late {
+  animation-delay: 0.8s;
+}
+
+/* The editing desk: the clapper snaps, the clip plays, the scissors cut the timeline. */
+.work-scene .ws-reel-clap-top {
+  transform-origin: left bottom;
+  animation: ws-clap 1.6s ease-in infinite;
+}
+
+.work-scene .ws-reel-play {
+  animation: ws-play 2.4s linear infinite;
+}
+
+.work-scene .ws-pulse {
+  animation: ws-pulse 1.6s ease-in-out infinite;
+}
+
+.work-scene .ws-reel-trim {
+  animation: ws-trim 3.2s ease-in-out infinite;
+}
+
+.work-scene .ws-reel-spark {
+  opacity: 0;
+  animation: ws-spark 3.2s ease-out infinite;
+}
+
+.work-scene .ws-reel-spark.ws-late {
+  animation-delay: 1.6s;
+}
+
+.work-scene .ws-reel-scissors {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: ws-scissors 3.2s ease-in-out infinite;
+}
+
+.work-scene :is(.ws-reel-blade-a, .ws-reel-blade-b) {
+  transform-box: view-box;
+  transform-origin: -4px 10px;
+}
+
+.work-scene .ws-reel-blade-a {
+  animation: ws-blade-a 0.4s ease-in-out infinite alternate;
+}
+
+.work-scene .ws-reel-blade-b {
+  animation: ws-blade-b 0.4s ease-in-out infinite alternate;
+}
+
+.work-scene-captions {
   position: relative;
   display: block;
-  overflow: hidden;
-  height: 14px;
-  margin-top: 4px;
-  border: 1px solid var(--openbot-border);
-  border-radius: var(--openbot-radius-sm);
-  opacity: 0.45;
+  height: 1.3em;
+  margin-top: 2px;
+  color: var(--openbot-beam-pink);
 }
 
-.spawned-edit-strip[data-working] {
-  border-color: var(--openbot-beam-pink);
-  opacity: 1;
-}
-
-.spawned-edit-track {
-  display: flex;
-  width: 200%;
-  height: 100%;
-  gap: 2px;
-  padding: 2px;
-}
-
-.spawned-edit-frame {
-  flex: 1;
-  border-radius: var(--openbot-radius-sm);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--openbot-file-orange) calc(30% + var(--frame) * 8%), transparent),
-    color-mix(in srgb, var(--openbot-beam-pink) calc(70% - var(--frame) * 6%), transparent)
-  );
-}
-
-.spawned-edit-playhead,
-.spawned-edit-cut {
+.work-scene-caption {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  border-radius: var(--openbot-radius-pill);
-  content: "";
-}
-
-.spawned-edit-playhead {
-  left: 30%;
-  background: var(--openbot-action-foreground);
-  box-shadow: 0 0 6px var(--openbot-beam-pink);
-}
-
-.spawned-edit-cut {
-  left: 62%;
-  background: var(--openbot-file-orange);
+  inset: 0;
+  overflow: hidden;
   opacity: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: ws-caption 8s linear infinite;
 }
 
-.spawned-edit-strip[data-working] .spawned-edit-track {
-  animation: spawned-edit-roll 3.2s linear infinite;
+.work-scene-caption:nth-child(2) {
+  animation-delay: 2s;
 }
 
-.spawned-edit-strip[data-working] .spawned-edit-playhead {
-  animation: spawned-edit-scrub 1.6s ease-in-out infinite alternate;
+.work-scene-caption:nth-child(3) {
+  animation-delay: 4s;
 }
 
-.spawned-edit-strip[data-working] .spawned-edit-cut {
-  animation: spawned-edit-cut 1.6s steps(1, end) infinite;
+.work-scene-caption:nth-child(4) {
+  animation-delay: 6s;
 }
 
-@keyframes spawned-edit-roll {
-  to {
-    transform: translateX(-50%);
-  }
+/* The other roles. */
+.work-scene .ws-cos-card {
+  animation: ws-sort 2.6s ease-in-out infinite;
 }
 
-@keyframes spawned-edit-scrub {
-  from {
-    left: 6%;
-  }
-  to {
-    left: 92%;
-  }
+.work-scene .ws-spin {
+  transform-box: view-box;
+  animation: ws-spin 2.4s linear infinite;
 }
 
-@keyframes spawned-edit-cut {
+.work-scene .ws-slide {
+  animation: ws-slide 2.4s ease-in-out infinite alternate;
+}
+
+.work-scene .ws-bar {
+  transform-origin: center bottom;
+  animation: ws-bar 1.8s ease-in-out infinite alternate;
+}
+
+.work-scene .ws-fly {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: ws-fly 2.6s ease-in infinite;
+}
+
+.work-scene .ws-flash {
+  animation: ws-flash 1.6s ease-out infinite;
+}
+
+.work-scene .ws-develop {
+  animation: ws-develop 1.6s ease-out infinite;
+}
+
+.work-scene .ws-carousel {
+  animation: ws-carousel 4s ease-in-out infinite;
+}
+
+.work-scene .ws-fill {
+  transform-origin: left center;
+  animation: ws-fill 2.4s linear infinite;
+}
+
+.work-scene .ws-scroll {
+  animation: ws-scroll 2.4s linear infinite;
+}
+
+.work-scene .ws-heart {
+  animation: ws-heart 2.4s ease-out infinite;
+}
+
+.work-scene .ws-stem {
+  transform-origin: center bottom;
+  animation: ws-grow 3s ease-out infinite;
+}
+
+.work-scene .ws-leaf {
+  animation: ws-leaf 3s ease-out infinite;
+}
+
+.work-scene .ws-compass {
+  transform-box: view-box;
+  animation: ws-compass 3s ease-in-out infinite;
+}
+
+.work-scene .ws-bounce {
+  animation: ws-bounce 0.9s ease-in-out infinite;
+}
+
+@keyframes ws-clap {
   0%,
-  70% {
-    opacity: 0;
-  }
-  71%,
+  60%,
   100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-24deg);
+  }
+}
+
+@keyframes ws-play {
+  to {
+    transform: translateX(-58px);
+  }
+}
+
+@keyframes ws-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes ws-trim {
+  0%,
+  30%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-7px) scaleX(0.82);
+  }
+  60% {
+    transform: translateY(0) scaleX(0.9);
+  }
+}
+
+@keyframes ws-spark {
+  0%,
+  22%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  26% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+  34% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+@keyframes ws-scissors {
+  0%,
+  100% {
+    transform: translate(112px, 15px);
+  }
+  25% {
+    transform: translate(142px, 15px);
+  }
+  50% {
+    transform: translate(176px, 15px);
+  }
+  75% {
+    transform: translate(210px, 15px);
+  }
+}
+
+@keyframes ws-blade-a {
+  from {
+    transform: rotate(-22deg);
+  }
+  to {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes ws-blade-b {
+  from {
+    transform: rotate(22deg);
+  }
+  to {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes ws-caption {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  4%,
+  22% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  26%,
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes ws-trail {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+@keyframes ws-check {
+  0%,
+  10% {
+    stroke-dashoffset: 10;
+  }
+  30%,
+  85% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 10;
+  }
+}
+
+@keyframes ws-sort {
+  0% {
+    transform: translate(0, 0);
     opacity: 1;
   }
+  60% {
+    transform: translate(130px, -6px);
+    opacity: 1;
+  }
+  70%,
+  100% {
+    transform: translate(150px, -6px);
+    opacity: 0;
+  }
+}
+
+@keyframes ws-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ws-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes ws-bar {
+  from {
+    transform: scaleY(0.3);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ws-fly {
+  0% {
+    transform: translate(4px, 22px);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(190px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes ws-flash {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(2.4);
+  }
+}
+
+@keyframes ws-develop {
+  0%,
+  70% {
+    opacity: 0.2;
+  }
+  80%,
+  100% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes ws-carousel {
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+  33%,
+  53% {
+    transform: translateX(-40px);
+  }
+  66%,
+  86% {
+    transform: translateX(-80px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ws-fill {
+  0% {
+    transform: scaleX(0.1);
+    opacity: 0.4;
+  }
+  33%,
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ws-scroll {
+  to {
+    transform: translateY(-24px);
+  }
+}
+
+@keyframes ws-heart {
+  0%,
+  50% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(1);
+  }
+}
+
+@keyframes ws-grow {
+  0% {
+    transform: scaleY(0.2);
+  }
+  60%,
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ws-leaf {
+  0%,
+  40% {
+    transform: scale(0);
+  }
+  70%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ws-compass {
+  0% {
+    transform: rotate(-40deg);
+  }
+  40% {
+    transform: rotate(70deg);
+  }
+  60% {
+    transform: rotate(30deg);
+  }
+  80%,
+  100% {
+    transform: rotate(45deg);
+  }
+}
+
+@keyframes ws-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* HoleA.I: a Reel Worker's Reels, one line each: the Reel, a pip per board stage, and its stage. */
+.reel-steps {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.reel-steps-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.reel-steps-label {
+  color: var(--openbot-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reel-steps-pips {
+  display: flex;
+  min-width: 0;
+  gap: 2px;
+}
+
+.reel-steps-pip {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--openbot-border);
+}
+
+.reel-steps-pip[data-state="done"] {
+  background: linear-gradient(90deg, var(--openbot-file-orange), var(--openbot-beam-pink));
+}
+
+.reel-steps-pip[data-state="current"] {
+  background: var(--openbot-beam-pink);
+  animation: ws-pulse 1.2s ease-in-out infinite;
+}
+
+.reel-steps-stage {
+  overflow: hidden;
+  max-width: 7.5em;
+  color: var(--openbot-beam-pink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3709,8 +4227,15 @@ textarea {
     display: none;
   }
 
-  .spawned-edit-strip[data-working] :is(.spawned-edit-track, .spawned-edit-playhead, .spawned-edit-cut) {
-    animation: none;
+  .work-scene *,
+  .work-scene-caption,
+  .reel-steps-pip,
+  .reel-creator-avatar {
+    animation: none !important;
+  }
+
+  .work-scene-caption:first-child {
+    opacity: 1;
   }
 }
 
