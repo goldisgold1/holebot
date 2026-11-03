@@ -127,7 +127,7 @@ import { handleUpdateAgentsTool } from "./update-agents-tool";
 const SPAWNED_REEL_WORKER_TITLE = "Spawned Reel Worker";
 const SPAWNED_REEL_WORKER_CAP = 2;
 const isReelWorkerName = (name: string) => /^reel worker\b/i.test(name.trim());
-const mayManageReelWorkers = (name: string) => /^(producer|cos)\b/i.test(name.trim());
+const mayManageReelWorkers = (name: string) => /^((reels? )?producer|cos)\b/i.test(name.trim());
 
 const logger = createOpenBotLogger("openbot-tool-router");
 
