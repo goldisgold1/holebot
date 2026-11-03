@@ -113,6 +113,20 @@ export interface MainWindowHolder {
   load: Promise<BrowserWindow> | null;
 }
 
+/** HoleA.I: Windows pins a running window as the bare HoleBot.exe, so a taskbar pin of an app started
+ * with `--user-data-dir` opened the default profile, which has no sign-in. Pin the same profile. */
+function pinWindowProfile(window: BrowserWindow): void {
+  if (process.platform !== "win32" || !app.isPackaged) return;
+  const userDataDir = app.commandLine.getSwitchValue("user-data-dir").trim();
+  if (!userDataDir) return;
+  window.setAppDetails({
+    appId: "app.openbot.desktop",
+    appIconPath: process.execPath,
+    relaunchCommand: `"${process.execPath}" "--user-data-dir=${userDataDir}"`,
+    relaunchDisplayName: "HoleBot",
+  });
+}
+
 export function createMainWindowHolder(): MainWindowHolder {
   return { current: null, load: null };
 }
@@ -217,6 +231,7 @@ export function createMainWindowController({
     hideMenuBar(window);
     followWindowGlass(window, MAIN_WINDOW_DARK_BACKGROUND);
     followWindowControls(window);
+    pinWindowProfile(window);
 
     window.once("ready-to-show", () => {
       performance.mark("openbot:window-ready");
