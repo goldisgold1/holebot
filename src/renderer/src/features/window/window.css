@@ -289,6 +289,20 @@
     -webkit-app-region: no-drag;
   }
 
+  /* HoleA.I: the Reel Factories toolbar sits in the top row like the usage title. The row moves the
+   * window, and its mark, title and buttons take clicks. */
+  .app-window > .app-frame-edge > .window-page .reel-factories-toolbar {
+    flex: none;
+    height: var(--left-header-height);
+    padding-block: 0;
+    border-bottom: 0;
+    -webkit-app-region: drag;
+  }
+
+  .app-window > .app-frame-edge > .window-page .reel-factories-toolbar > :not(.reel-factories-spacer) {
+    -webkit-app-region: no-drag;
+  }
+
   .app-window > .app-frame-edge > .window-page :is(.agent-usage-identity, .routine-planner-identity) .ui-icon-button {
     margin-left: 0;
   }
@@ -516,7 +530,7 @@
   .app-window
     > .app-frame-edge[data-window-page-kind="titled"]
     > .window-page
-    :is(.agent-usage-header, .routine-planner-title, .skills-marketplace-topbar) {
+    :is(.agent-usage-header, .routine-planner-title, .skills-marketplace-topbar, .reel-factories-toolbar) {
     margin-left: var(--left-panel-width);
   }
 
@@ -532,7 +546,9 @@
       .routine-planner-error,
       .marketplace-heading,
       .marketplace-nav,
-      .skills-marketplace-body
+      .skills-marketplace-body,
+      .reel-factories-toolbar,
+      .reel-factories-body
     ) {
     pointer-events: auto;
   }

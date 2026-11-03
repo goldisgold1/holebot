@@ -1006,7 +1006,7 @@
   padding-inline-end: calc(var(--openbot-space-2) + var(--holeai-window-controls-inset));
 }
 
-:is(.agent-usage-header, .routine-planner-title, .tasks-page-header) {
+:is(.agent-usage-header, .routine-planner-title, .tasks-page-header, .reel-factories-toolbar) {
   padding-inline-end: calc(var(--openbot-space-3) + var(--holeai-window-controls-inset));
 }
 
