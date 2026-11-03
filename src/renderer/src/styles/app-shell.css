@@ -3626,7 +3626,7 @@ textarea {
 
 .agent-outfit .ao-wave {
   fill: none;
-  stroke: var(--openbot-file-orange);
+  stroke: var(--openbot-text-muted);
   stroke-width: 1.6;
   stroke-linecap: round;
   opacity: 0;
@@ -3933,8 +3933,8 @@ textarea {
     repeat-x,
     repeating-linear-gradient(
       90deg,
-      var(--openbot-file-orange) 0 14px,
-      var(--openbot-beam-pink) 14px 28px,
+      var(--openbot-border-strong) 0 14px,
+      var(--openbot-border) 14px 28px,
       var(--openbot-bg-sidebar) 28px 31px
     );
   animation: strip-film 1.6s linear infinite;
@@ -3945,7 +3945,7 @@ textarea {
   left: 0;
   width: 10px;
   height: 14px;
-  border-right: 2px solid var(--openbot-file-orange);
+  border-right: 2px solid var(--openbot-text-muted);
   border-radius: var(--openbot-radius-pill);
   opacity: 0;
   animation: strip-wave 1.8s ease-out infinite;
@@ -3958,7 +3958,7 @@ textarea {
   width: calc(80% - var(--bit) * 18%);
   height: 3px;
   border-radius: var(--openbot-radius-xs);
-  background: linear-gradient(90deg, var(--openbot-file-green), var(--openbot-file-blue));
+  background: var(--openbot-border-strong);
   transform-origin: left center;
   animation: strip-type 2.4s steps(8, end) infinite;
   animation-delay: calc(var(--bit) * 0.5s);
@@ -3967,11 +3967,11 @@ textarea {
 .work-strip[data-role="cos"] .work-strip-bit,
 .work-strip[data-role="coo"] .work-strip-bit,
 .work-strip[data-role="english"] .work-strip-bit {
-  background: linear-gradient(90deg, var(--openbot-beam-pink), var(--openbot-file-orange));
+  background: var(--openbot-border-strong);
 }
 
 .work-strip[data-role="chinese"] .work-strip-bit {
-  background: var(--openbot-text-primary);
+  background: var(--openbot-text-secondary);
 }
 
 .work-strip[data-trail="photos"] .work-strip-bit {
@@ -3998,7 +3998,7 @@ textarea {
   width: 5px;
   height: 5px;
   border-radius: var(--openbot-radius-pill);
-  background: var(--openbot-file-yellow);
+  background: var(--openbot-text-muted);
   opacity: 0;
   animation: strip-sparkle 1.6s ease-out infinite;
   animation-delay: calc(var(--bit) * 0.3s);
@@ -4010,7 +4010,7 @@ textarea {
   width: 10px;
   height: 16px;
   border-radius: var(--openbot-radius-xs);
-  background: linear-gradient(0deg, var(--openbot-file-green), var(--openbot-file-blue));
+  background: var(--openbot-border-strong);
   transform-origin: bottom center;
   animation: strip-bar 1.8s ease-in-out infinite;
   animation-delay: calc(var(--bit) * 0.25s);
@@ -4026,7 +4026,9 @@ textarea {
   z-index: 2;
   top: 0;
   left: calc(34% + var(--pop) * (56% / var(--pops)));
+  color: var(--openbot-text-secondary);
   font-size: var(--openbot-text-md);
+  font-weight: 600;
   line-height: 18px;
   opacity: 0;
   animation-duration: 2.4s;
@@ -4051,6 +4053,18 @@ textarea {
 
 .work-strip[data-role="strategist"] .work-strip-pop {
   left: 66px;
+}
+
+/* A pinned agent's emoji float up around its tile while it works. */
+.pinned-pops {
+  position: absolute;
+  inset: -8px -6px auto;
+  height: 18px;
+  pointer-events: none;
+}
+
+.pinned-pops .work-strip-pop {
+  left: calc(4% + var(--pop) * (84% / var(--pops)));
 }
 
 @keyframes strip-pop {

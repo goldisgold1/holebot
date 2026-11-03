@@ -15,7 +15,7 @@ import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import { agentAccessLockLabel } from "../agents/agent-access";
-import { AgentOutfit, hasWorkStrip, outfitBodyShape, WorkStrip } from "./AgentOutfit";
+import { AgentOutfit, hasWorkStrip, outfitBodyHue, outfitBodyShape, WorkStrip } from "./AgentOutfit";
 import { agentWorkRole, isSpawnedReelWorker, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarWaitChip, SidebarWaitTooltip } from "./SidebarAgentIndicator";
@@ -112,7 +112,13 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
         }}
       >
         <span class="agent-row-avatar">
-          <AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} shape={outfitBodyShape(role())} />
+          <AgentAvatar
+            agent={rowProps.agent}
+            motion="idle"
+            mood={mood()}
+            shape={outfitBodyShape(role())}
+            hue={outfitBodyHue(role())}
+          />
           <AgentOutfit role={role()} working={working()} />
           <SidebarAgentIndicator state={state} />
         </span>

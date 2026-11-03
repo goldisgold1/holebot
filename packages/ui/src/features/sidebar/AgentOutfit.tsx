@@ -183,7 +183,9 @@ const OUTFITS: Partial<Record<AgentWorkRole, Outfit>> = {
  * A dressed agent wears the same soft pebble body, so its hat sits on top and its glasses on its eyes;
  * the house, crown and cloud silhouettes put them in the wrong place.
  */
-export const outfitBodyShape = (role: AgentWorkRole) => (OUTFITS[role] ? ("galet" as const) : undefined);
+// Every dressed agent wears the same round teal body (Vincent's pick), so the outfit is what tells roles apart.
+export const outfitBodyShape = (role: AgentWorkRole) => (OUTFITS[role] ? ("cercle" as const) : undefined);
+export const outfitBodyHue = (role: AgentWorkRole) => (OUTFITS[role] ? (185 as const) : undefined);
 
 export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
   return (
@@ -250,84 +252,84 @@ const WORK_STRIPS: Partial<Record<AgentWorkRole, WorkStripScene>> = {
   reel: {
     actor: { src: clapperboard, move: "stay" },
     trail: "film",
-    pops: { chars: ["✂️", "✨", "🎞️", "✨"], motion: "pop" },
+    pops: { chars: ["✂", "✦", "✦"], motion: "pop" },
   },
   producer: {
     actor: { src: megaphone, move: "stay" },
     trail: "waves",
-    pops: { chars: ["⭐", "🎬", "✨", "⭐"], motion: "float" },
+    pops: { chars: ["★", "✦", "★"], motion: "float" },
   },
-  cos: { actor: { src: clipboard, move: "stay" }, trail: "lines", pops: { chars: ["✅", "✅", "✅"], motion: "pop" } },
-  coo: { actor: { src: laptop, move: "stay" }, trail: "lines", pops: { chars: ["💌", "💕", "💌"], motion: "float" } },
+  cos: { actor: { src: clipboard, move: "stay" }, trail: "lines", pops: { chars: ["✓", "✓", "✓"], motion: "pop" } },
+  coo: { actor: { src: laptop, move: "stay" }, trail: "lines", pops: { chars: ["♥", "✉", "♥"], motion: "float" } },
   analyst: {
     actor: { src: magnifyingGlass, move: "sweep" },
     trail: "film",
-    pops: { chars: ["👀", "💯", "⭐"], motion: "pop" },
+    pops: { chars: ["✦", "★", "✓"], motion: "pop" },
   },
-  strategist: { trail: "bars", pops: { chars: ["👑"], motion: "drop" } },
+  strategist: { trail: "bars", pops: { chars: ["♛"], motion: "drop" } },
   story: {
     actor: { src: smartphone, move: "stay" },
     trail: "photos",
     photo: photoStack,
-    pops: { chars: ["📸", "💖", "✨"], motion: "float" },
+    pops: { chars: ["✦", "♥", "✦"], motion: "float" },
   },
   carousel: {
     actor: { src: photoStack, move: "stay" },
     trail: "photos",
     photo: photoStack,
-    pops: { chars: ["✨", "🖼️", "✨"], motion: "pop" },
+    pops: { chars: ["✦", "✧", "✦"], motion: "pop" },
   },
   image: {
     actor: { src: instantCamera, move: "stay" },
     trail: "photos",
     photo: photoStack,
-    pops: { chars: ["⚡", "✨", "📸"], motion: "pop" },
+    pops: { chars: ["✧", "✦", "✧"], motion: "pop" },
   },
   publisher: {
     actor: { src: paperPlane, move: "travel" },
     trail: "dashes",
-    pops: { chars: ["💨", "💌", "💨"], motion: "float" },
+    pops: { chars: ["✉", "✦", "✉"], motion: "float" },
   },
-  coder: { actor: { src: keyboard, move: "stay" }, trail: "lines", pops: { chars: ["✅", "🚀", "✨"], motion: "pop" } },
+  coder: { actor: { src: keyboard, move: "stay" }, trail: "lines", pops: { chars: ["✓", "✦", "✓"], motion: "pop" } },
   warmup: {
     actor: { src: dumbbell, move: "lift" },
     trail: "bars",
-    pops: { chars: ["💦", "💪", "🔥"], motion: "float" },
+    pops: { chars: ["✦", "↑", "✦"], motion: "float" },
   },
   growth: {
     actor: { src: rocket, move: "travel" },
     trail: "dashes",
-    pops: { chars: ["⭐", "✨", "📈", "⭐"], motion: "float" },
+    pops: { chars: ["★", "↗", "✦", "★"], motion: "float" },
   },
   finances: {
     actor: { src: coinStack, move: "stay" },
     trail: "sparkle",
-    pops: { chars: ["💰", "🪙", "💵", "🪙"], motion: "drop" },
+    pops: { chars: ["$", "$", "$", "$"], motion: "drop" },
   },
   voice: {
     actor: { src: microphone, move: "stay" },
     trail: "waves",
-    pops: { chars: ["🎵", "🎶", "🎵"], motion: "float" },
+    pops: { chars: ["♪", "♫", "♪"], motion: "float" },
   },
   thinking: {
     actor: { src: lightBulb, move: "stay" },
     trail: "sparkle",
-    pops: { chars: ["💭", "❗", "✨"], motion: "float" },
+    pops: { chars: ["?", "!", "✦"], motion: "float" },
   },
   chinese: {
     actor: { src: calligraphyBrush, move: "travel" },
     trail: "lines",
-    pops: { chars: ["✨", "🌸", "✨"], motion: "float" },
+    pops: { chars: ["✿", "✦", "✿"], motion: "float" },
   },
   english: {
     actor: { src: openBook, move: "stay" },
     trail: "lines",
-    pops: { chars: ["🔤", "📚", "✨"], motion: "float" },
+    pops: { chars: ["A", "B", "C"], motion: "float" },
   },
   selfie: {
     actor: { src: selfieStick, move: "stay" },
     trail: "sparkle",
-    pops: { chars: ["💖", "😍", "✨"], motion: "float" },
+    pops: { chars: ["♥", "✦", "♥"], motion: "float" },
   },
 };
 
@@ -361,7 +363,7 @@ export function WorkStrip(props: { role: AgentWorkRole }) {
                     data-motion={pops().motion}
                     style={{ "--pop": String(index()), "--pops": String(pops().chars.length) }}
                   >
-                    {char}
+                    {`${char}︎`}
                   </span>
                 )}
               </For>
@@ -376,6 +378,29 @@ export function WorkStrip(props: { role: AgentWorkRole }) {
               />
             )}
           </Show>
+        </span>
+      )}
+    </Show>
+  );
+}
+
+/** A pinned tile has no row to play its job across, so its emoji float up around the avatar instead. */
+export function WorkPops(props: { role: AgentWorkRole }) {
+  return (
+    <Show when={WORK_STRIPS[props.role]?.pops}>
+      {(pops) => (
+        <span class="pinned-pops" aria-hidden="true">
+          <For each={pops().chars}>
+            {(char, index) => (
+              <span
+                class="work-strip-pop"
+                data-motion="float"
+                style={{ "--pop": String(index()), "--pops": String(pops().chars.length) }}
+              >
+                {`${char}︎`}
+              </span>
+            )}
+          </For>
         </span>
       )}
     </Show>
