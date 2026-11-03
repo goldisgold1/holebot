@@ -232,6 +232,8 @@ interface WorkStripScene {
   trail: StripTrail;
   /** The picture the "photos" trail deals out. */
   photo?: string;
+  /** Little emoji the job throws off: they pop up, float away or rain down along the row. */
+  pops?: { chars: string[]; motion: "pop" | "float" | "drop" };
 }
 
 const STRIP_COUNTS: Readonly<Record<StripTrail, number>> = {
@@ -245,25 +247,88 @@ const STRIP_COUNTS: Readonly<Record<StripTrail, number>> = {
 };
 
 const WORK_STRIPS: Partial<Record<AgentWorkRole, WorkStripScene>> = {
-  reel: { actor: { src: clapperboard, move: "stay" }, trail: "film" },
-  producer: { actor: { src: megaphone, move: "stay" }, trail: "waves" },
-  cos: { actor: { src: clipboard, move: "stay" }, trail: "lines" },
-  coo: { actor: { src: laptop, move: "stay" }, trail: "lines" },
-  analyst: { actor: { src: magnifyingGlass, move: "sweep" }, trail: "film" },
-  strategist: { trail: "bars" },
-  story: { actor: { src: smartphone, move: "stay" }, trail: "photos", photo: photoStack },
-  carousel: { actor: { src: photoStack, move: "stay" }, trail: "photos", photo: photoStack },
-  image: { actor: { src: instantCamera, move: "stay" }, trail: "photos", photo: photoStack },
-  publisher: { actor: { src: paperPlane, move: "travel" }, trail: "dashes" },
-  coder: { actor: { src: keyboard, move: "stay" }, trail: "lines" },
-  warmup: { actor: { src: dumbbell, move: "lift" }, trail: "bars" },
-  growth: { actor: { src: rocket, move: "travel" }, trail: "dashes" },
-  finances: { actor: { src: coinStack, move: "stay" }, trail: "sparkle" },
-  voice: { actor: { src: microphone, move: "stay" }, trail: "waves" },
-  thinking: { actor: { src: lightBulb, move: "stay" }, trail: "sparkle" },
-  chinese: { actor: { src: calligraphyBrush, move: "travel" }, trail: "lines" },
-  english: { actor: { src: openBook, move: "stay" }, trail: "lines" },
-  selfie: { actor: { src: selfieStick, move: "stay" }, trail: "sparkle" },
+  reel: {
+    actor: { src: clapperboard, move: "stay" },
+    trail: "film",
+    pops: { chars: ["✂️", "✨", "🎞️", "✨"], motion: "pop" },
+  },
+  producer: {
+    actor: { src: megaphone, move: "stay" },
+    trail: "waves",
+    pops: { chars: ["⭐", "🎬", "✨", "⭐"], motion: "float" },
+  },
+  cos: { actor: { src: clipboard, move: "stay" }, trail: "lines", pops: { chars: ["✅", "✅", "✅"], motion: "pop" } },
+  coo: { actor: { src: laptop, move: "stay" }, trail: "lines", pops: { chars: ["💌", "💕", "💌"], motion: "float" } },
+  analyst: {
+    actor: { src: magnifyingGlass, move: "sweep" },
+    trail: "film",
+    pops: { chars: ["👀", "💯", "⭐"], motion: "pop" },
+  },
+  strategist: { trail: "bars", pops: { chars: ["👑"], motion: "drop" } },
+  story: {
+    actor: { src: smartphone, move: "stay" },
+    trail: "photos",
+    photo: photoStack,
+    pops: { chars: ["📸", "💖", "✨"], motion: "float" },
+  },
+  carousel: {
+    actor: { src: photoStack, move: "stay" },
+    trail: "photos",
+    photo: photoStack,
+    pops: { chars: ["✨", "🖼️", "✨"], motion: "pop" },
+  },
+  image: {
+    actor: { src: instantCamera, move: "stay" },
+    trail: "photos",
+    photo: photoStack,
+    pops: { chars: ["⚡", "✨", "📸"], motion: "pop" },
+  },
+  publisher: {
+    actor: { src: paperPlane, move: "travel" },
+    trail: "dashes",
+    pops: { chars: ["💨", "💌", "💨"], motion: "float" },
+  },
+  coder: { actor: { src: keyboard, move: "stay" }, trail: "lines", pops: { chars: ["✅", "🚀", "✨"], motion: "pop" } },
+  warmup: {
+    actor: { src: dumbbell, move: "lift" },
+    trail: "bars",
+    pops: { chars: ["💦", "💪", "🔥"], motion: "float" },
+  },
+  growth: {
+    actor: { src: rocket, move: "travel" },
+    trail: "dashes",
+    pops: { chars: ["⭐", "✨", "📈", "⭐"], motion: "float" },
+  },
+  finances: {
+    actor: { src: coinStack, move: "stay" },
+    trail: "sparkle",
+    pops: { chars: ["💰", "🪙", "💵", "🪙"], motion: "drop" },
+  },
+  voice: {
+    actor: { src: microphone, move: "stay" },
+    trail: "waves",
+    pops: { chars: ["🎵", "🎶", "🎵"], motion: "float" },
+  },
+  thinking: {
+    actor: { src: lightBulb, move: "stay" },
+    trail: "sparkle",
+    pops: { chars: ["💭", "❗", "✨"], motion: "float" },
+  },
+  chinese: {
+    actor: { src: calligraphyBrush, move: "travel" },
+    trail: "lines",
+    pops: { chars: ["✨", "🌸", "✨"], motion: "float" },
+  },
+  english: {
+    actor: { src: openBook, move: "stay" },
+    trail: "lines",
+    pops: { chars: ["🔤", "📚", "✨"], motion: "float" },
+  },
+  selfie: {
+    actor: { src: selfieStick, move: "stay" },
+    trail: "sparkle",
+    pops: { chars: ["💖", "😍", "✨"], motion: "float" },
+  },
 };
 
 export const hasWorkStrip = (role: AgentWorkRole) => WORK_STRIPS[role] !== undefined;
@@ -287,6 +352,21 @@ export function WorkStrip(props: { role: AgentWorkRole }) {
               )}
             </For>
           </span>
+          <Show when={scene().pops}>
+            {(pops) => (
+              <For each={pops().chars}>
+                {(char, index) => (
+                  <span
+                    class="work-strip-pop"
+                    data-motion={pops().motion}
+                    style={{ "--pop": String(index()), "--pops": String(pops().chars.length) }}
+                  >
+                    {char}
+                  </span>
+                )}
+              </For>
+            )}
+          </Show>
           <Show when={scene().actor}>
             {(actor) => (
               <span
