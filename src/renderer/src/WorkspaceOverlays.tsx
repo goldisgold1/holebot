@@ -15,9 +15,13 @@ import type { CustomAgentSettingsApi } from "@openbot/ui/features/custom-provide
 import { providerDiagnosticsText } from "@openbot/ui/features/provider-diagnostics/provider-diagnostics";
 import { LeaveServerDialog } from "@openbot/ui/features/servers/LeaveServerDialog";
 import { RestartServerDialog } from "@openbot/ui/features/servers/RestartServerDialog";
+import {
+  isKeyboardShortcutsSheetShortcut,
+  KeyboardShortcutsSheet,
+} from "@openbot/ui/features/settings/KeyboardShortcutsSheet";
 import type { HostedSiteDeleteResult } from "@openbot/ui/features/settings/stores/hosted-sites-store";
 import { currentText } from "@openbot/ui/text";
-import { createEffect, createMemo, Loading, Show, untrack } from "solid-js";
+import { createEffect, createMemo, createSignal, Loading, onSettled, Show, untrack } from "solid-js";
 import { actionToast } from "./action-toast";
 import { desktopAnalytics } from "./analytics";
 import { appPort } from "./app-port";
@@ -112,6 +116,7 @@ export function WorkspaceOverlays(props: AccountProps) {
       <ServerSettings />
       <AppSettings account={props.account} />
       <GlobalMessageSearch />
+      <KeyboardShortcuts />
       <RemoteDesktop />
       <ChannelCreateOverlay />
     </>
@@ -934,6 +939,24 @@ function AppSettings(props: AccountProps) {
         hostedServerDeleteRequest={hostedServerDeleteRequest()}
       />
     </Loading>
+  );
+}
+
+/** HoleA.I: the bot app's keyboard shortcuts sheet, on Ctrl+/ (Cmd+/ on macOS). */
+function KeyboardShortcuts() {
+  const platform = usePlatform();
+  const [open, setOpen] = createSignal(false);
+  onSettled(() => {
+    const toggle = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || !isKeyboardShortcutsSheetShortcut(event)) return;
+      event.preventDefault();
+      setOpen((current) => !current);
+    };
+    window.addEventListener("keydown", toggle);
+    return () => window.removeEventListener("keydown", toggle);
+  });
+  return (
+    <KeyboardShortcutsSheet open={open()} mac={platform.appInfo()?.platform === "darwin"} onOpenChange={setOpen} />
   );
 }
 

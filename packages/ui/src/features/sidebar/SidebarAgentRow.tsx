@@ -15,12 +15,26 @@ import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import { agentAccessLockLabel } from "../agents/agent-access";
+import { finishedAt } from "../agents/bot-mark/settle-pose";
 import { AgentOutfit, hasWorkStrip, outfitBodyShape, WorkStrip } from "./AgentOutfit";
 import { agentWorkRole, isSpawnedReelWorker, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarWaitChip, SidebarWaitTooltip } from "./SidebarAgentIndicator";
 import { sidebarAgentStateLabel, sidebarMessageTime, sidebarUsageResetTime } from "./sidebar-filtering";
 import { useSidebarScope } from "./sidebar-scope";
+import { selectAgentRow, selectedAgentIds } from "./sidebar-selection";
+
+/** The agent rows in the order the sidebar shows them, for a Shift+click range. */
+const visibleAgentRowIds = () =>
+  [...document.querySelectorAll<HTMLElement>(".agent-row[data-agent-id]")].flatMap((row) =>
+    row.dataset.agentId ? [row.dataset.agentId] : [],
+  );
+
+/** How long a row says "Finished 3m ago" after its agent finished. */
+const FINISHED_LABEL_MINUTES = 15;
+/** One clock for every row, ticking each half minute, so the "Finished" labels move on together. */
+const [sidebarClock, setSidebarClock] = createSignal(Date.now());
+if (typeof window !== "undefined") window.setInterval(() => setSidebarClock(Date.now()), 30_000);
 
 /**
  * `waiting` is set by the "Needs you" group. The row reads it rather than the agent's state, because
@@ -73,6 +87,14 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
   const working = () => state()?.kind === "working";
   // As in the bot app, a working row says what the agent is doing now in place of the last message.
   const liveStep = () => (working() ? props.agentActivity?.[rowProps.agent.id]?.trim() || undefined : undefined);
+  // As in the bot app, a row says when its agent finished, for a while after it did, unless a reply waits.
+  const finishedLabel = () => {
+    const at = finishedAt(rowProps.agent.avatarSeed);
+    if (at === undefined || working() || state()?.kind === "unread") return undefined;
+    const minutes = Math.floor((sidebarClock() - at) / 60_000);
+    if (minutes >= FINISHED_LABEL_MINUTES) return undefined;
+    return minutes < 1 ? t("sidebar.finished.now") : t("sidebar.finished.minutes", { minutes });
+  };
   const reels = () => (role() === "reel" ? reelWorkerReels(rowProps.agent.name, props.reelFactoryLive) : []);
   const limit = () => {
     const current = state();
@@ -109,11 +131,15 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
         aria-pressed={props.activeAgentId === rowProps.agent.id ? "true" : "false"}
         data-sidebar-unread={unreadCount() || undefined}
         data-cuelume-navigate=""
+        data-agent-id={rowProps.agent.id}
+        data-selected={selectedAgentIds().includes(rowProps.agent.id) ? "" : undefined}
         onClick={(event: MouseEvent) => {
-          if (!sidebarClickIsSuppressed(event)) props.onSelectAgent(rowProps.agent.id);
+          if (sidebarClickIsSuppressed(event)) return;
+          if (selectAgentRow(event, rowProps.agent.id, visibleAgentRowIds)) return;
+          props.onSelectAgent(rowProps.agent.id);
         }}
       >
-        <span class="agent-row-avatar">
+        <span class="agent-row-avatar" data-working={working() ? "" : undefined}>
           <AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} shape={outfitBodyShape(role())} />
           <AgentOutfit role={role()} working={working()} />
           <SidebarAgentIndicator state={state} />
@@ -173,8 +199,12 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
           <Show
             when={working() && hasWorkStrip(role())}
             fallback={
-              <Show when={liveStep()} fallback={<span class="agent-row-preview">{detail()}</span>}>
-                {(step) => <span class="agent-row-preview agent-row-live-step">{step()}</span>}
+              <Show when={liveStep() ?? finishedLabel()} fallback={<span class="agent-row-preview">{detail()}</span>}>
+                {(step) => (
+                  <span class={`agent-row-preview ${liveStep() ? "agent-row-live-step" : "agent-row-finished"}`}>
+                    {step()}
+                  </span>
+                )}
               </Show>
             }
           >

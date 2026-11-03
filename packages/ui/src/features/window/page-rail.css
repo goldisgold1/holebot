@@ -188,7 +188,7 @@
 }
 
 /* The whole line highlights, for the page and for its pin. The items have no background of their own. */
-.ui-action-menu.window-rail-more-menu .window-rail-more-row:is(:hover, :has([data-highlighted])) {
+.ui-action-menu.window-rail-more-menu .window-rail-more-row:is(:hover, :focus-within) {
   background: var(--ui-menu-item-hover);
 }
 
@@ -230,14 +230,14 @@
 
 /* The page icon follows the line, also when the pin is highlighted. */
 .ui-action-menu.window-rail-more-menu
-  .window-rail-more-row:is(:hover, :has([data-highlighted]))
+  .window-rail-more-row:is(:hover, :focus-within)
   > [role="menuitem"]
   > .agent-context-icon {
   color: var(--openbot-text-primary);
 }
 
 .ui-action-menu.window-rail-more-menu
-  .window-rail-more-row:is(:hover, :has([data-highlighted]))
+  .window-rail-more-row:is(:hover, :focus-within)
   > [role="menuitem"]
   > .agent-context-icon
   > * {

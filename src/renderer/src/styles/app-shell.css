@@ -3638,12 +3638,12 @@ textarea {
 }
 
 /* The avatar bobs while it works. `translate` leaves the avatar's own motion transform alone. */
-.agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-avatar {
+.agent-row-avatar[data-working] > .agent-avatar {
   transform-origin: center bottom;
   animation: ao-squish 1.1s ease-in-out infinite;
 }
 
-.agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-outfit {
+.agent-row-avatar[data-working] > .agent-outfit {
   transform-origin: center bottom;
   animation: ao-squish 1.1s ease-in-out infinite;
 }
@@ -4305,9 +4305,9 @@ textarea {
   }
 
   .agent-outfit *,
-  .agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-outfit,
+  .agent-row-avatar[data-working] > .agent-outfit,
   .work-strip *,
-  .agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-avatar,
+  .agent-row-avatar[data-working] > .agent-avatar,
   .reel-steps-pip {
     animation: none !important;
   }

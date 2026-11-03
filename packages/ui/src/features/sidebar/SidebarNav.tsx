@@ -13,8 +13,10 @@ import { SidebarHiddenGroup } from "./SidebarHiddenGroup";
 import { createSidebarMoreUnreads, SidebarMoreUnreadsPill } from "./SidebarMoreUnreads";
 import { SidebarPinnedGroup } from "./SidebarPinnedGroup";
 import { SidebarSectionList } from "./SidebarSectionList";
+import { SidebarSelectionBar } from "./SidebarSelectionBar";
 import { SidebarWaitingGroup } from "./SidebarWaitingGroup";
 import { useSidebarScope } from "./sidebar-scope";
+import { selectedAgentIds } from "./sidebar-selection";
 
 export function SidebarNav() {
   const {
@@ -134,7 +136,10 @@ export function SidebarNav() {
           </ContextMenu.Portal>
         </ContextMenu.Root>
       </Show>
-      <SidebarMoreUnreadsPill edge="below" unreads={moreUnreads} />
+      {/* The selection bar takes the foot of the sidebar while rows are picked. */}
+      <Show when={selectedAgentIds().length === 0} fallback={<SidebarSelectionBar />}>
+        <SidebarMoreUnreadsPill edge="below" unreads={moreUnreads} />
+      </Show>
     </nav>
   );
 }

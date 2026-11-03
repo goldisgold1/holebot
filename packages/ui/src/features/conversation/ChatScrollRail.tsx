@@ -398,18 +398,33 @@ export function ChatScrollRail(props: ChatScrollRailProps) {
 
   // A list taller than the rail scrolls itself, not the transcript, to keep the current section in view.
   // The reading head goes to the bar of the current section, which moves when the lengths change.
+  // HoleA.I (Vincent, Nov 3 2026): read at most once a frame, in the frame's own layout. Read in the
+  // effect, the offsets forced a layout of the whole transcript while the virtualizer was adding rows,
+  // which held a chat scroll at 8 fps.
+  let headFrame = 0;
+  let headIndex = 0;
+  const placeHead = () => {
+    headFrame = 0;
+    const item = list?.children[headIndex];
+    if (!track || !(item instanceof HTMLElement)) return;
+    const top = item.offsetTop;
+    const length = item.offsetHeight;
+    setHead({ top, length });
+    const visible = track.clientHeight;
+    if (track.scrollHeight <= visible) return;
+    if (top < track.scrollTop) track.scrollTop = top;
+    else if (top + length > track.scrollTop + visible) track.scrollTop = top + length - visible;
+  };
   createEffect(
     () => ({ shown: rail.shown, index: rail.active, lengths: [...rail.lengths] }),
     ({ index }) => {
-      const item = list?.children[index];
-      if (!track || !(item instanceof HTMLElement)) return;
-      setHead({ top: item.offsetTop, length: item.offsetHeight });
-      if (track.scrollHeight <= track.clientHeight) return;
-      if (item.offsetTop < track.scrollTop) track.scrollTop = item.offsetTop;
-      else if (item.offsetTop + item.offsetHeight > track.scrollTop + track.clientHeight)
-        track.scrollTop = item.offsetTop + item.offsetHeight - track.clientHeight;
+      headIndex = index;
+      if (!headFrame) headFrame = requestAnimationFrame(placeHead);
     },
   );
+  onSettled(() => () => {
+    if (headFrame) cancelAnimationFrame(headFrame);
+  });
 
   onSettled(() => () => {
     if (frame) cancelAnimationFrame(frame);

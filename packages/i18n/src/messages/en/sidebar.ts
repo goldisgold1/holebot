@@ -170,4 +170,12 @@ export const messages = defineMessages("sidebar", {
   "sidebar.moreUnreads.above": "More unreads above",
   "sidebar.moreUnreads.below": "More unreads below",
   "sidebar.moreUnreads.count": { one: "{count} unread message", other: "{count} unread messages" },
+  "sidebar.finished.now": "Finished just now",
+  "sidebar.finished.minutes": "Finished {minutes}m ago",
+  "sidebar.selection.label": "Selected agents",
+  "sidebar.selection.count": { one: "{count} selected", other: "{count} selected" },
+  "sidebar.selection.pin": "Pin selected",
+  "sidebar.selection.openWindows": "Open selected in windows",
+  "sidebar.selection.hide": "Hide selected",
+  "sidebar.selection.clear": "Clear selection",
 });

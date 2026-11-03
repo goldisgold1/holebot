@@ -155,7 +155,10 @@ export function SidebarPinnedAvatar(props: {
   agentState: () => SidebarAgentState | undefined;
 }) {
   return (
-    <span class="agent-row-avatar sidebar-pinned-avatar">
+    <span
+      class="agent-row-avatar sidebar-pinned-avatar"
+      data-working={props.agentState()?.kind === "working" ? "" : undefined}
+    >
       <AgentAvatar
         agent={props.agent}
         motion="idle"

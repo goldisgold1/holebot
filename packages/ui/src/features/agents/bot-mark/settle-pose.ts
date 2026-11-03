@@ -11,6 +11,8 @@ export const SETTLE_POSE_MS = 8_000;
 export type SettlePose = "finished" | "failed";
 
 const [poses, setPoses] = createSignal<Readonly<Record<string, SettlePose>>>({});
+/** When each agent last finished a turn, by avatar seed, for the sidebar's "Finished 3m ago". */
+const [finishes, setFinishes] = createSignal<Readonly<Record<string, number>>>({});
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function clearPose(seed: string) {
@@ -26,6 +28,7 @@ function clearPose(seed: string) {
 /** Shows `pose` on the agent's face for {@link SETTLE_POSE_MS}; `null` returns it to rest now. */
 export function holdSettlePose(seed: string, pose: SettlePose | null) {
   clearPose(seed);
+  if (pose === "finished") setFinishes((current) => ({ ...current, [seed]: Date.now() }));
   if (!pose) return;
   setPoses((current) => ({ ...current, [seed]: pose }));
   timers.set(
@@ -36,4 +39,8 @@ export function holdSettlePose(seed: string, pose: SettlePose | null) {
 
 export function settlePose(seed: string): BotMarkState | undefined {
   return poses()[seed];
+}
+
+export function finishedAt(seed: string): number | undefined {
+  return finishes()[seed];
 }
