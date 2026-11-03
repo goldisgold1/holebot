@@ -16,6 +16,8 @@ import {
   agentComputerUseEnabled,
   agentNewChatAllowed,
   agentQuickAcknowledgementEnabled,
+  type QuotaShare,
+  type QuotaShareInput,
   type UpdateAgentBackupModelsInput,
   type UpdateAgentHostSettingsInput,
   type UpdateAgentNewChatInput,
@@ -30,7 +32,7 @@ import type { AgentDefaultsPreferenceStore } from "./agent-defaults-preference-s
 import type { BusyMessageModePreferenceStore } from "./busy-message-mode-preference-store";
 
 export interface AgentHostSettingsDependencies {
-  agents: Pick<AgentService, "listAgents" | "updateAgent">;
+  agents: Pick<AgentService, "listAgents" | "updateAgent" | "getQuotaShares">;
   busyMessageMode: Pick<BusyMessageModePreferenceStore, "get">;
   agentDefaults: Pick<AgentDefaultsPreferenceStore, "get">;
 }
@@ -48,6 +50,8 @@ export interface AgentHostSettingsService {
   updateNewChat(input: UpdateAgentNewChatInput): Effect.Effect<AgentNewChatSettings, AgentHostSettingsFailure>;
   readPlanCard(agentId: string): AgentPlanCardSettings;
   updatePlanCard(input: UpdateAgentPlanCardInput): Effect.Effect<AgentPlanCardSettings, AgentHostSettingsFailure>;
+  /** HoleA.I: how each plan window splits between the agents, for the `agent-quota-shares-v1` route. */
+  readQuotaShares(input: QuotaShareInput): QuotaShare[];
 }
 
 export function createAgentHostSettings({
@@ -145,6 +149,7 @@ export function createAgentHostSettings({
     updateNewChat: (input) => updateNewChat(input).pipe(Effect.uninterruptible),
     readPlanCard: (agentId) => planCard(requireAgent(agentId)),
     updatePlanCard: (input) => updatePlanCard(input).pipe(Effect.uninterruptible),
+    readQuotaShares: (input) => agents.getQuotaShares(input),
   };
 }
 

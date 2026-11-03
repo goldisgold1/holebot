@@ -12,6 +12,7 @@ import { AGENT_NEW_CHAT_ROUTES } from "@openbot/contracts/team-protocol/agent-ne
 import { AGENT_NOTIFICATION_LEVELS_ROUTES } from "@openbot/contracts/team-protocol/agent-notification-levels-v1";
 import { AGENT_PLAN_CARD_ROUTES } from "@openbot/contracts/team-protocol/agent-plan-card-v1";
 import { AGENT_PUBLISH_ROUTES } from "@openbot/contracts/team-protocol/agent-publish-v1";
+import { AGENT_QUOTA_SHARES_ROUTES } from "@openbot/contracts/team-protocol/agent-quota-shares-v1";
 import { AGENT_TASK_LIMIT_ROUTES } from "@openbot/contracts/team-protocol/agent-task-limit-v1";
 import { BROWSER_PROFILES_ROUTES } from "@openbot/contracts/team-protocol/browser-profiles-v1";
 import { CHANNEL_ROUTES } from "@openbot/contracts/team-protocol/channels-v1";
@@ -83,6 +84,7 @@ const PASSIVE_ROUTES: ReadonlySet<string> = new Set([
   AGENT_TASK_LIMIT_ROUTES.settings,
   AGENT_NEW_CHAT_ROUTES.settings,
   AGENT_PLAN_CARD_ROUTES.settings,
+  AGENT_QUOTA_SHARES_ROUTES.read,
   AGENT_FOLDERS_ROUTES.read,
   AGENT_FOLDERS_ROUTES.browse,
   BROWSER_PROFILES_ROUTES.list,

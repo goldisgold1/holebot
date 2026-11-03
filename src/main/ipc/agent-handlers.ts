@@ -24,6 +24,7 @@ import {
   decodeChannel,
   decodeChannelPage,
   decodeChannelSummaries,
+  decodeQuotaShares,
   decodeSaveAgentProfileResult,
   hostAnalyticsQuery,
   isAgentModelOption,
@@ -45,6 +46,10 @@ import {
 } from "@openbot/contracts/ipc";
 import { isDynamicRecord } from "@openbot/contracts/runtime-values";
 import { TEAM_API_ROUTES } from "@openbot/contracts/team-api-routes";
+import {
+  AGENT_QUOTA_SHARES_CAPABILITY,
+  AGENT_QUOTA_SHARES_ROUTES,
+} from "@openbot/contracts/team-protocol/agent-quota-shares-v1";
 import { AGENT_TASKS_CAPABILITY, AGENT_TASKS_ROUTES } from "@openbot/contracts/team-protocol/agent-tasks-v1";
 import {
   AGENT_THREAD_BRANCHES_CAPABILITY,
@@ -230,7 +235,18 @@ export function agentIpcHandlers({
       }),
       getQuotaShares: scopedHandler(parseQuotaShareInput, {
         local: (input) => service.getQuotaShares(input),
-        remote: () => null,
+        // HoleA.I: hosts without `agent-quota-shares-v1` keep the meters without the per-agent split.
+        remote: (input, serverId) =>
+          remoteServers.supportsCapability(serverId, AGENT_QUOTA_SHARES_CAPABILITY)
+            ? runCauseEffect(
+                remoteServers.request(
+                  serverId,
+                  AGENT_QUOTA_SHARES_ROUTES.read,
+                  (value) => decodeQuotaShares(isDynamicRecord(value) ? value.shares : undefined) ?? [],
+                  { method: "POST", body: input },
+                ),
+              )
+            : null,
       }),
       getHostAnalytics: scopedHandler(parseHostAnalyticsInput, {
         local: (input) => service.getHostAnalytics(input),

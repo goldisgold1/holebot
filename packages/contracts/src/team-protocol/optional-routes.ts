@@ -17,6 +17,7 @@ import { AGENT_NEW_CHAT_CODECS } from "./agent-new-chat-v1";
 import { AGENT_NOTIFICATION_LEVELS_CODECS } from "./agent-notification-levels-v1";
 import { AGENT_PLAN_CARD_CODECS } from "./agent-plan-card-v1";
 import { AGENT_PUBLISH_CODECS } from "./agent-publish-v1";
+import { AGENT_QUOTA_SHARES_CODECS } from "./agent-quota-shares-v1";
 import { AGENT_SESSION_SETTINGS_CODECS } from "./agent-session-settings-v1";
 import { AGENT_TASK_LIMIT_CODECS } from "./agent-task-limit-v1";
 import { AGENT_TASKS_CODECS } from "./agent-tasks-v1";
@@ -166,6 +167,7 @@ const CODECS: ReadonlyMap<string, OptionalRouteCodec> = new Map([
   ...BROWSER_PROFILES_CODECS,
   ...WORKFLOWS_CODECS,
   ...WORKFLOWS_GITHUB_CODECS,
+  ...AGENT_QUOTA_SHARES_CODECS,
   ...VAULT_CODECS,
   ...BROWSER_SECRET_VAULT_CODECS,
   ...VAULT_IMPORT_CODECS,

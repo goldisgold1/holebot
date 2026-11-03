@@ -122,6 +122,7 @@
     "./team-protocol/agent-backup-models-v1": "./src/team-protocol/agent-backup-models-v1.ts",
     "./team-protocol/agent-folders-v1": "./src/team-protocol/agent-folders-v1.ts",
     "./team-protocol/agent-task-limit-v1": "./src/team-protocol/agent-task-limit-v1.ts",
+    "./team-protocol/agent-quota-shares-v1": "./src/team-protocol/agent-quota-shares-v1.ts",
     "./team-protocol/agent-new-chat-v1": "./src/team-protocol/agent-new-chat-v1.ts",
     "./team-protocol/agent-host-settings-v1": "./src/team-protocol/agent-host-settings-v1.ts",
     "./team-protocol/agent-memory-limit-v1": "./src/team-protocol/agent-memory-limit-v1.ts",

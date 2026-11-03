@@ -773,6 +773,7 @@ try {
       agentHost: createAgentHostSettings({
         agents: {
           listAgents: () => agents,
+          getQuotaShares: () => [],
           updateAgent: (input) =>
             Effect.sync(() => {
               record("updateAgent", input);

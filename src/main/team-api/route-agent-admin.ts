@@ -1,4 +1,5 @@
 import {
+  parseQuotaShareInput,
   parseUpdateAgentAdminSettingsInput,
   parseUpdateAgentBackupModelsInput,
   parseUpdateAgentHostSettingsInput,
@@ -20,6 +21,10 @@ import {
   AGENT_PLAN_CARD_CAPABILITY,
   AGENT_PLAN_CARD_ROUTES,
 } from "@openbot/contracts/team-protocol/agent-plan-card-v1";
+import {
+  AGENT_QUOTA_SHARES_CAPABILITY,
+  AGENT_QUOTA_SHARES_ROUTES,
+} from "@openbot/contracts/team-protocol/agent-quota-shares-v1";
 import {
   AGENT_TASK_LIMIT_CAPABILITY,
   AGENT_TASK_LIMIT_ROUTES,
@@ -177,6 +182,35 @@ export async function routeAgentTaskLimit(
     if (error instanceof AgentNotFoundError) throw new HttpError(404, error.message);
     throw error;
   }
+}
+
+/**
+ * HoleA.I: how each plan window's usage splits between the agents of this computer. Any member may
+ * read it: the meters it splits are already theirs to see. Agents hidden from the member are left
+ * out. Frozen by `agent-quota-shares-v1`.
+ */
+export async function routeAgentQuotaShares(
+  context: TeamApiRequestContext,
+  admin: TeamApiAdmin | undefined,
+  hiddenAgentIds: ReadonlySet<string>,
+): Promise<RouteOutcome> {
+  const { method, url, capabilities, request, json } = context;
+  if (method !== "POST" || url.pathname !== AGENT_QUOTA_SHARES_ROUTES.read) return "unmatched";
+  const settings = admin?.agentHost;
+  if (!settings || !capabilities.has(AGENT_QUOTA_SHARES_CAPABILITY))
+    throw new HttpError(400, sourceText("error.team.agentSettingsUnsupported"));
+  // `readJson` has already run the body through the agent-quota-shares wire codec.
+  let input: ReturnType<typeof parseQuotaShareInput>;
+  try {
+    input = parseQuotaShareInput(await readJson(request));
+  } catch (error) {
+    throw new HttpError(400, error instanceof Error ? error.message : "Invalid quota share request.");
+  }
+  const shares = settings.readQuotaShares(input).map((share) => ({
+    ...share,
+    agents: share.agents.filter((agent) => !hiddenAgentIds.has(agent.agentId)),
+  }));
+  return json(200, { shares });
 }
 
 /**

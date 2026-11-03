@@ -35,6 +35,7 @@ import { AGENT_HIDDEN_CAPABILITY } from "@openbot/contracts/team-protocol/agent-
 import { AGENT_NEW_CHAT_CAPABILITY } from "@openbot/contracts/team-protocol/agent-new-chat-v1";
 import { AGENT_NOTIFICATION_LEVELS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-notification-levels-v1";
 import { AGENT_PLAN_CARD_CAPABILITY } from "@openbot/contracts/team-protocol/agent-plan-card-v1";
+import { AGENT_QUOTA_SHARES_CAPABILITY } from "@openbot/contracts/team-protocol/agent-quota-shares-v1";
 import { AGENT_SESSION_SETTINGS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-session-settings-v1";
 import { AGENT_TASK_LIMIT_CAPABILITY } from "@openbot/contracts/team-protocol/agent-task-limit-v1";
 import { AGENT_TASK_UI_BLOCKS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-task-ui-blocks-v1";
@@ -210,6 +211,7 @@ import {
   routeAgentHostSettings,
   routeAgentNewChat,
   routeAgentPlanCard,
+  routeAgentQuotaShares,
   routeAgentTaskLimit,
 } from "./team-api/route-agent-admin";
 import { routeAgentFolders } from "./team-api/route-agent-folders";
@@ -968,6 +970,7 @@ export class TeamApiServer {
       if ((await routeAgentHostSettings(context, this.#options.admin, hidden)) === "handled") return;
       if ((await routeAgentBackupModels(context, this.#options.admin, hidden)) === "handled") return;
       if ((await routeAgentTaskLimit(context, this.#options.admin, hidden)) === "handled") return;
+      if ((await routeAgentQuotaShares(context, this.#options.admin, hidden)) === "handled") return;
       if ((await routeAgentNewChat(context, this.#options.admin, hidden)) === "handled") return;
       if ((await routeAgentPlanCard(context, this.#options.admin, hidden)) === "handled") return;
       if (
@@ -2085,6 +2088,7 @@ export class TeamApiServer {
           if (capability === AGENT_TASK_LIMIT_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
           if (capability === AGENT_NEW_CHAT_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
           if (capability === AGENT_PLAN_CARD_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
+          if (capability === AGENT_QUOTA_SHARES_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
           if (capability === BROWSER_PROFILES_CAPABILITY || capability === BROWSER_PROFILES_EVENTS_CAPABILITY)
             return this.#options.browserProfiles !== undefined;
           if (capability === SKILLS_ADMIN_CAPABILITY) return this.#options.admin?.skills !== undefined;

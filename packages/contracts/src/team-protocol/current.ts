@@ -17,6 +17,7 @@ import { AGENT_NEW_CHAT_CAPABILITY } from "./agent-new-chat-v1";
 import { AGENT_NOTIFICATION_LEVELS_CAPABILITY } from "./agent-notification-levels-v1";
 import { AGENT_PLAN_CARD_CAPABILITY } from "./agent-plan-card-v1";
 import { AGENT_PUBLISH_CAPABILITY } from "./agent-publish-v1";
+import { AGENT_QUOTA_SHARES_CAPABILITY } from "./agent-quota-shares-v1";
 import { AGENT_SESSION_SETTINGS_CAPABILITY } from "./agent-session-settings-v1";
 import { AGENT_TASK_LIMIT_CAPABILITY } from "./agent-task-limit-v1";
 import { AGENT_TASK_UI_BLOCKS_CAPABILITY } from "./agent-task-ui-blocks-v1";
@@ -159,6 +160,7 @@ export {
   AGENT_NOTIFICATION_LEVELS_CAPABILITY,
   AGENT_PLAN_CARD_CAPABILITY,
   AGENT_PUBLISH_CAPABILITY,
+  AGENT_QUOTA_SHARES_CAPABILITY,
   AGENT_SESSION_SETTINGS_CAPABILITY,
   AGENT_TASK_LIMIT_CAPABILITY,
   AGENT_TASK_UI_BLOCKS_CAPABILITY,
@@ -377,6 +379,7 @@ export const TEAM_CURRENT_CAPABILITIES = [
   CUSTOM_AGENTS_CAPABILITY,
   CHANNEL_TASK_CANCEL_CAPABILITY,
   WORKFLOWS_GITHUB_CAPABILITY,
+  AGENT_QUOTA_SHARES_CAPABILITY,
 ] as const;
 
 export type TeamCurrentCapability = (typeof TEAM_CURRENT_CAPABILITIES)[number];
@@ -520,7 +523,8 @@ export const TEAM_BOOTSTRAP_CAPABILITIES = TEAM_CURRENT_CAPABILITIES.filter(
     capability !== AGENT_THREAD_BRANCHES_CAPABILITY &&
     capability !== CUSTOM_AGENTS_CAPABILITY &&
     capability !== CHANNEL_TASK_CANCEL_CAPABILITY &&
-    capability !== WORKFLOWS_GITHUB_CAPABILITY,
+    capability !== WORKFLOWS_GITHUB_CAPABILITY &&
+    capability !== AGENT_QUOTA_SHARES_CAPABILITY,
 );
 /**
  * The capabilities that only a protocol 9 peer sends and gets. Protocols 7 and 8 read at most 128
@@ -540,6 +544,7 @@ export const TEAM_PROTOCOL_V9_ONLY_CAPABILITIES: ReadonlySet<string> = new Set<T
   CUSTOM_AGENTS_CAPABILITY,
   CHANNEL_TASK_CANCEL_CAPABILITY,
   WORKFLOWS_GITHUB_CAPABILITY,
+  AGENT_QUOTA_SHARES_CAPABILITY,
 ]);
 // A v8 host reads at most 128 capabilities, so a client sends the protocol 9 ones only after it
 // negotiates protocol 9.
@@ -642,6 +647,7 @@ export function legacyTeamCapabilities(capabilities: readonly string[]): string[
       capability !== AGENT_THREAD_BRANCHES_CAPABILITY &&
       capability !== CUSTOM_AGENTS_CAPABILITY &&
       capability !== CHANNEL_TASK_CANCEL_CAPABILITY &&
-      capability !== WORKFLOWS_GITHUB_CAPABILITY,
+      capability !== WORKFLOWS_GITHUB_CAPABILITY &&
+      capability !== AGENT_QUOTA_SHARES_CAPABILITY,
   );
 }
