@@ -513,6 +513,8 @@ class RemoteDependencies extends Context.Service<
     signal: RemoteSignalPlan | null;
     webhookUrls: readonly string[];
     webhookSecret: string | null;
+    /** HoleA.I: lowercase email domains whose accounts share each other's servers (`AUTH_ORG_DOMAINS`). */
+    orgDomains: readonly string[];
   }
 >()("auth-api/RemoteControlPlane/Dependencies") {}
 
@@ -540,6 +542,7 @@ export class RemoteControlPlane {
       | "DISCORD_ROUTE_KEY_ID"
       | "TELEGRAM_BOT_ID"
       | "TELEGRAM_BOT_USERNAME"
+      | "AUTH_ORG_DOMAINS"
     >,
     options: {
       fetch?: RemoteFetch;
@@ -595,6 +598,10 @@ export class RemoteControlPlane {
       signal: remoteSignalPlan(bindings),
       webhookUrls,
       webhookSecret,
+      orgDomains: (bindings.AUTH_ORG_DOMAINS ?? "")
+        .split(",")
+        .map((domain) => domain.trim().toLowerCase())
+        .filter((domain) => /^[a-z0-9.-]+\.[a-z]{2,}$/u.test(domain)),
     });
   }
 
@@ -866,8 +873,9 @@ export class RemoteControlPlane {
   ).bind(this);
 
   readonly listHosts = Effect.fn("RemoteControlPlane.listHosts")(
-    function* (this: RemoteControlPlane, userId: string) {
+    function* (this: RemoteControlPlane, userId: string, email?: string) {
       const dependencies = yield* RemoteDependencies;
+      if (email) yield* this.#joinOrganizationHosts(userId, email);
       const result = yield* remoteCall(() =>
         dependencies.database
           .prepare(
@@ -2962,6 +2970,54 @@ export class RemoteControlPlane {
       memberBinds,
       licenseBinds,
     };
+  });
+
+  /**
+   * HoleA.I: an account on an organization domain (`AUTH_ORG_DOMAINS`) joins, as a member, every server
+   * that another account on the same domain owns, so the whole company sees every agent without
+   * invitations. It never brings back someone who left or whom an owner or admin removed (any earlier
+   * membership row, active or not, skips the server), and a full server is skipped, not overfilled.
+   */
+  readonly #joinOrganizationHosts = Effect.fn("RemoteControlPlane.joinOrganizationHosts")(function* (
+    this: RemoteControlPlane,
+    userId: string,
+    email: string,
+  ): Effect.fn.Return<void, RemoteFailure, RemoteDependencies> {
+    const dependencies = yield* RemoteDependencies;
+    const domain = email.trim().toLowerCase().split("@").at(-1) ?? "";
+    if (!dependencies.orgDomains.includes(domain)) return;
+    const suffix = `@${domain}`;
+    const hosts = yield* remoteCall(() =>
+      dependencies.database
+        .prepare(
+          `SELECT h.host_id FROM remote_hosts h JOIN users u ON u.id = h.owner_user_id
+            WHERE substr(lower(u.email), -length(?)) = ? AND h.owner_user_id <> ?
+              AND NOT EXISTS(SELECT 1 FROM remote_memberships m WHERE m.host_id = h.host_id AND m.user_id = ?)`,
+        )
+        .bind(suffix, suffix, userId, userId)
+        .all<{ host_id: string }>(),
+    );
+    let joined = false;
+    for (const { host_id: hostId } of hosts.results ?? []) {
+      const seat = yield* this.#memberSeat(hostId, userId);
+      const now = dependencies.now();
+      const result = yield* remoteCall(() =>
+        dependencies.database
+          .prepare(
+            `INSERT INTO remote_memberships(membership_id, host_id, user_id, role, status, created_at, updated_at)
+             SELECT ?, ?, ?, 'member', 'active', ?, ? WHERE ${seat.sql}
+             ON CONFLICT(host_id, user_id) DO NOTHING`,
+          )
+          .bind(crypto.randomUUID(), hostId, userId, now, now, ...seat.binds)
+          .run(),
+      );
+      if ((result.meta.changes ?? 0) > 0) joined = true;
+    }
+    if (!joined) return;
+    yield* remoteCall(() =>
+      this.#authEventStatement({ type: "account-servers-changed", userId }, dependencies.now()).run(),
+    );
+    yield* this.#flushAuthEvents();
   });
 
   readonly #requireMemberSeat = Effect.fn("RemoteControlPlane.requireMemberSeat")(function* (

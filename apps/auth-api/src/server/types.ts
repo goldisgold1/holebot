@@ -19,6 +19,8 @@ export interface WorkerBindings {
   LIVE_ACTIVITY_RATE_LIMITER?: RateLimit;
   AUTH_EXPOSE_DEVELOPMENT_CODE?: string;
   AUTH_ACCESS_CODE_HASHES?: string;
+  /** HoleA.I: comma-separated email domains whose accounts share each other's servers. */
+  AUTH_ORG_DOMAINS?: string;
   EMAIL_SMTP_HOST?: string;
   EMAIL_SMTP_PORT?: string;
   EMAIL_SMTP_USERNAME?: string;

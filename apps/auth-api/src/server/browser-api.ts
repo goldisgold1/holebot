@@ -211,7 +211,7 @@ const handleBrowserOperation = Effect.fn("BrowserApi.handleOperation")(function*
   if (!token || !user) return failure(401, "sign_in_required", "Sign in is required.");
   if (path === "session" && request.method === "GET") return json({ user });
   if (path === "v2/remote/hosts" && request.method === "GET")
-    return json({ hosts: yield* services.remote.listHosts(user.id) });
+    return json({ hosts: yield* services.remote.listHosts(user.id, user.email) });
   const [, removedHostId] = /^v2\/remote\/hosts\/([^/]+)$/u.exec(path) ?? [];
   if (removedHostId !== undefined && request.method === "DELETE") {
     yield* services.remote.removeOwnedHost(user.id, decodeURIComponent(removedHostId));
