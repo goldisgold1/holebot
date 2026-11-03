@@ -78,6 +78,10 @@
     0 0 0 0.5px rgba(127, 127, 127, 0.16), 0 1px 4px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.035);
   --holeai-radius-pill: 999px;
   --holeai-shadow-composer: none;
+  /* The bot app's floating shadows: three soft layers under menus and toasts, a deeper lift under dialogs. */
+  --holeai-shadow-popup: 0 3px 8px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.12);
+  --holeai-shadow-dialog:
+    inset 0 0 4px rgba(255, 255, 255, 0.05), 0 0 3px rgba(0, 0, 0, 0.12), 0 16px 24px rgba(0, 0, 0, 0.06);
   /* Grok Bot's switches: 32x20, the small one 26x16. */
   --openbot-switch-width: 32px;
   --openbot-switch-sm-width: 26px;

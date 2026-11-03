@@ -763,18 +763,18 @@
   }
 }
 
-/* Menus as the bot app draws them: a 12px panel on the pane colour with an 8% edge and a soft drop, 30px rows
- * with 6px corners and 13px text, an 8% highlight, a quick open. */
+/* Menus as the bot app draws them: a 14px panel on the pane colour with a 12% hairline and a soft three-layer
+ * drop, 30px rows with 6px corners and 13px text, an 8% highlight, a quick open. */
 .ui-action-menu {
   --openbot-control-md: 30px;
-  --ui-menu-radius: var(--openbot-radius-lg);
+  --ui-menu-radius: var(--openbot-radius-card);
   --ui-menu-padding: 6px;
   --ui-menu-item-radius: var(--openbot-radius-sm);
-  --ui-menu-edge: var(--openbot-border);
+  --ui-menu-edge: var(--openbot-border-strong);
   --ui-menu-highlight: transparent;
   --ui-menu-item-hover: var(--openbot-hover);
   --ui-menu-row-highlight: color-mix(in srgb, var(--openbot-text-primary) 8%, var(--ui-menu-bg));
-  --ui-menu-panel-shadow: 0 0 0 1px var(--ui-menu-edge), 0 8px 24px var(--openbot-shadow-menu);
+  --ui-menu-panel-shadow: 0 0 0 1px var(--ui-menu-edge), var(--holeai-shadow-popup);
   --ui-menu-duration: var(--openbot-duration-fast);
   font-size: var(--holeai-text-row);
 }
@@ -783,13 +783,13 @@
   height: 0.5px;
 }
 
-/* Select lists match the menus. */
+/* Select lists are the bot app's 12px pop-up. */
 .ui-select-content {
   border-radius: var(--openbot-radius-lg);
   background: var(--openbot-bg-sheet);
   box-shadow:
-    0 0 0 1px var(--openbot-border),
-    0 8px 24px var(--openbot-shadow-menu);
+    0 0 0 1px var(--openbot-border-strong),
+    var(--holeai-shadow-popup);
 }
 
 .ui-select-listbox {
@@ -802,9 +802,9 @@
   font-size: var(--holeai-text-row);
 }
 
-/* Tooltips: small, 12px text, 6px corners. */
+/* Tooltips: small, 12px text, 8px corners. */
 .ui-tooltip {
-  border-radius: var(--openbot-radius-sm);
+  border-radius: var(--openbot-radius-md);
   padding: 4px 8px;
   font-size: var(--holeai-text-preview);
   font-weight: var(--openbot-weight-regular);
@@ -826,6 +826,77 @@
 :where(.ui-input, .ui-textarea, .ui-native-select):focus-visible,
 .ui-select-trigger:focus-visible {
   border-color: var(--holeai-stroke-focus);
+}
+
+/*
+ * Buttons as the bot app draws them: 24, 28 and 32px tall with 6 or 8px corners and 8 to 12px sides, regular
+ * 13px text, regular except the primary button's medium, the secondary on a 6% fill and the ghost in the 74% text colour.
+ * Zero specificity, like the base sizes, so a feature's own button still wins.
+ */
+.ui-button {
+  font-size: var(--openbot-text-md);
+  font-weight: var(--openbot-weight-regular);
+}
+
+.ui-button-variant-default {
+  font-weight: var(--openbot-weight-medium);
+}
+
+:where(.ui-button-size-xs) {
+  height: var(--openbot-control-xs);
+  border-radius: var(--openbot-radius-sm);
+  padding-inline: var(--openbot-space-2);
+  font-size: var(--openbot-text-sm);
+}
+
+:where(.ui-button-size-sm) {
+  height: var(--openbot-control-sm);
+  border-radius: var(--openbot-radius-md);
+  padding-inline: 10px;
+  font-size: var(--openbot-text-sm);
+}
+
+:where(.ui-button-size-default, .ui-button-size-lg) {
+  height: var(--openbot-control-md);
+  border-radius: var(--openbot-radius-md);
+  padding-inline: var(--openbot-space-3);
+  font-size: var(--openbot-text-md);
+}
+
+:where(.ui-button-variant-secondary) {
+  background: var(--openbot-bg-control);
+}
+
+:where(.ui-button-variant-secondary):hover {
+  background: var(--openbot-bg-control-hover);
+}
+
+:where(.ui-button-variant-ghost) {
+  color: var(--openbot-text-secondary);
+}
+
+:where(.ui-button-variant-ghost):hover {
+  color: var(--openbot-text-primary);
+}
+
+/* Dialogs: a 12% hairline and the bot app's deep, soft lift. */
+.ui-dialog-content {
+  box-shadow:
+    0 0 0 1px var(--openbot-border-strong),
+    var(--holeai-shadow-dialog);
+}
+
+.ui-dialog-content[data-dialog-surface="unstyled"] {
+  box-shadow: none;
+}
+
+/* Toasts are the bot app's 12px pop-up on the pane colour. */
+.ui-toaster [data-sonner-toast][data-styled="true"] {
+  border-radius: var(--openbot-radius-lg);
+  background: var(--openbot-bg-sheet);
+  box-shadow:
+    0 0 0 1px var(--openbot-border-strong),
+    var(--holeai-shadow-popup);
 }
 
 /* A switch that is on fills with the accent. */
