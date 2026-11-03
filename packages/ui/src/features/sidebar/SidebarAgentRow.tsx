@@ -8,14 +8,15 @@
  * and shows when the user hid it in place of the last message.
  */
 
-import { AppWindow, Badge, buttonVariants, Clapperboard, Clock3, ContextMenu, Lock } from "@openbot/ui";
+import { AppWindow, Badge, buttonVariants, Clock3, ContextMenu, Lock } from "@openbot/ui";
 import type { JSX } from "@solidjs/web";
 import { createSignal, Show } from "solid-js";
 import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import { agentAccessLockLabel } from "../agents/agent-access";
-import { AgentWorkScene, agentWorkRole, isSpawnedReelWorker, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
+import { AgentOutfit } from "./AgentOutfit";
+import { agentWorkRole, isSpawnedReelWorker, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarWaitChip, SidebarWaitTooltip } from "./SidebarAgentIndicator";
 import { sidebarAgentStateLabel, sidebarMessageTime, sidebarUsageResetTime } from "./sidebar-filtering";
@@ -64,7 +65,7 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
   // The state label already reads the question, so the label does not say it twice.
   const labelDetail = () => (wait()?.detail ? "" : `. ${hiddenLabel()}${detail()}`);
   const [menuOpen, setMenuOpen] = createSignal(false);
-  // HoleA.I: a working agent plays the scene of its role, and a Reel Worker lists the Reels it makes.
+  // HoleA.I: the avatar wears its role's outfit and works in it, and a Reel Worker lists the Reels it makes.
   const role = () => {
     const named = agentWorkRole(rowProps.agent.name);
     return named === "reel" && !isSpawnedReelWorker(rowProps.agent) ? "general" : named;
@@ -111,11 +112,8 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
         }}
       >
         <span class="agent-row-avatar">
-          <Show when={role() === "reel"} fallback={<AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} />}>
-            <span class="reel-creator-avatar" data-working={working() ? "" : undefined} aria-hidden="true">
-              <Clapperboard />
-            </span>
-          </Show>
+          <AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} />
+          <AgentOutfit role={role()} working={working()} />
           <SidebarAgentIndicator state={state} />
         </span>
         <span class="agent-row-copy">
@@ -170,9 +168,6 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
             </Show>
           </span>
           <span class="agent-row-preview">{detail()}</span>
-          <Show when={working()}>
-            <AgentWorkScene role={role()} />
-          </Show>
           <Show when={reels().length > 0}>
             <ReelStepRows reels={reels()} stages={props.reelFactoryLive?.stages ?? []} />
           </Show>

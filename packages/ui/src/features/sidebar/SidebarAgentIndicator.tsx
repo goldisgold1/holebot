@@ -6,6 +6,8 @@ import { TypingDots } from "../../components/TypingDots";
 import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
+import { AgentOutfit } from "./AgentOutfit";
+import { agentWorkRole } from "./AgentWorkScene";
 import { SIDEBAR_WAIT_ACTION, SIDEBAR_WAIT_HINT, SIDEBAR_WAIT_TITLE } from "./sidebar-filtering";
 import type { SidebarAgentState, SidebarChannelWait, SidebarRoutinePhase, SidebarWaitReason } from "./sidebar-types";
 
@@ -155,6 +157,7 @@ export function SidebarPinnedAvatar(props: {
   return (
     <span class="agent-row-avatar sidebar-pinned-avatar">
       <AgentAvatar agent={props.agent} motion="idle" mood={props.mood} />
+      <AgentOutfit role={agentWorkRole(props.agent.name)} working={props.agentState()?.kind === "working"} />
       <SidebarAgentIndicator state={props.agentState} />
     </span>
   );

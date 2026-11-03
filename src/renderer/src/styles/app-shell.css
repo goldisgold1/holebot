@@ -3608,686 +3608,491 @@ textarea {
   }
 }
 
-/* HoleA.I: the Reel Creator avatar every Reel Worker wears. */
-.reel-creator-avatar {
-  display: grid;
-  width: var(--agent-row-avatar-size, 40px);
-  height: var(--agent-row-avatar-size, 40px);
-  place-items: center;
-  border-radius: var(--openbot-radius-md);
-  background: linear-gradient(135deg, var(--openbot-file-orange), var(--openbot-beam-pink));
-  color: var(--openbot-action-foreground);
-}
-
-.reel-creator-avatar svg {
-  width: 55%;
-  height: 55%;
-}
-
-.reel-creator-avatar[data-working] {
-  animation: reel-factories-glow 2s ease-in-out infinite;
-}
-
-/* HoleA.I: what a working agent does, drawn under its row. Shapes take their color from the theme. */
-.work-scene {
-  display: block;
-  margin-top: 6px;
-}
-
-.work-scene-art {
-  display: block;
+/* HoleA.I: the outfit an avatar wears for its role (AgentOutfit). It sits over the avatar and stays
+   inside its box; its prop moves only while the agent works. */
+.agent-outfit {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 40px;
+  height: 100%;
   overflow: visible;
+  pointer-events: none;
 }
 
-.work-scene :is(rect, circle, ellipse, path, g) {
+.agent-outfit :is(rect, circle, ellipse, path, g) {
   transform-box: fill-box;
   transform-origin: center;
 }
 
-.work-scene .ws-a {
-  fill: var(--openbot-file-orange);
+.agent-outfit .ao-ink {
+  fill: var(--openbot-paper-text);
 }
 
-.work-scene .ws-b {
+.agent-outfit .ao-paper {
+  fill: var(--openbot-surface-light);
+  stroke: var(--openbot-paper-text);
+  stroke-width: 1;
+}
+
+.agent-outfit .ao-line {
+  fill: var(--openbot-paper-text-muted);
+}
+
+.agent-outfit .ao-pink {
   fill: var(--openbot-beam-pink);
 }
 
-.work-scene .ws-fg {
-  fill: var(--openbot-action-foreground);
+.agent-outfit .ao-orange {
+  fill: var(--openbot-file-orange);
 }
 
-.work-scene .ws-muted {
-  fill: var(--openbot-text-muted);
+.agent-outfit .ao-red {
+  fill: var(--openbot-file-red);
 }
 
-.work-scene .ws-soft {
-  opacity: 0.55;
+.agent-outfit .ao-yellow {
+  fill: var(--openbot-file-yellow);
 }
 
-.work-scene :is(.ws-frame, .ws-ring) {
+.agent-outfit .ao-green {
+  fill: var(--openbot-file-green);
+}
+
+.agent-outfit .ao-blue {
+  fill: var(--openbot-file-blue);
+}
+
+.agent-outfit .ao-accent-fill {
+  fill: var(--openbot-accent);
+}
+
+.agent-outfit :is(.ao-band, .ao-tick, .ao-check, .ao-code, .ao-wave) {
   fill: none;
-  stroke: var(--openbot-text-muted);
-  stroke-width: 1.5;
-}
-
-.work-scene .ws-line {
-  stroke: var(--openbot-border);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.work-scene .ws-trail {
-  fill: none;
-  stroke: var(--openbot-beam-pink);
-  stroke-width: 1.5;
-  stroke-dasharray: 3 4;
-  stroke-linecap: round;
-  animation: ws-trail 1.2s linear infinite;
-}
-
-.work-scene .ws-ink {
-  stroke: var(--openbot-bg-sidebar);
-  stroke-width: 2;
-}
-
-.work-scene .ws-check-static {
-  fill: none;
-  stroke: var(--openbot-action-foreground);
-  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.work-scene .ws-late {
-  animation-delay: 0.8s;
+.agent-outfit .ao-band {
+  stroke: var(--openbot-paper-text);
+  stroke-width: 3;
 }
 
-/* The editing desk: the clapper snaps, the clip plays, the scissors cut the timeline. */
-.work-scene .ws-reel-clap-top {
+.agent-outfit .ao-band.ao-thin {
+  stroke-width: 1.6;
+}
+
+.agent-outfit .ao-band.ao-accent {
+  stroke: var(--openbot-accent);
+}
+
+.agent-outfit .ao-band.ao-yellow-stroke {
+  stroke: var(--openbot-file-yellow);
+}
+
+.agent-outfit .ao-tick {
+  stroke: var(--openbot-file-green);
+  stroke-width: 1.8;
+}
+
+.agent-outfit .ao-check {
+  stroke: var(--openbot-surface-light);
+  stroke-width: 1.4;
+}
+
+.agent-outfit .ao-code {
+  stroke: var(--openbot-file-green);
+  stroke-width: 1.6;
+}
+
+.agent-outfit .ao-wave {
+  stroke: var(--openbot-file-orange);
+  stroke-width: 1.6;
+  opacity: 0;
+}
+
+.agent-outfit .ao-flash {
+  fill: var(--openbot-surface-light);
+  opacity: 0;
+}
+
+/* What shows only while the agent works: the pop-ups, the flash, the flying plane. */
+.agent-outfit:not([data-working]) :is(.ao-pop, .ao-fly, .ao-check, .ao-drip, .ao-flame) {
+  opacity: 0;
+}
+
+/* The avatar bobs while it works. `translate` leaves the avatar's own motion transform alone. */
+.agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-avatar {
+  animation: ao-bob 1.4s ease-in-out infinite;
+}
+
+.agent-row-avatar:has(> .agent-outfit[data-role="warmup"][data-working]) > .agent-avatar {
+  animation-duration: 0.7s;
+}
+
+.agent-outfit[data-working] .ao-late {
+  animation-delay: 0.5s;
+}
+
+.agent-outfit[data-working] .ao-beat {
+  animation: ao-beat 0.8s ease-in-out infinite;
+}
+
+.agent-outfit[data-working] .ao-clap {
   transform-origin: left bottom;
-  animation: ws-clap 1.6s ease-in infinite;
+  animation: ao-clap 1.4s ease-in infinite;
 }
 
-.work-scene .ws-reel-play {
-  animation: ws-play 2.4s linear infinite;
-}
-
-.work-scene .ws-pulse {
-  animation: ws-pulse 1.6s ease-in-out infinite;
-}
-
-.work-scene .ws-reel-trim {
-  animation: ws-trim 3.2s ease-in-out infinite;
-}
-
-.work-scene .ws-reel-spark {
-  opacity: 0;
-  animation: ws-spark 3.2s ease-out infinite;
-}
-
-.work-scene .ws-reel-spark.ws-late {
-  animation-delay: 1.6s;
-}
-
-.work-scene .ws-reel-scissors {
-  transform-box: view-box;
-  transform-origin: 0 0;
-  animation: ws-scissors 3.2s ease-in-out infinite;
-}
-
-.work-scene :is(.ws-reel-blade-a, .ws-reel-blade-b) {
-  transform-box: view-box;
-  transform-origin: -4px 10px;
-}
-
-.work-scene .ws-reel-blade-a {
-  animation: ws-blade-a 0.4s ease-in-out infinite alternate;
-}
-
-.work-scene .ws-reel-blade-b {
-  animation: ws-blade-b 0.4s ease-in-out infinite alternate;
-}
-
-.work-scene-captions {
-  position: relative;
-  display: block;
-  height: 1.3em;
-  margin-top: 2px;
-  color: var(--openbot-beam-pink);
-}
-
-.work-scene-caption {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  opacity: 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  animation: ws-caption 8s linear infinite;
-}
-
-.work-scene-caption:nth-child(2) {
-  animation-delay: 2s;
-}
-
-.work-scene-caption:nth-child(3) {
-  animation-delay: 4s;
-}
-
-.work-scene-caption:nth-child(4) {
-  animation-delay: 6s;
-}
-
-/* The other roles. */
-.work-scene .ws-cos-card {
-  animation: ws-sort 2.6s ease-in-out infinite;
-}
-
-.work-scene .ws-fly {
-  transform-box: view-box;
-  transform-origin: 0 0;
-  animation: ws-fly 2.6s ease-in infinite;
-}
-
-.work-scene .ws-flash {
-  animation: ws-flash 1.6s ease-out infinite;
-}
-
-.work-scene .ws-develop {
-  animation: ws-develop 1.6s ease-out infinite;
-}
-
-.work-scene .ws-fill {
+.agent-outfit[data-working] .ao-shout {
   transform-origin: left center;
-  animation: ws-fill 2.4s linear infinite;
+  animation: ao-shout 1.2s ease-in-out infinite;
 }
 
-.work-scene .ws-scroll {
-  animation: ws-scroll 2.4s linear infinite;
+.agent-outfit[data-working] .ao-wave {
+  animation: ao-wave 1.2s ease-out infinite;
 }
 
-.work-scene .ws-heart {
-  animation: ws-heart 2.4s ease-out infinite;
-}
-
-.work-scene .ws-stem {
+.agent-outfit[data-working] :is(.ao-tilt, .ao-brush) {
   transform-origin: center bottom;
-  animation: ws-grow 3s ease-out infinite;
+  animation: ao-tilt 1.6s ease-in-out infinite;
 }
 
-.work-scene .ws-leaf {
-  animation: ws-leaf 3s ease-out infinite;
+.agent-outfit[data-working] .ao-tick {
+  stroke-dasharray: 10;
+  animation: ao-tick 1.6s ease-out infinite;
 }
 
-.work-scene .ws-chair {
-  stroke: var(--openbot-text-muted);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.work-scene .ws-shout {
+.agent-outfit[data-working] .ao-type {
   transform-origin: left center;
-  animation: ws-shout 1.2s ease-in-out infinite;
+  animation: ao-type 1.6s steps(6, end) infinite;
 }
 
-.work-scene .ws-wave {
-  fill: none;
-  stroke: var(--openbot-beam-pink);
-  stroke-width: 2;
-  stroke-linecap: round;
-  opacity: 0;
-  animation: ws-wave 1.2s ease-out infinite;
+.agent-outfit[data-working] .ao-fly {
+  animation: ao-fly 2.4s ease-in infinite;
 }
 
-.work-scene .ws-wave-2 {
-  animation-delay: 0.2s;
+.agent-outfit[data-working] :is(.ao-pop, .ao-check) {
+  animation: ao-pop 2s ease-out infinite;
 }
 
-.work-scene .ws-wave-3 {
-  animation-delay: 0.4s;
+.agent-outfit[data-working] .ao-scan {
+  animation: ao-scan 2.4s ease-in-out infinite;
 }
 
-.work-scene .ws-spin-local {
-  stroke-dasharray: 6 4;
-  animation: ws-spin 1.6s linear infinite;
+.agent-outfit[data-working] .ao-hop {
+  animation: ao-hop 0.9s ease-in-out infinite;
 }
 
-.work-scene .ws-send {
-  animation: ws-send 4s ease-in-out infinite;
+.agent-outfit[data-working] .ao-flash {
+  animation: ao-flash 2s ease-out infinite;
 }
 
-.work-scene .ws-frames {
-  animation: ws-frames 3s linear infinite;
+.agent-outfit[data-working] .ao-deal {
+  animation: ao-deal 1.8s ease-in-out infinite;
 }
 
-.work-scene .ws-glass {
-  animation: ws-glass 3s ease-in-out infinite;
+.agent-outfit[data-working] .ao-print {
+  animation: ao-print 2s ease-out infinite;
 }
 
-.work-scene .ws-highlight {
-  opacity: 0.35;
-  animation: ws-highlight 3s steps(1, end) infinite;
+.agent-outfit[data-working] .ao-key {
+  animation: ao-key 0.5s ease-in-out infinite alternate;
 }
 
-.work-scene .ws-deal {
-  opacity: 0;
-  animation: ws-deal 3.5s ease-out infinite;
+.agent-outfit[data-working] .ao-drip {
+  animation: ao-drip 1.4s ease-in infinite;
 }
 
-.work-scene .ws-scrape {
-  animation: ws-scrape 2s ease-in-out infinite;
+.agent-outfit[data-working] .ao-launch {
+  animation: ao-launch 2.4s ease-in infinite;
 }
 
-.work-scene .ws-stamp {
-  transform: scale(0);
-  animation: ws-stamp 2s ease-out infinite;
+.agent-outfit[data-working] .ao-flame {
+  animation: ao-flame 0.25s ease-in-out infinite alternate;
 }
 
-.work-scene .ws-shuffle {
-  animation: ws-shuffle 2.4s ease-in-out infinite alternate;
+.agent-outfit[data-working] .ao-coin {
+  animation: ao-coin 1.4s ease-out infinite;
 }
 
-.work-scene .ws-shuffle-2 {
-  animation-delay: 0.4s;
+.agent-outfit[data-working] .ao-glow {
+  animation: ao-glow 1.6s ease-in-out infinite;
 }
 
-.work-scene .ws-shuffle-3 {
-  animation-delay: 0.8s;
+.agent-outfit[data-working] .ao-page {
+  transform-origin: left center;
+  animation: ao-page 1.8s ease-in-out infinite;
 }
 
-@keyframes ws-shout {
+@keyframes ao-bob {
   0%,
   100% {
-    transform: rotate(0deg);
+    translate: 0 0;
   }
   50% {
-    transform: rotate(-6deg) scale(1.05);
+    translate: 0 -2px;
   }
 }
 
-@keyframes ws-wave {
-  0% {
-    opacity: 0;
-    transform: translateX(-4px);
-  }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(4px);
-  }
-}
-
-@keyframes ws-send {
+@keyframes ao-beat {
   0%,
-  55% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-  80% {
-    opacity: 0;
-    transform: translateX(110px) scale(0.4);
-  }
-  81%,
-  90% {
-    opacity: 0;
-    transform: translateX(0) scale(1);
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes ws-frames {
-  to {
-    transform: translateX(-60px);
-  }
-}
-
-@keyframes ws-glass {
-  0%,
-  100% {
-    transform: translateX(-20px);
-  }
-  50% {
-    transform: translateX(26px);
-  }
-}
-
-@keyframes ws-highlight {
-  0% {
-    transform: translateY(0);
-  }
-  33% {
-    transform: translateY(9px);
-  }
-  66% {
-    transform: translateY(18px);
-  }
-}
-
-@keyframes ws-deal {
-  0% {
-    opacity: 0;
-    transform: translate(180px, -6px) rotate(12deg);
-  }
-  30%,
-  85% {
-    opacity: 1;
-    transform: translate(var(--deal-x), 0) rotate(0deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--deal-x), 0);
-  }
-}
-
-@keyframes ws-scrape {
-  0%,
-  20% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-  70% {
-    opacity: 1;
-    transform: translate(60px, -2px) scale(0.9);
-  }
-  71%,
-  100% {
-    opacity: 0;
-    transform: translate(0, 0);
-  }
-}
-
-@keyframes ws-stamp {
-  0%,
-  40% {
-    transform: scale(0);
-  }
-  55% {
-    transform: scale(1.3);
-  }
-  65%,
   100% {
     transform: scale(1);
   }
-}
-
-@keyframes ws-shuffle {
-  0% {
-    transform: translate(0, 0);
-  }
   50% {
-    transform: translate(8px, 4px);
-  }
-  100% {
-    transform: translate(-4px, -3px);
+    transform: scale(1.12);
   }
 }
 
-.work-scene .ws-type {
-  transform-origin: left center;
-  animation: ws-fill 2.1s steps(8, end) infinite;
-}
-
-.work-scene .ws-caret {
-  animation: ws-caret 0.8s steps(1, end) infinite;
-}
-
-@keyframes ws-caret {
-  50% {
-    opacity: 0;
-  }
-}
-
-.work-scene .ws-bounce {
-  animation: ws-bounce 0.9s ease-in-out infinite;
-}
-
-@keyframes ws-clap {
+@keyframes ao-clap {
   0%,
   60%,
   100% {
     transform: rotate(0deg);
   }
   30% {
-    transform: rotate(-24deg);
+    transform: rotate(-28deg);
   }
 }
 
-@keyframes ws-play {
-  to {
-    transform: translateX(-58px);
-  }
-}
-
-@keyframes ws-pulse {
+@keyframes ao-shout {
   0%,
   100% {
-    opacity: 0.55;
-    transform: scale(0.92);
+    transform: rotate(0deg);
   }
   50% {
+    transform: rotate(-8deg);
+  }
+}
+
+@keyframes ao-wave {
+  0% {
+    opacity: 0;
+  }
+  40% {
     opacity: 1;
-    transform: scale(1.06);
   }
-}
-
-@keyframes ws-trim {
-  0%,
-  30%,
-  100% {
-    transform: translateY(0);
-  }
-  45% {
-    transform: translateY(-7px) scaleX(0.82);
-  }
-  60% {
-    transform: translateY(0) scaleX(0.9);
-  }
-}
-
-@keyframes ws-spark {
-  0%,
-  22%,
   100% {
     opacity: 0;
-    transform: scale(0.4);
-  }
-  26% {
-    opacity: 1;
-    transform: scale(1.4);
-  }
-  34% {
-    opacity: 0;
-    transform: scale(2);
   }
 }
 
-@keyframes ws-scissors {
+@keyframes ao-tilt {
   0%,
   100% {
-    transform: translate(112px, 15px);
-  }
-  25% {
-    transform: translate(142px, 15px);
+    transform: rotate(0deg);
   }
   50% {
-    transform: translate(176px, 15px);
-  }
-  75% {
-    transform: translate(210px, 15px);
+    transform: rotate(-6deg);
   }
 }
 
-@keyframes ws-blade-a {
-  from {
-    transform: rotate(-22deg);
-  }
-  to {
-    transform: rotate(-2deg);
-  }
-}
-
-@keyframes ws-blade-b {
-  from {
-    transform: rotate(22deg);
-  }
-  to {
-    transform: rotate(2deg);
-  }
-}
-
-@keyframes ws-caption {
+@keyframes ao-tick {
   0% {
-    opacity: 0;
-    transform: translateY(4px);
+    stroke-dashoffset: 10;
   }
-  4%,
-  22% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  26%,
+  50%,
   100% {
-    opacity: 0;
-    transform: translateY(-4px);
+    stroke-dashoffset: 0;
   }
 }
 
-@keyframes ws-trail {
-  to {
-    stroke-dashoffset: -14;
-  }
-}
-
-@keyframes ws-sort {
+@keyframes ao-type {
   0% {
-    transform: translate(0, 0);
-    opacity: 1;
-  }
-  60% {
-    transform: translate(130px, -6px);
-    opacity: 1;
-  }
-  70%,
-  100% {
-    transform: translate(150px, -6px);
-    opacity: 0;
-  }
-}
-
-@keyframes ws-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes ws-fly {
-  0% {
-    transform: translate(4px, 22px);
-    opacity: 0;
-  }
-  15%,
-  85% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(190px, 0);
-    opacity: 0;
-  }
-}
-
-@keyframes ws-flash {
-  0%,
-  70%,
-  100% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  75% {
-    opacity: 1;
-    transform: scale(2.4);
-  }
-}
-
-@keyframes ws-develop {
-  0%,
-  70% {
-    opacity: 0.2;
+    transform: scaleX(0);
   }
   80%,
   100% {
-    opacity: 0.85;
+    transform: scaleX(1);
   }
 }
 
-@keyframes ws-fill {
-  0% {
-    transform: scaleX(0.1);
-    opacity: 0.4;
+@keyframes ao-fly {
+  0%,
+  40% {
+    opacity: 0;
+    transform: translate(0, 0);
   }
-  33%,
-  100% {
-    transform: scaleX(1);
+  50% {
     opacity: 1;
   }
-}
-
-@keyframes ws-scroll {
-  to {
-    transform: translateY(-24px);
-  }
-}
-
-@keyframes ws-heart {
-  0%,
-  50% {
+  100% {
     opacity: 0;
-    transform: scale(0.4);
+    transform: translate(4px, -10px);
   }
-  65% {
+}
+
+@keyframes ao-pop {
+  0%,
+  30% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  45% {
     opacity: 1;
     transform: scale(1.2);
   }
+  55%,
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
   100% {
     opacity: 0;
-    transform: translateY(-8px) scale(1);
-  }
-}
-
-@keyframes ws-grow {
-  0% {
-    transform: scaleY(0.2);
-  }
-  60%,
-  100% {
-    transform: scaleY(1);
-  }
-}
-
-@keyframes ws-leaf {
-  0%,
-  40% {
-    transform: scale(0);
-  }
-  70%,
-  100% {
     transform: scale(1);
   }
 }
 
-@keyframes ws-bounce {
+@keyframes ao-scan {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-6px, -3px);
+  }
+}
+
+@keyframes ao-hop {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+@keyframes ao-flash {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ao-deal {
+  0%,
+  20% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  60% {
+    transform: translate(3px, -4px) rotate(12deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+@keyframes ao-print {
+  0%,
+  30% {
+    transform: translateY(-6px);
+  }
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes ao-key {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(0.8px);
+  }
+}
+
+@keyframes ao-drip {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes ao-launch {
+  0%,
+  30% {
+    transform: translateY(0);
+  }
+  70% {
     transform: translateY(-5px);
   }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes ao-flame {
+  from {
+    transform: scaleY(0.7);
+  }
+  to {
+    transform: scaleY(1.2);
+  }
+}
+
+@keyframes ao-coin {
+  0% {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  40%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes ao-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ao-page {
+  0%,
+  20% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.1);
+  }
+  80%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* A Reel Worker's row grows to list its Reels, so the list never covers the row under it. */
+.agent-row:has(.reel-steps) {
+  height: auto;
+  align-items: flex-start;
+}
+
+.sidebar-compact .reel-steps {
+  display: none;
+}
+
+.sidebar-compact .agent-row:has(.reel-steps) {
+  height: 62px;
+  align-items: center;
 }
 
 /* HoleA.I: a Reel Worker's Reels, one line each: the Reel, a pip per board stage, and its stage. */
@@ -4329,7 +4134,7 @@ textarea {
 
 .reel-steps-pip[data-state="current"] {
   background: var(--openbot-beam-pink);
-  animation: ws-pulse 1.2s ease-in-out infinite;
+  animation: ao-glow 1.2s ease-in-out infinite;
 }
 
 .reel-steps-stage {
@@ -4345,15 +4150,10 @@ textarea {
     display: none;
   }
 
-  .work-scene *,
-  .work-scene-caption,
-  .reel-steps-pip,
-  .reel-creator-avatar {
+  .agent-outfit *,
+  .agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-avatar,
+  .reel-steps-pip {
     animation: none !important;
-  }
-
-  .work-scene-caption:first-child {
-    opacity: 1;
   }
 }
 
