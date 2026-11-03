@@ -42,18 +42,22 @@ export function createLoginItem(options: { appVariant: AppVariant; server: boole
  * `executableWillLaunchAtLogin` includes the switch in Task Manager; a write sets it again.
  */
 function electronLoginItem(): LoginItem {
+  // HoleA.I: a window started with its own profile starts with that profile at sign-in too, or it
+  // opens the default profile, which nobody signed into.
+  const userDataDir = app.commandLine.getSwitchValue("user-data-dir");
+  const args = userDataDir ? [`--user-data-dir=${userDataDir}`] : [];
   return {
     read: () =>
       Effect.try({
         try: () => {
-          const settings = app.getLoginItemSettings();
+          const settings = app.getLoginItemSettings({ args });
           return process.platform === "win32" ? settings.executableWillLaunchAtLogin : settings.openAtLogin;
         },
         catch: (cause) => new LoginItemFailure({ cause }),
       }),
     write: (enabled) =>
       Effect.try({
-        try: () => app.setLoginItemSettings({ openAtLogin: enabled }),
+        try: () => app.setLoginItemSettings({ openAtLogin: enabled, args }),
         catch: (cause) => new LoginItemFailure({ cause }),
       }),
     // The item names the executable, and an update keeps its path.

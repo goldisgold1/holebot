@@ -1,18 +1,17 @@
 import { useText } from "@openbot/ui/text";
 import { createEffect, createSignal, Loading, Show } from "solid-js";
 import { useAuth } from "./features/account/account-context";
-import { useProviderDetection } from "./features/custom-providers/provider-detection-context";
 import { createLanguageStep } from "./features/onboarding/language-step";
 import { useSetup } from "./features/onboarding/onboarding-context";
 import { SetupReadError } from "./features/onboarding/SetupReadError";
 import { useSetupProviderProps } from "./features/onboarding/setup-provider-props";
 import { useServerScope } from "./features/servers/server-scope";
 import { useServerSelection } from "./features/servers/server-selection";
-import { useSettings } from "./features/settings/settings-context";
+import { useServers } from "./features/servers/servers-context";
 import { StartupSplash } from "./features/startup/StartupSplash";
 import { WhatsNewOverlay } from "./features/updates/WhatsNewOverlay";
 import { useI18n } from "./i18n-context";
-import { AccountLogin, FirstRunFlow, InitialSetup, LanguageStep } from "./lazy-views";
+import { AccountLogin, InitialSetup, LanguageStep } from "./lazy-views";
 import { usePlatform } from "./platform";
 import { WorkspaceShell } from "./WorkspaceShell";
 
@@ -20,6 +19,18 @@ import { WorkspaceShell } from "./WorkspaceShell";
 function LoadingScreen() {
   const { t } = useText();
   return <div class="initial-setup-screen" role="status" aria-label={t("app.loading")} />;
+}
+
+/**
+ * HoleA.I: team members work with the agents on the HoleA.I VPS, which come with their account, so
+ * the first run asks for no model or subscription. It records the setup as done and opens the team
+ * server once the account lists it (see `openTeamServer` in the gate, which outlives this screen).
+ */
+function TeamAutoSetup(props: { onStart: () => void }) {
+  const setup = useSetup();
+  props.onStart();
+  void setup.saveSetup("claude", null).catch(() => undefined);
+  return <LoadingScreen />;
 }
 
 /**
@@ -47,9 +58,18 @@ export function AppAccessGate() {
   const scope = useServerScope();
   // Setup actions run against this computer. The view waits for its first status before offering them.
   const setupProviders = useSetupProviderProps();
-  const detection = useProviderDetection();
-  const settings = useSettings();
-  const { joinRemoteDuringSetup } = useServerSelection();
+  const { joinRemoteDuringSetup, selectServer } = useServerSelection();
+  const { servers } = useServers();
+  // HoleA.I: after the first run, the window opens the team server as soon as the account lists it.
+  const [openTeamServer, setOpenTeamServer] = createSignal(false);
+  createEffect(
+    () => (openTeamServer() ? servers().find((server) => server.kind === "remote")?.id : undefined),
+    (remoteId) => {
+      if (!remoteId) return;
+      setOpenTeamServer(false);
+      if (servers().find((server) => server.active)?.kind !== "remote") void selectServer(remoteId, false);
+    },
+  );
   const started = () => setup.setupLoaded() && platform.appInfo() !== null;
   const [splashShown, setSplashShown] = createSignal(true);
   const languageStep = createLanguageStep();
@@ -108,26 +128,7 @@ export function AppAccessGate() {
                   <Show when={!setup.setupReadFailed()} fallback={<SetupReadError />}>
                     <Show
                       when={setup.pendingInviteUrl().trim()}
-                      fallback={
-                        <Loading fallback={<LoadingScreen />}>
-                          <FirstRunFlow
-                            {...setupProviders}
-                            state={
-                              setup.setupState() ?? { completed: false, preferredProvider: null, preferredModel: null }
-                            }
-                            platform={platform.appInfo()?.platform ?? "darwin"}
-                            onSave={setup.saveSetup}
-                            onAnalyticsChoice={(enabled, chosen) =>
-                              settings.updateGeneralSettings(
-                                { ...settings.generalSettings(), productAnalytics: enabled },
-                                { analyticsChosen: chosen },
-                              )
-                            }
-                            onProviderStepShown={detection.scanOnce}
-                            logoVariant={platform.appInfo()?.variant ?? "production"}
-                          />
-                        </Loading>
-                      }
+                      fallback={<TeamAutoSetup onStart={() => setOpenTeamServer(true)} />}
                     >
                       <Loading fallback={<LoadingScreen />}>
                         <InitialSetup

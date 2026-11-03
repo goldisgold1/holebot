@@ -901,7 +901,13 @@ async function presentApplication(): Promise<void> {
     process.platform === "linux" ||
     ((process.platform === "darwin" || process.platform === "win32") && app.isPackaged)
   ) {
-    if (!app.setAsDefaultProtocolClient("openbot")) {
+    // HoleA.I: a link opens the profile this window runs, not the default one nobody signed into.
+    const userDataDir = app.commandLine.getSwitchValue("user-data-dir");
+    const registered =
+      process.platform === "win32" && userDataDir
+        ? app.setAsDefaultProtocolClient("openbot", process.execPath, [`--user-data-dir=${userDataDir}`])
+        : app.setAsDefaultProtocolClient("openbot");
+    if (!registered) {
       logger.warn("Unable to register the openbot:// scheme. Invitation links will not open OpenBot.");
     }
   }
