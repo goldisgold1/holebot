@@ -414,7 +414,8 @@ function isV1BotSummary(value: unknown): value is TeamProtocolV1JsonObject {
     /^[a-z0-9:-]{1,128}$/u.test(value.avatarSeed) &&
     (value.avatarHue === null || isV1OneOf([0, 30, 55, 100, 150, 185, 215, 245, 280, 320], value.avatarHue)) &&
     (value.avatarUrl === null || isV1BoundedString(value.avatarUrl, 2_048)) &&
-    (value.marketplaceSource === undefined || isV1MarketplaceSource(value.marketplaceSource))
+    (value.marketplaceSource === undefined || isV1MarketplaceSource(value.marketplaceSource)) &&
+    (value.spawnedBy === undefined || isV1Identifier(value.spawnedBy))
   );
 }
 
@@ -1136,6 +1137,8 @@ const V1_BOT_KEYS = [
   "avatarHue",
   "avatarUrl",
   "marketplaceSource",
+  // HoleA.I: the agent that spawned this one, so a client can nest it under its parent.
+  "spawnedBy",
 ] as const;
 const V1_DIRECT_MESSAGE_KEYS = [
   "id",

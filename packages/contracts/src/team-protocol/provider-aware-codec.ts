@@ -480,7 +480,8 @@ function isProviderAwareBotSummary(
     (value.avatarHue === null ||
       isProviderAwareOneOf([0, 30, 55, 100, 150, 185, 215, 245, 280, 320], value.avatarHue)) &&
     (value.avatarUrl === null || isProviderAwareBoundedString(value.avatarUrl, 2_048)) &&
-    (value.marketplaceSource === undefined || isProviderAwareMarketplaceSource(value.marketplaceSource))
+    (value.marketplaceSource === undefined || isProviderAwareMarketplaceSource(value.marketplaceSource)) &&
+    (value.spawnedBy === undefined || isProviderAwareIdentifier(value.spawnedBy))
   );
 }
 
@@ -1231,6 +1232,8 @@ const ProviderAware_BOT_KEYS = [
   "avatarHue",
   "avatarUrl",
   "marketplaceSource",
+  // HoleA.I: the agent that spawned this one, so a client can nest it under its parent.
+  "spawnedBy",
 ] as const;
 const ProviderAware_DIRECT_MESSAGE_KEYS = [
   "id",
