@@ -1625,7 +1625,7 @@
   overflow-y: auto;
   padding: var(--openbot-space-6);
   border-radius: var(--openbot-radius-xl);
-  background: var(--openbot-bg-sidebar);
+  background: var(--openbot-bg-sheet);
   color: var(--openbot-text-primary);
   outline: 0;
 }
