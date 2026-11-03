@@ -15,7 +15,7 @@ import type { AgentProfile } from "../../data";
 import { useText } from "../../text";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import { agentAccessLockLabel } from "../agents/agent-access";
-import { AgentOutfit } from "./AgentOutfit";
+import { AgentOutfit, hasWorkStrip, outfitBodyShape, WorkStrip } from "./AgentOutfit";
 import { agentWorkRole, isSpawnedReelWorker, ReelStepRows, reelWorkerReels } from "./AgentWorkScene";
 import { SidebarAgentContextMenu } from "./SidebarAgentContextMenu";
 import { SidebarAgentIndicator, SidebarWaitChip, SidebarWaitTooltip } from "./SidebarAgentIndicator";
@@ -112,7 +112,7 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
         }}
       >
         <span class="agent-row-avatar">
-          <AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} />
+          <AgentAvatar agent={rowProps.agent} motion="idle" mood={mood()} shape={outfitBodyShape(role())} />
           <AgentOutfit role={role()} working={working()} />
           <SidebarAgentIndicator state={state} />
         </span>
@@ -167,7 +167,10 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
               {(current) => <SidebarWaitChip reason={current().reason} />}
             </Show>
           </span>
-          <span class="agent-row-preview">{detail()}</span>
+          {/* HoleA.I: while it works, the row plays its job where the chat preview was. */}
+          <Show when={working() && hasWorkStrip(role())} fallback={<span class="agent-row-preview">{detail()}</span>}>
+            <WorkStrip role={role()} />
+          </Show>
           <Show when={reels().length > 0}>
             <ReelStepRows reels={reels()} stages={props.reelFactoryLive?.stages ?? []} />
           </Show>

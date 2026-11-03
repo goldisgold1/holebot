@@ -3608,8 +3608,8 @@ textarea {
   }
 }
 
-/* HoleA.I: the outfit an avatar wears for its role (AgentOutfit). It sits over the avatar and stays
-   inside its box; its prop moves only while the agent works. */
+/* HoleA.I: the outfit an avatar wears for its role (AgentOutfit): real item renders over the avatar.
+   It stays inside the avatar's box; the held item moves only while the agent works. */
 .agent-outfit {
   position: absolute;
   inset: 0;
@@ -3619,104 +3619,21 @@ textarea {
   pointer-events: none;
 }
 
-.agent-outfit :is(rect, circle, ellipse, path, g) {
+.agent-outfit :is(image, path, circle) {
   transform-box: fill-box;
   transform-origin: center;
 }
 
-.agent-outfit .ao-ink {
-  fill: var(--openbot-paper-text);
-}
-
-.agent-outfit .ao-paper {
-  fill: var(--openbot-surface-light);
-  stroke: var(--openbot-paper-text);
-  stroke-width: 1;
-}
-
-.agent-outfit .ao-line {
-  fill: var(--openbot-paper-text-muted);
-}
-
-.agent-outfit .ao-pink {
-  fill: var(--openbot-beam-pink);
-}
-
-.agent-outfit .ao-orange {
-  fill: var(--openbot-file-orange);
-}
-
-.agent-outfit .ao-red {
-  fill: var(--openbot-file-red);
-}
-
-.agent-outfit .ao-yellow {
-  fill: var(--openbot-file-yellow);
-}
-
-.agent-outfit .ao-green {
-  fill: var(--openbot-file-green);
-}
-
-.agent-outfit .ao-blue {
-  fill: var(--openbot-file-blue);
-}
-
-.agent-outfit .ao-accent-fill {
-  fill: var(--openbot-accent);
-}
-
-.agent-outfit :is(.ao-band, .ao-tick, .ao-check, .ao-code, .ao-wave) {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.agent-outfit .ao-band {
-  stroke: var(--openbot-paper-text);
-  stroke-width: 3;
-}
-
-.agent-outfit .ao-band.ao-thin {
-  stroke-width: 1.6;
-}
-
-.agent-outfit .ao-band.ao-accent {
-  stroke: var(--openbot-accent);
-}
-
-.agent-outfit .ao-band.ao-yellow-stroke {
-  stroke: var(--openbot-file-yellow);
-}
-
-.agent-outfit .ao-tick {
-  stroke: var(--openbot-file-green);
-  stroke-width: 1.8;
-}
-
-.agent-outfit .ao-check {
-  stroke: var(--openbot-surface-light);
-  stroke-width: 1.4;
-}
-
-.agent-outfit .ao-code {
-  stroke: var(--openbot-file-green);
-  stroke-width: 1.6;
-}
-
 .agent-outfit .ao-wave {
+  fill: none;
   stroke: var(--openbot-file-orange);
   stroke-width: 1.6;
+  stroke-linecap: round;
   opacity: 0;
 }
 
 .agent-outfit .ao-flash {
   fill: var(--openbot-surface-light);
-  opacity: 0;
-}
-
-/* What shows only while the agent works: the pop-ups, the flash, the flying plane. */
-.agent-outfit:not([data-working]) :is(.ao-pop, .ao-fly, .ao-check, .ao-drip, .ao-flame) {
   opacity: 0;
 }
 
@@ -3733,94 +3650,59 @@ textarea {
   animation-delay: 0.5s;
 }
 
-.agent-outfit[data-working] .ao-beat {
-  animation: ao-beat 0.8s ease-in-out infinite;
-}
-
-.agent-outfit[data-working] .ao-clap {
-  transform-origin: left bottom;
-  animation: ao-clap 1.4s ease-in infinite;
-}
-
-.agent-outfit[data-working] .ao-shout {
-  transform-origin: left center;
-  animation: ao-shout 1.2s ease-in-out infinite;
-}
-
 .agent-outfit[data-working] .ao-wave {
   animation: ao-wave 1.2s ease-out infinite;
-}
-
-.agent-outfit[data-working] :is(.ao-tilt, .ao-brush) {
-  transform-origin: center bottom;
-  animation: ao-tilt 1.6s ease-in-out infinite;
-}
-
-.agent-outfit[data-working] .ao-tick {
-  stroke-dasharray: 10;
-  animation: ao-tick 1.6s ease-out infinite;
-}
-
-.agent-outfit[data-working] .ao-type {
-  transform-origin: left center;
-  animation: ao-type 1.6s steps(6, end) infinite;
-}
-
-.agent-outfit[data-working] .ao-fly {
-  animation: ao-fly 2.4s ease-in infinite;
-}
-
-.agent-outfit[data-working] :is(.ao-pop, .ao-check) {
-  animation: ao-pop 2s ease-out infinite;
-}
-
-.agent-outfit[data-working] .ao-scan {
-  animation: ao-scan 2.4s ease-in-out infinite;
-}
-
-.agent-outfit[data-working] .ao-hop {
-  animation: ao-hop 0.9s ease-in-out infinite;
 }
 
 .agent-outfit[data-working] .ao-flash {
   animation: ao-flash 2s ease-out infinite;
 }
 
-.agent-outfit[data-working] .ao-deal {
+.agent-outfit[data-working] [data-motion="snap"] {
+  transform-origin: left bottom;
+  animation: ao-snap 1.4s ease-in infinite;
+}
+
+.agent-outfit[data-working] [data-motion="shout"] {
+  transform-origin: left center;
+  animation: ao-shout 1.2s ease-in-out infinite;
+}
+
+.agent-outfit[data-working] [data-motion="tilt"] {
+  transform-origin: center bottom;
+  animation: ao-tilt 1.6s ease-in-out infinite;
+}
+
+.agent-outfit[data-working] [data-motion="throw"] {
+  animation: ao-throw 2.4s ease-in-out infinite;
+}
+
+.agent-outfit[data-working] [data-motion="scan"] {
+  animation: ao-scan 2.4s ease-in-out infinite;
+}
+
+.agent-outfit[data-working] [data-motion="deal"] {
   animation: ao-deal 1.8s ease-in-out infinite;
 }
 
-.agent-outfit[data-working] .ao-print {
-  animation: ao-print 2s ease-out infinite;
+.agent-outfit[data-working] [data-motion="tap"] {
+  animation: ao-tap 0.5s ease-in-out infinite alternate;
 }
 
-.agent-outfit[data-working] .ao-key {
-  animation: ao-key 0.5s ease-in-out infinite alternate;
+.agent-outfit[data-working] [data-motion="lift"] {
+  animation: ao-lift 0.9s ease-in-out infinite;
 }
 
-.agent-outfit[data-working] .ao-drip {
-  animation: ao-drip 1.4s ease-in infinite;
-}
-
-.agent-outfit[data-working] .ao-launch {
+.agent-outfit[data-working] [data-motion="launch"] {
   animation: ao-launch 2.4s ease-in infinite;
 }
 
-.agent-outfit[data-working] .ao-flame {
-  animation: ao-flame 0.25s ease-in-out infinite alternate;
-}
-
-.agent-outfit[data-working] .ao-coin {
-  animation: ao-coin 1.4s ease-out infinite;
-}
-
-.agent-outfit[data-working] .ao-glow {
+.agent-outfit[data-working] [data-motion="glow"] {
   animation: ao-glow 1.6s ease-in-out infinite;
 }
 
-.agent-outfit[data-working] .ao-page {
-  transform-origin: left center;
-  animation: ao-page 1.8s ease-in-out infinite;
+.agent-outfit[data-working] [data-motion="beat"] {
+  animation: ao-beat 0.9s ease-in-out infinite;
 }
 
 @keyframes ao-bob {
@@ -3830,37 +3712,6 @@ textarea {
   }
   50% {
     translate: 0 -2px;
-  }
-}
-
-@keyframes ao-beat {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.12);
-  }
-}
-
-@keyframes ao-clap {
-  0%,
-  60%,
-  100% {
-    transform: rotate(0deg);
-  }
-  30% {
-    transform: rotate(-28deg);
-  }
-}
-
-@keyframes ao-shout {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  50% {
-    transform: rotate(-8deg);
   }
 }
 
@@ -3876,69 +3727,57 @@ textarea {
   }
 }
 
+@keyframes ao-flash {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ao-snap {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-10deg);
+  }
+}
+
+@keyframes ao-shout {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(-8deg) scale(1.06);
+  }
+}
+
 @keyframes ao-tilt {
   0%,
   100% {
     transform: rotate(0deg);
   }
   50% {
-    transform: rotate(-6deg);
+    transform: rotate(-7deg);
   }
 }
 
-@keyframes ao-tick {
-  0% {
-    stroke-dashoffset: 10;
-  }
-  50%,
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes ao-type {
-  0% {
-    transform: scaleX(0);
-  }
-  80%,
-  100% {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes ao-fly {
+@keyframes ao-throw {
   0%,
-  40% {
-    opacity: 0;
-    transform: translate(0, 0);
+  100% {
+    transform: translate(0, 0) rotate(0deg);
   }
   50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(4px, -10px);
-  }
-}
-
-@keyframes ao-pop {
-  0%,
-  30% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  45% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-  55%,
-  85% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
+    transform: translate(2px, -4px) rotate(-8deg);
   }
 }
 
@@ -3952,73 +3791,35 @@ textarea {
   }
 }
 
-@keyframes ao-hop {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2.5px);
-  }
-}
-
-@keyframes ao-flash {
-  0%,
-  60% {
-    opacity: 0;
-  }
-  65% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
 @keyframes ao-deal {
   0%,
   20% {
     transform: translate(0, 0) rotate(0deg);
   }
   60% {
-    transform: translate(3px, -4px) rotate(12deg);
+    transform: translate(2px, -3px) rotate(10deg);
   }
   100% {
     transform: translate(0, 0) rotate(0deg);
   }
 }
 
-@keyframes ao-print {
-  0%,
-  30% {
-    transform: translateY(-6px);
-  }
-  70%,
-  100% {
-    transform: translateY(0);
-  }
-}
-
-@keyframes ao-key {
+@keyframes ao-tap {
   from {
     transform: translateY(0);
   }
   to {
-    transform: translateY(0.8px);
+    transform: translateY(1px);
   }
 }
 
-@keyframes ao-drip {
-  0% {
-    opacity: 0;
+@keyframes ao-lift {
+  0%,
+  100% {
     transform: translateY(0);
   }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(6px);
+  50% {
+    transform: translateY(-5px);
   }
 }
 
@@ -4035,48 +3836,265 @@ textarea {
   }
 }
 
-@keyframes ao-flame {
-  from {
-    transform: scaleY(0.7);
-  }
-  to {
-    transform: scaleY(1.2);
-  }
-}
-
-@keyframes ao-coin {
-  0% {
-    transform: translateY(-6px);
-    opacity: 0;
-  }
-  40%,
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
 @keyframes ao-glow {
   0%,
   100% {
-    opacity: 0.5;
+    opacity: 0.6;
   }
   50% {
     opacity: 1;
   }
 }
 
-@keyframes ao-page {
+@keyframes ao-beat {
   0%,
-  20% {
-    transform: scaleX(1);
+  100% {
+    transform: scale(1);
   }
   50% {
-    transform: scaleX(0.1);
+    transform: scale(1.08);
   }
-  80%,
+}
+
+/* HoleA.I: a working agent's job, played across the row where its chat preview was (WorkStrip).
+   It is one preview line tall, so the row keeps its height. */
+.work-strip {
+  position: relative;
+  display: block;
+  height: 18px;
+  overflow: hidden;
+}
+
+.work-strip-trail {
+  position: absolute;
+  inset: 0 0 0 26px;
+}
+
+.work-strip-actor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 18px;
+  background: center / contain no-repeat;
+}
+
+.work-strip-bit {
+  position: absolute;
+  display: block;
+  background: center / contain no-repeat;
+}
+
+.work-strip-actor[data-move="travel"] {
+  animation: strip-travel 2.6s ease-in-out infinite;
+}
+
+.work-strip-actor[data-move="sweep"] {
+  z-index: 1;
+  animation: strip-sweep 3s ease-in-out infinite;
+}
+
+.work-strip-actor[data-move="lift"] {
+  animation: strip-lift 0.9s ease-in-out infinite;
+}
+
+.work-strip[data-trail="film"] .work-strip-bit {
+  inset: 3px 0;
+  border-radius: var(--openbot-radius-xs);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--openbot-file-orange) 0 14px,
+    var(--openbot-beam-pink) 14px 28px,
+    var(--openbot-bg-sidebar) 28px 31px
+  );
+  animation: strip-film 1.6s linear infinite;
+}
+
+.work-strip[data-trail="waves"] .work-strip-bit {
+  top: 2px;
+  left: 0;
+  width: 10px;
+  height: 14px;
+  border-right: 2px solid var(--openbot-file-orange);
+  border-radius: var(--openbot-radius-pill);
+  opacity: 0;
+  animation: strip-wave 1.8s ease-out infinite;
+  animation-delay: calc(var(--bit) * 0.6s);
+}
+
+.work-strip[data-trail="lines"] .work-strip-bit {
+  left: 0;
+  top: calc(2px + var(--bit) * 5px);
+  width: calc(80% - var(--bit) * 18%);
+  height: 3px;
+  border-radius: var(--openbot-radius-xs);
+  background: var(--openbot-file-green);
+  transform-origin: left center;
+  animation: strip-type 2.4s steps(8, end) infinite;
+  animation-delay: calc(var(--bit) * 0.5s);
+}
+
+.work-strip[data-role="cos"] .work-strip-bit,
+.work-strip[data-role="coo"] .work-strip-bit,
+.work-strip[data-role="english"] .work-strip-bit {
+  background: var(--openbot-text-muted);
+}
+
+.work-strip[data-role="chinese"] .work-strip-bit {
+  background: var(--openbot-text-primary);
+}
+
+.work-strip[data-trail="photos"] .work-strip-bit {
+  top: 1px;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  animation: strip-photo 2.8s ease-out infinite;
+  animation-delay: calc(var(--bit) * 0.7s);
+}
+
+.work-strip[data-trail="dashes"] .work-strip-bit {
+  inset: 8px 0 auto;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--openbot-text-muted) 0 5px, transparent 5px 10px);
+  opacity: 0.6;
+  animation: strip-film 1s linear infinite reverse;
+}
+
+.work-strip[data-trail="sparkle"] .work-strip-bit {
+  top: calc(3px + (var(--bit) * 7px) - (var(--bit) * var(--bit) * 1.2px));
+  left: calc(var(--bit) * 18%);
+  width: 5px;
+  height: 5px;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--openbot-file-yellow);
+  opacity: 0;
+  animation: strip-sparkle 1.6s ease-out infinite;
+  animation-delay: calc(var(--bit) * 0.3s);
+}
+
+.work-strip[data-trail="bars"] .work-strip-bit {
+  bottom: 1px;
+  left: calc(var(--bit) * 16px);
+  width: 10px;
+  height: 16px;
+  border-radius: var(--openbot-radius-xs);
+  background: linear-gradient(0deg, var(--openbot-file-green), var(--openbot-file-blue));
+  transform-origin: bottom center;
+  animation: strip-bar 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--bit) * 0.25s);
+}
+
+.work-strip[data-trail="bars"]:not(:has(.work-strip-actor)) .work-strip-trail {
+  inset-inline-start: 0;
+}
+
+@keyframes strip-travel {
+  0% {
+    transform: translateX(0) translateY(2px) rotate(0deg);
+  }
+  50% {
+    transform: translateX(150px) translateY(-2px) rotate(-6deg);
+  }
+  100% {
+    transform: translateX(0) translateY(2px) rotate(0deg);
+  }
+}
+
+@keyframes strip-sweep {
+  0%,
+  100% {
+    transform: translateX(26px);
+  }
+  50% {
+    transform: translateX(150px);
+  }
+}
+
+@keyframes strip-lift {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes strip-film {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -31px 0;
+  }
+}
+
+@keyframes strip-wave {
+  0% {
+    opacity: 0;
+    transform: translateX(0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(150px) scale(1.2);
+  }
+}
+
+@keyframes strip-type {
+  0% {
+    transform: scaleX(0);
+  }
+  70%,
   100% {
     transform: scaleX(1);
+  }
+}
+
+@keyframes strip-photo {
+  0% {
+    opacity: 0;
+    transform: translateX(0) rotate(-10deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(140px) rotate(8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(150px) rotate(8deg);
+  }
+}
+
+@keyframes strip-sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes strip-bar {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
   }
 }
 
@@ -4151,6 +4169,7 @@ textarea {
   }
 
   .agent-outfit *,
+  .work-strip *,
   .agent-row-avatar:has(> .agent-outfit[data-working]) > .agent-avatar,
   .reel-steps-pip {
     animation: none !important;
