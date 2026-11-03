@@ -1417,3 +1417,11 @@
   width: 14px;
   height: 14px;
 }
+
+/* HoleA.I: the bot app's avatar engine draws the agent face (BotMarkFace); it fills the avatar box. */
+.bot-mark-face {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}

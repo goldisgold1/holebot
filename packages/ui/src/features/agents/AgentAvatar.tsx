@@ -4,14 +4,10 @@ import type { AvatarHue } from "@openbot/contracts/ipc";
 import { prefersReducedMotion } from "@openbot/ui/utils";
 import type { JSX } from "@solidjs/web";
 import { createEffect, createMemo, createSignal, createUniqueId, For, onCleanup, onSettled, Show } from "solid-js";
-import {
-  type AvatarMotion,
-  avatarHeadColor,
-  bloubAvatarProfile,
-  type SupportedAvatarSilhouetteId,
-} from "../../bloub-avatar";
+import { type AvatarMotion, avatarHeadColor, type SupportedAvatarSilhouetteId } from "../../bloub-avatar";
 import type { AgentProfile } from "../../data";
-import { CuteFace } from "./CuteFace";
+import { BotMarkFace } from "./BotMarkFace";
+import type { BotMarkHandle } from "./bot-mark/engine";
 
 // Cap avatar animation at 30fps: uncapped bloub clocks measured 30% renderer / 24% GPU
 // for two visible avatars. The shape is 24-40px, so the eye cannot see the difference.
@@ -303,11 +299,11 @@ function GeneratedAvatar(props: {
   style?: Record<string, string>;
 }) {
   let element: HTMLSpanElement | undefined;
+  let mark: BotMarkHandle | undefined;
   const [interacting, setInteracting] = createSignal(false);
   const [ambient, setAmbient] = createSignal(false);
   const [reducedMotion, setReducedMotion] = createSignal(prefersReducedMotion());
   const presentation = createMemo(() => avatarMoodPresentation(props.mood));
-  const profile = createMemo(() => bloubAvatarProfile(props.seed, props.hue));
   // A mood that carries its own motion has to be seen without being pointed at, and so do eyes that
   // follow the pointer; the resting moods keep the hover gating that the perf note above is about.
   const animated = () =>
@@ -360,6 +356,7 @@ function GeneratedAvatar(props: {
       element.removeAttribute("data-poked");
       void element.offsetWidth;
       element.setAttribute("data-poked", "");
+      mark?.poke("spin");
       clearTimeout(pokeTimer);
       pokeTimer = setTimeout(() => element?.removeAttribute("data-poked"), 700);
     };
@@ -415,24 +412,17 @@ function GeneratedAvatar(props: {
       aria-hidden="true"
     >
       <AvatarRings when={presentation().rings}>
-        <CuteFace
+        <BotMarkFace
           seed={props.seed}
           color={avatarHeadColor(props.seed, props.hue)}
-          shape={props.shape ?? profile().shape}
           mood={props.mood}
-          animated={animated()}
-          delay={-(props.animationOffset ?? avatarAnimationPhase(props.seed))}
+          playing={animated()}
+          followPointer={props.followPointer}
+          handle={(handle) => {
+            mark = handle;
+          }}
         />
       </AvatarRings>
     </span>
   );
-}
-
-function avatarAnimationPhase(seed: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return ((hash >>> 0) / 0x100000000) * 1.4;
 }
