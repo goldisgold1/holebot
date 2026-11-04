@@ -78,7 +78,12 @@ bun run dist:linux    # or Linux AppImage
 
 Install it, sign in with your email and access code, and your PC appears as a server your agents run on.
 
-## 5. Phones (optional)
+## 5. The agent team (optional)
+
+To start with the HoleA.I team (Chief of Staff, Producer, Analyst, Rosie and six more), import
+`deploy/team/holeai-team-import.zip`: see [TEAM-TEMPLATES.md](TEAM-TEMPLATES.md).
+
+## 6. Phones (optional)
 
 - **Any phone, in the browser:** run `bash deploy/vps/build-mobile-web.sh` on the VPS. The phone app is then
   at `https://bot.example.com/m/`.
@@ -90,8 +95,8 @@ Install it, sign in with your email and access code, and your PC appears as a se
 Some parts are for the first owner's own business systems (hole.fm, the Grok bots, the Reels board). They do
 nothing useful without those, so skip them:
 
-- `deploy/vps/setup-team.sh`, `setup-team-relay.sh`, `add-wake-hook.ts`, `switch-holefm-wakes.sh`,
-  `finish-move.sh`, `deploy/team/`
+- `deploy/vps/setup-team-relay.sh`, `add-wake-hook.ts`, `switch-holefm-wakes.sh`,
+  `finish-move.sh`, and `setup-team.sh` except `--models-only`
 - The **Reel Factories** board in the app. It links to the first owner's site and asks you to sign in there.
 - `bootstrap.sh --agents` is optional: it runs agents 24/7 on the VPS instead of your PC.
 

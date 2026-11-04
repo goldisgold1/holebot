@@ -1,7 +1,7 @@
 # OpenBot
 
 > **HoleBot:** this is HoleA.I's fork of OpenBot. To run your own copy on your own server, follow
-> [FRIEND-SETUP.md](FRIEND-SETUP.md).
+> [FRIEND-SETUP.md](FRIEND-SETUP.md). To add the HoleA.I agent team, see [TEAM-TEMPLATES.md](TEAM-TEMPLATES.md).
 
 [![CI](https://github.com/nightly-labs/openbot/actions/workflows/ci.yml/badge.svg)](https://github.com/nightly-labs/openbot/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
