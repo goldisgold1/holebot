@@ -16,6 +16,9 @@ export type RemoteConnectPhase =
   | "compatibility"
   | "first-request";
 
+/** Why an attempt ended before its first request, as a fixed word for the trace. */
+export type RemoteConnectFailure = "error" | "timeout" | "auth-timeout" | "disconnected";
+
 interface Attempt {
   readonly startedAt: number;
   readonly recorded: Set<RemoteConnectPhase>;
@@ -52,7 +55,7 @@ export class RemoteConnectTrace {
   }
 
   /** The attempt ended before its first request. */
-  fail(hostId: string, outcome: "error" | "cancelled"): void {
+  fail(hostId: string, outcome: RemoteConnectFailure | "cancelled"): void {
     const attempt = this.#attempts.get(hostId);
     if (!attempt) return;
     this.#attempts.delete(hostId);

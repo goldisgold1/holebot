@@ -265,6 +265,18 @@ const Conversation = createSimpleContext({
       },
     );
 
+    // HoleA.I: at a launch the roster comes from the saved frame and no agent is open yet
+    // (`activeAgentId` waits for the first read), but the frame already shows the last opened agent.
+    // Its cached page shows with it, before the host answers; the read above replaces it once the
+    // agent opens. An agent that is gone is dropped by the first roster read, as before.
+    createEffect(
+      () => (activeAgentId() ? "" : `${activeAgent()?.id ?? ""}\0${signedInAccount()?.id ?? ""}`),
+      (key) => {
+        const agentId = key.split("\0")[0];
+        if (agentId) untrack(() => seedCachedConversation(agentId, activeServerId()));
+      },
+    );
+
     const cacheAccount = () => signedInAccount()?.id ?? null;
 
     /** Keeps the latest page of a chat on the device, for the next open of the chat. */

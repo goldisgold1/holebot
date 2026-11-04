@@ -37,7 +37,7 @@ import type {
   RemoteInviteRecord,
   RemoteMemberRecord,
 } from "./central-auth-records";
-import type { RemoteConnectTrace } from "./remote-connect-trace";
+import type { RemoteConnectFailure, RemoteConnectTrace } from "./remote-connect-trace";
 import { transportFailure } from "./remote-server-connection-status";
 import { RemoteWorkflowError, remoteDecode, toRemoteWorkflowError } from "./remote-service-effects";
 import type { RemoteSessionCache } from "./remote-session-cache";
@@ -52,6 +52,10 @@ const MAXIMUM_TIMER_DELAY_MILLISECONDS = 2_147_483_647;
 /** The wait after a failed attempt, the same steps as the Signal sockets: 500 ms, doubled, to 30 s. */
 const CONNECT_RETRY_START_MILLISECONDS = 500;
 const CONNECT_RETRY_LIMIT_MILLISECONDS = 30_000;
+/** The limit for one attempt, from the ticket to an authenticated connection. */
+const CONNECT_TIMEOUT_MILLISECONDS = 30_000;
+/** From open data channels to an authenticated connection: two round trips and a ticket check. */
+const AUTHENTICATION_TIMEOUT_MILLISECONDS = 6_000;
 
 interface TeamWebRtcClientTransportEvents {
   connected: [hostId: string];
@@ -127,6 +131,13 @@ interface ActiveHost {
   /** Closed by `stop` with its session kept for the next run, so nothing may end that session. */
   released: boolean;
   cancelConnectionWait: (() => void) | null;
+  /**
+   * HoleA.I: called when the data channels open. Authentication takes two round trips from there,
+   * so a host that does not answer fails the attempt after a few seconds, not at the 30 s limit.
+   */
+  channelsOpened: (() => void) | null;
+  /** Why the attempt failed, as one fixed word for the local trace. */
+  failureReason: RemoteConnectFailure | null;
   expirationTimer: ReturnType<typeof setTimeout> | null;
   /** The one compatibility read of this connection that learns the host protocol. */
   protocolProbe: Deferred.Deferred<void> | null;
@@ -822,6 +833,8 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
       cancelled: false,
       released: false,
       cancelConnectionWait: null,
+      channelsOpened: null,
+      failureReason: null,
       expirationTimer: null,
       protocolProbe: null,
       authentication: null,
@@ -851,7 +864,7 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
       Effect.onExit((exit) => Deferred.done(done, exit)),
       Effect.onError(() =>
         Effect.sync(() => {
-          this.#options.connectTrace?.fail(hostId, active.cancelled ? "cancelled" : "error");
+          this.#options.connectTrace?.fail(hostId, active.cancelled ? "cancelled" : (active.failureReason ?? "error"));
           if (this.#active.get(hostId) === active) this.#active.delete(hostId);
         }),
       ),
@@ -975,6 +988,7 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
         bootstrap.signalUrl,
       );
     let cleanupConnectionWait: () => void = () => undefined;
+    let bridgeConnected = false;
     // Subscribe before bridge.connect: a bridge can deliver authentication events before it resolves.
     const connected = Deferred.makeUnsafe<void, RemoteWorkflowError>();
     {
@@ -984,20 +998,39 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
       const reject = (cause: Error) => {
         Deferred.doneUnsafe(connected, Effect.fail(new RemoteWorkflowError({ cause })));
       };
+      let authTimer: ReturnType<typeof setTimeout> | null = null;
       const cleanup = () => {
         clearTimeout(timer);
+        if (authTimer) clearTimeout(authTimer);
+        active.channelsOpened = null;
         this.off("connected", onConnected);
         this.off("error", onError);
+        this.off("disconnected", onDisconnected);
       };
       cleanupConnectionWait = cleanup;
       active.cancelConnectionWait = () => {
         cleanup();
         reject(new Error(sourceText("error.remote.connectionCancelled")));
       };
-      const timer = setTimeout(() => {
+      const fail = (reason: RemoteConnectFailure, cause: Error) => {
         cleanup();
-        reject(new Error(sourceText("error.remote.hostDidNotConnect")));
-      }, 30_000);
+        active.failureReason = reason;
+        reject(cause);
+      };
+      const timer = setTimeout(
+        () => fail("timeout", new Error(sourceText("error.remote.hostDidNotConnect"))),
+        CONNECT_TIMEOUT_MILLISECONDS,
+      );
+      // HoleA.I: after a force quit the host can still hold the last run's peer of this session. The
+      // channels open, but the host closes them or never answers the handshake. Each case ended
+      // only at the 30 s limit; now the attempt fails at once, and the retry connects.
+      active.channelsOpened = () => {
+        if (authTimer) return;
+        authTimer = setTimeout(
+          () => fail("auth-timeout", new Error(sourceText("error.remote.hostDidNotConnect"))),
+          AUTHENTICATION_TIMEOUT_MILLISECONDS,
+        );
+      };
       const onConnected = (connectedHostId: string) => {
         if (connectedHostId !== hostId) return;
         cleanup();
@@ -1005,11 +1038,16 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
       };
       const onError = (failedHostId: string, code: string, message: string) => {
         if (failedHostId !== hostId) return;
-        cleanup();
-        reject(new TeamWebRtcConnectError(code, message));
+        fail("error", new TeamWebRtcConnectError(code, message));
+      };
+      // A close posted before `bridge.connect` finished belongs to an earlier peer of this host.
+      const onDisconnected = (disconnectedHostId: string) => {
+        if (disconnectedHostId !== hostId || !bridgeConnected) return;
+        fail("disconnected", new Error(sourceText("error.remote.hostDidNotConnect")));
       };
       this.on("connected", onConnected);
       this.on("error", onError);
+      this.on("disconnected", onDisconnected);
     }
     active.authentication = {
       ticket: bootstrap.ticket,
@@ -1031,6 +1069,7 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
           peer: "client",
         }),
       );
+      bridgeConnected = true;
       yield* this.#assertCurrentEffect(hostId, active, connectedSessionId);
       yield* Deferred.await(connected);
       this.#scheduleExpiration(hostId, active);
@@ -1144,7 +1183,9 @@ export class TeamWebRtcClientTransport extends EventEmitter<TeamWebRtcClientTran
   };
 
   readonly #onConnected = (hostId: string, binding?: { localFingerprint: string; remoteFingerprint: string }): void => {
-    if (this.#active.has(hostId)) this.#options.connectTrace?.mark(hostId, "channels");
+    const active = this.#active.get(hostId);
+    if (active) this.#options.connectTrace?.mark(hostId, "channels");
+    active?.channelsOpened?.();
     void Effect.runPromise(this.#owned(this.#beginAuthenticationEffect(hostId, binding))).catch(() => undefined);
   };
   readonly #beginAuthenticationEffect = Effect.fn("TeamWebRtcClient.beginAuthentication")(function* (

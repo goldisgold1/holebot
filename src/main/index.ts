@@ -132,6 +132,9 @@ import { setIpcCallObserver } from "./trusted-ipc";
 import { UPDATE_INSTALL_TIMEOUT_MS } from "./update-service";
 import { setWindowAppearance } from "./window-appearance";
 
+// Startup marks for the local trace: the bundle has loaded, before any app setup.
+performance.mark("openbot:main-start");
+
 const logger = createOpenBotLogger("main");
 
 // Electron keeps running after both events: an unhandled rejection only prints a warning, and a
@@ -254,6 +257,7 @@ app.enableSandbox();
 if (process.platform === "win32")
   app.setAppUserModelId(app.isPackaged ? "app.openbot.desktop" : "app.openbot.desktop.dev");
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
+performance.mark("openbot:single-instance");
 // A second launch exits at once and must not write into the files of the instance that runs.
 if (hasSingleInstanceLock) {
   startMainLog(join(app.getPath("userData"), "logs"));
@@ -1451,6 +1455,17 @@ if (!hasSingleInstanceLock) {
       reconcileDynamicIsland();
       await windows.loadRenderer(mainWindow);
       performance.mark("openbot:renderer-loaded");
+      // HoleA.I: the startup marks go to the local trace too, each with its time since the process
+      // started, so a slow launch shows which step took the time. Fixed names only.
+      for (const mark of performance.getEntriesByType("mark")) {
+        if (mark.name.startsWith("openbot:"))
+          trace.record({
+            kind: "startup",
+            name: `startup:${mark.name.slice(8)}`,
+            durationMs: mark.startTime,
+            outcome: "ok",
+          });
+      }
       // `sendToRenderer` dropped the server changes made while the window loaded: the host list and
       // the connection of the selected server. The renderer can have read the list before them.
       forwardServers(remoteServers.list());

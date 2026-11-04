@@ -13,7 +13,7 @@ import { analyticsIO } from "./analytics-effects";
  * it.
  */
 export interface TraceSpan {
-  kind: "ipc" | "turn" | "crash" | "connect" | "exit";
+  kind: "ipc" | "turn" | "crash" | "connect" | "exit" | "startup";
   name: string;
   durationMs: number;
   outcome: string;
@@ -193,7 +193,15 @@ function parseLine(line: string): TraceSpan | null {
   }
   if (!isDynamicRecord(parsed)) return null;
   const { kind, name, durationMs, outcome } = parsed;
-  if (kind !== "ipc" && kind !== "turn" && kind !== "crash" && kind !== "connect" && kind !== "exit") return null;
+  if (
+    kind !== "ipc" &&
+    kind !== "turn" &&
+    kind !== "crash" &&
+    kind !== "connect" &&
+    kind !== "exit" &&
+    kind !== "startup"
+  )
+    return null;
   if (typeof name !== "string" || typeof outcome !== "string" || typeof durationMs !== "number") return null;
   return { kind, name, durationMs, outcome };
 }

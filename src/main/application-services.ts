@@ -2,6 +2,7 @@ import { isManagedRuntimeProvider } from "@openbot/contracts/agent-providers";
 import { ANALYTICS_GENERATIONS, openPanelTransport, ReportQueue } from "@openbot/telemetry";
 import { fileReportStorage } from "@openbot/telemetry/node";
 import { Effect, Fiber } from "effect";
+import { z } from "zod";
 import { toAgentRemovalFailed } from "../backend/agent/agent-removal";
 import { toHostedSiteOperationFailed } from "../backend/agent/hosted-site-coordinator";
 import { AgentApiKeys } from "../backend/agent-api-keys";
@@ -62,7 +63,7 @@ import { RemoteWorkflowError, toRemoteWorkflowError } from "./remote-service-eff
  * when - see `teardown-registry.ts` for why shutdown here is not the reverse of construction.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readdir, rm } from "node:fs/promises";
 import { homedir, hostname, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -378,6 +379,27 @@ const TEAM_FILE = "openbot-team-server-v1.json";
 /** One host per account. The v1 file above stays as the last build without accounts left it. */
 const TEAM_FILE_V2 = "openbot-team-server-v2.json";
 const REMOTE_SERVERS_FILE = "openbot-remote-servers-v1.json";
+
+const savedServerSelectionSchema = z.object({
+  activeServerId: z.string().nullish(),
+  servers: z.array(z.object({ id: z.string(), transport: z.string().nullish() })),
+});
+
+/** Whether the saved selected server is a remote WebRTC host. Any read or shape failure reads as no. */
+function selectedServerIsWebRtc(userData: string): boolean {
+  try {
+    const saved = savedServerSelectionSchema.safeParse(
+      JSON.parse(readFileSync(join(userData, REMOTE_SERVERS_FILE), "utf8")),
+    );
+    if (!saved.success) return false;
+    return saved.data.servers.some(
+      (server) => server.id === saved.data.activeServerId && server.transport === "webrtc-v2",
+    );
+  } catch {
+    return false;
+  }
+}
+
 const CENTRAL_AUTH_FILE = "openbot-central-auth-v1.bin";
 const REMOTE_SESSIONS_FILE = "openbot-remote-sessions-v1.bin";
 const LEGACY_REMOTE_DESKTOP_CREDENTIAL_FILE = "openbot-remote-desktop-credential-v1.json";
@@ -1095,6 +1117,11 @@ export async function createApplicationServices({
   teardown.push(TEARDOWN_ORDER.teamWebRtcBridge, "the team WebRTC bridge", () =>
     runCauseEffect(teamWebRtcBridge.stop()),
   );
+  // HoleA.I: when the selected server is a remote host, the hidden WebRTC window loads now, while the
+  // other services build, so the connection that starts after them does not wait the half second
+  // or more that the window takes. A failure is dropped: the connection starts the window again.
+  if (!hostedServer && !serverModeEnvironment && !localServerChild && selectedServerIsWebRtc(app.getPath("userData")))
+    void runCauseEffect(teamWebRtcBridge.start()).catch(() => undefined);
   // Only a hosted, self-hosted or container server: one unit or container holds OpenBot and every
   // agent process. The desktop app does not hold turns for memory.
   const hostMemory =
