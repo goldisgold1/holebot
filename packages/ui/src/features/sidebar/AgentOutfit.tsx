@@ -8,7 +8,7 @@
  * decoration, hidden from screen readers.
  */
 
-import { For, Show } from "solid-js";
+import { createSignal, For, onCleanup, Show } from "solid-js";
 import type { AgentWorkRole } from "./AgentWorkScene";
 import aviatorGoggles from "./outfit-items/aviator_goggles.webp";
 import beanie from "./outfit-items/beanie.webp";
@@ -190,12 +190,107 @@ const OUTFITS: Partial<Record<AgentWorkRole, Outfit>> = {
 // Every dressed agent wears the round body (Vincent's pick) in its own colour; the outfit tells roles apart.
 export const outfitBodyShape = (role: AgentWorkRole) => (OUTFITS[role] ? ("cercle" as const) : undefined);
 
+/** Where the face actually is in the 48 box: its body's box and the middle of its eyes. */
+interface FaceFit {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  eyeX: number;
+  eyeY: number;
+}
+
+// The items above were placed on the round body (x 5-44, y 11-50, eyes near 31.5, 24.5).
+const REFERENCE_FACE: FaceFit = { x: 5, y: 11, w: 39, h: 39, eyeX: 31.5, eyeY: 24.5 };
+
+/**
+ * HoleA.I (Vincent): each agent's face has its own shape (a tall pill, a wedge, ...), so the outfit is fitted to
+ * the face drawn next to it: the body's box and the eyes are read off the rendered mark.
+ */
+function measureFace(outfit: SVGSVGElement): FaceFit | undefined {
+  const box = outfit.parentElement?.getBoundingClientRect();
+  const mark = outfit.parentElement?.querySelector<SVGSVGElement>("[data-bot-mark] svg");
+  const body = mark?.querySelector<SVGUseElement>("use");
+  if (!box || !mark || !body || box.width === 0) return undefined;
+  const unit = 48 / box.width;
+  const rect = body.getBoundingClientRect();
+  if (rect.width === 0) return undefined;
+  const face = {
+    x: (rect.left - box.left) * unit,
+    y: (rect.top - box.top) * unit,
+    w: rect.width * unit,
+    h: rect.height * unit,
+  };
+  // The eyes are holes in the body's mask, in the space of the group that holds the body.
+  const group = body.parentNode;
+  const toScreen = group instanceof SVGGraphicsElement ? group.getScreenCTM() : null;
+  const eyes = [...mark.querySelectorAll<SVGPathElement>("mask path")].flatMap((path) => {
+    const b = path.getBBox();
+    if (!toScreen || b.width === 0) return [];
+    const point = new DOMPoint(b.x + b.width / 2, b.y + b.height / 2).matrixTransform(toScreen);
+    return [{ x: (point.x - box.left) * unit, y: (point.y - box.top) * unit }];
+  });
+  const middle = (axis: "x" | "y", fallback: number) =>
+    eyes.length ? eyes.reduce((sum, eye) => sum + eye[axis], 0) / eyes.length : fallback;
+  return {
+    ...face,
+    eyeX: middle("x", face.x + face.w * 0.68),
+    eyeY: middle("y", face.y + face.h * 0.35),
+  };
+}
+
+/** Moves an item from the round body onto `face`: hats ride its top, glasses its eyes, held items its lower right. */
+function fitItem(item: OutfitItem, face: FaceFit): OutfitItem {
+  const ref = REFERENCE_FACE;
+  const scale = face.w / ref.w;
+  const w = item.w * scale;
+  const h = item.h * scale;
+  const centreY = item.y + item.h / 2;
+  if (item.motion) {
+    return {
+      ...item,
+      w,
+      h,
+      x: face.x + face.w + (item.x - ref.x - ref.w) * scale,
+      y: face.y + face.h + (item.y - ref.y - ref.h) * scale,
+    };
+  }
+  if (Math.abs(centreY - ref.eyeY) < 6 && item.h < 12) {
+    return { ...item, w, h, x: face.eyeX + (item.x - ref.eyeX) * scale, y: face.eyeY + (item.y - ref.eyeY) * scale };
+  }
+  // Headwear: tall wraps (headphones, a headset) also stretch to the face's height.
+  const tall = item.h > ref.h * 0.6;
+  const vertical = tall ? face.h / ref.h : scale;
+  return {
+    ...item,
+    w,
+    h: item.h * vertical,
+    x: face.x + (item.x - ref.x) * scale,
+    y: face.y + (item.y - ref.y) * vertical,
+  };
+}
+
 /** The outfit goes on only while the agent works (Vincent): an idle agent is just its round body. */
 export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
+  const [face, setFace] = createSignal<FaceFit | undefined>();
+  let frame = 0;
+  // The mark draws its first frame after mounting, so the face is read once that frame is up.
+  const fit = (outfit: SVGSVGElement) => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setFace(measureFace(outfit)));
+    });
+  };
+  onCleanup(() => cancelAnimationFrame(frame));
+  const placed = (item: OutfitItem) => {
+    const current = face();
+    return current ? fitItem(item, current) : item;
+  };
   return (
     <Show when={props.working ? OUTFITS[props.role] : undefined}>
       {(outfit) => (
         <svg
+          ref={fit}
           class="agent-outfit"
           viewBox="0 0 48 48"
           data-role={props.role}
@@ -208,10 +303,10 @@ export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
                 class="ao-item"
                 data-motion={item.motion}
                 href={item.src}
-                x={item.x}
-                y={item.y}
-                width={item.w}
-                height={item.h}
+                x={placed(item).x}
+                y={placed(item).y}
+                width={placed(item).w}
+                height={placed(item).h}
                 preserveAspectRatio="xMidYMid meet"
               />
             )}

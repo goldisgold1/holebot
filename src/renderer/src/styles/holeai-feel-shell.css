@@ -364,3 +364,11 @@ body {
 .chat-action-card {
   max-width: min(80%, 560px, calc(100% - 82px));
 }
+
+/* HoleA.I (Vincent): a face wearing its outfit steps down and in a little, so the hat has room above it inside the
+   row; AgentOutfit then fits each item to the face as drawn. */
+.agent-row-avatar:has(> .agent-outfit) .bot-mark-face {
+  width: 82%;
+  height: 82%;
+  margin: 18% 9% 0;
+}

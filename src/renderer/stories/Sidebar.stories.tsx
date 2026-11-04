@@ -750,3 +750,36 @@ export const DeletedChats: Story = {
     deletedChannels: storyChannels.map((channel) => ({ ...channel, id: `deleted-${channel.id}`, archived: true })),
   },
 };
+
+const OUTFIT_ROLES = [
+  "Reel Worker EC13",
+  "Producer",
+  "COS Secretary",
+  "Rosie",
+  "Analyst",
+  "Strategist",
+  "Story Maker",
+  "Carousel Maker",
+  "Image Producer",
+  "Publisher",
+  "Coder",
+  "Chef",
+] as const;
+const outfitAgents = OUTFIT_ROLES.map((name, index) => ({
+  ...requireFixture(STORY_AGENTS[index % STORY_AGENTS.length], "agent"),
+  id: `outfit-${index}`,
+  avatarSeed: `outfit-${index}`,
+  name,
+  title: index === 0 ? "Spawned Reel Worker" : name,
+}));
+
+/** Every role at work, wearing its outfit: the items have to fit the face at the row's avatar size. */
+export const Outfits: Story = {
+  args: {
+    agents: outfitAgents,
+    pinnedItems: [],
+    agentStates: Object.fromEntries(outfitAgents.map((agent) => [agent.id, { kind: "working" as const }])),
+    agentMoods: Object.fromEntries(outfitAgents.map((agent) => [agent.id, "working" as const])),
+  },
+  decorators: [(Story) => <div style={{ width: "280px", height: "100vh" }}>{Story()}</div>],
+};
