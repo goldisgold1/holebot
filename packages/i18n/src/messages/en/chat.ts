@@ -2,7 +2,7 @@ import { defineMessages } from "../../message";
 
 export const messages = defineMessages("chat", {
   "chat.activity.workingOnIt": "Working on it…",
-  "chat.activity.thinking": "Thinking",
+  "chat.activity.thinking": "Thinking it through…",
   "chat.activity.connectingDots": "Mulling it over…",
   "chat.activity.checkingDetails": "Putting it together…",
   "chat.activity.puttingTogether": "Getting it done…",

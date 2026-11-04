@@ -142,8 +142,8 @@ export function AgentActivityIndicator(props: {
   const label = () => {
     const provider = props.waitingFor;
     if (provider) return t("chat.activity.waitingFor", { provider });
-    // HoleA.I: one plain word while the agent works, as in a messenger, instead of a rotating phrase.
-    return props.detail ?? t("chat.activity.thinking");
+    // HoleA.I (from Vincent's bot app): the step the agent is on, else this turn's phrase, such as "Thinking it through…".
+    return props.detail ?? t(agentActivityLabelKey(props.label));
   };
   const statusLabel = () => {
     const name = props.agent?.name ?? t("chat.activity.agentFallback");
