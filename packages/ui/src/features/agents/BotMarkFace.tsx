@@ -78,6 +78,8 @@ export function BotMarkFace(props: {
       followPointer: props.followPointer,
       playing: props.playing,
       maxFrameRate: 30,
+      // .bot-mark-face is position: relative in CSS.
+      hostPositioned: true,
       ...(props.eyeColor ? { eyeColor: props.eyeColor } : {}),
     });
     props.handle?.(mark);

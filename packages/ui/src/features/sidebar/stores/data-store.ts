@@ -10,8 +10,8 @@ import type { AgentProfile } from "../../../data";
 import { currentText } from "../../../text";
 import { teamMemberName } from "../../team/TeamPersonAvatar";
 import { sidebarPinnedItemKey } from "../sidebar-pins";
-import { unreadOnly } from "../sidebar-unread-filter";
 import type { ResolvedPinnedItem, SidebarChatItem, SidebarProps } from "../sidebar-types";
+import { unreadOnly } from "../sidebar-unread-filter";
 
 type PinnedItemSource = SidebarProps["agents"][number] | NonNullable<SidebarProps["channels"]>[number];
 
@@ -128,8 +128,7 @@ export function createSidebarDataStore(deps: {
   const filteredChannels = createMemo(() =>
     listedChannels().filter(
       (channel) =>
-        !chatWaits(channel.id) &&
-        (!unreadOnly() || channel.unreadCount > 0 || channel.id === props.activeChannelId),
+        !chatWaits(channel.id) && (!unreadOnly() || channel.unreadCount > 0 || channel.id === props.activeChannelId),
     ),
   );
   function sortByLayoutOrder<T extends { id: string }>(items: T[]): T[] {

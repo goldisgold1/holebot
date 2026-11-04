@@ -131,6 +131,8 @@ export interface BotMarkOptions {
   emphasized?: boolean;
   /** Always draw a still frame (as with prefers-reduced-motion). Default false. */
   isStatic?: boolean;
+  /** The host is already positioned by its own CSS, so mounting skips the computed-style read. */
+  hostPositioned?: boolean;
 }
 
 export interface BotMarkHandle {

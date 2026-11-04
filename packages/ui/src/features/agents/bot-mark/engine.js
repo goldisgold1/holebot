@@ -11262,7 +11262,8 @@ export function mountBotMark(host, opts) {
   // scaled so the body (drawn at Ea of the canvas) fills `fill` of the host.
   let restorePosition = null;
   const view = doc.defaultView;
-  const position = view?.getComputedStyle ? view.getComputedStyle(host).position : host.style.position;
+  // A host its own CSS positions skips the computed-style read, which forces a style pass on each mount.
+  const position = o.hostPositioned ? `relative` : view?.getComputedStyle ? view.getComputedStyle(host).position : host.style.position;
   if (position === `` || position === `static`) {
     restorePosition = host.style.position;
     host.style.position = `relative`;
