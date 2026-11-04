@@ -168,30 +168,58 @@ export function ServerConnectionNotice(props: ServerConnectionNoticeProps) {
       )}
     </Show>
   );
+  // HoleA.I (from Vincent's bot app): a plain connect, load or reconnect shows no screen and no banner.
+  // A workspace on screen keeps working under a small dot, and an empty one waits a moment before the
+  // crew shows, so a fast connection shows nothing at all. A failure, a wait or a sleep still explains itself.
+  const quiet = () => QUIET_PHASES.has(props.phase) && !props.issue && !props.detail && !props.remainingSeconds;
+  const [waitedLong, setWaitedLong] = createSignal(false);
+  createEffect(
+    () => props.initial && quiet(),
+    (waiting) => {
+      if (!waiting) return;
+      const timer = setTimeout(() => setWaitedLong(true), QUIET_LOADING_DELAY_MS);
+      return () => clearTimeout(timer);
+    },
+  );
   return (
-    <Show
-      when={props.initial}
-      fallback={
-        <section class="server-connection-notice" role="status" aria-live="polite">
-          <div>
-            <p>{title()}</p>
-            <p class="server-connection-detail">{detail()}</p>
-            <ErrorReference reference={props.reference} />
-            {upsell()}
-          </div>
-          <div class="server-connection-actions">{actions()}</div>
-        </section>
-      }
-    >
-      <AppLoadingScreen
-        label={title()}
-        title={title()}
-        detail={detail()}
-        reference={props.reference ?? null}
-        actions={actions()}
-        footer={upsell()}
-      />
+    <Show when={!quiet() || (props.initial && waitedLong())} fallback={<QuietConnectionDot label={title()} />}>
+      <Show
+        when={props.initial}
+        fallback={
+          <section class="server-connection-notice" role="status" aria-live="polite">
+            <div>
+              <p>{title()}</p>
+              <p class="server-connection-detail">{detail()}</p>
+              <ErrorReference reference={props.reference} />
+              {upsell()}
+            </div>
+            <div class="server-connection-actions">{actions()}</div>
+          </section>
+        }
+      >
+        <AppLoadingScreen
+          label={title()}
+          title={title()}
+          detail={detail()}
+          reference={props.reference ?? null}
+          actions={actions()}
+          footer={upsell()}
+        />
+      </Show>
     </Show>
+  );
+}
+
+const QUIET_PHASES: ReadonlySet<ServerWorkspacePhase> = new Set(["connecting", "loading", "reconnecting"]);
+/** Below this wait, a load with nothing to show yet shows nothing either. */
+const QUIET_LOADING_DELAY_MS = 400;
+
+/** The whole connection feedback while the workspace connects on its own: a dot, and its name for a reader. */
+function QuietConnectionDot(props: { label: string }) {
+  return (
+    <span class="server-connection-dot" role="status" aria-live="polite">
+      <span class="sr-only">{props.label}</span>
+    </span>
   );
 }
 
@@ -200,7 +228,8 @@ function formatElapsed(seconds: number): string {
 }
 
 // A history that loads faster than this does not cover the chat, so a fast switch does not flash.
-const CONVERSATION_LOADING_DELAY_MS = 150;
+// HoleA.I (from Vincent's bot app): 400 ms, and a chat with a cached page never waits at all.
+const CONVERSATION_LOADING_DELAY_MS = 400;
 
 export interface ConversationLoadNoticeProps {
   /** The agent whose history loads. */

@@ -375,6 +375,30 @@
   gap: var(--openbot-space-2);
   -webkit-app-region: no-drag;
 }
+/* HoleA.I (from Vincent's bot app): the only sign of a connection in progress, at the top corner of the panes. */
+.server-connection-dot {
+  position: absolute;
+  top: var(--openbot-space-3);
+  right: var(--openbot-space-3);
+  z-index: 2;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--openbot-text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: server-connection-dot-pulse 1.6s ease-in-out infinite;
+}
+@keyframes server-connection-dot-pulse {
+  50% {
+    opacity: 0.15;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .server-connection-dot {
+    animation: none;
+  }
+}
 .server-connection-content {
   position: relative;
   min-height: 0;

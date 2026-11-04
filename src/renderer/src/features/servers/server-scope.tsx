@@ -24,6 +24,7 @@ import { useAgents } from "../agents/agents-context";
 import { useBrowserTabs } from "../browser/browser-context";
 import { useChannels } from "../channels/channels-context";
 import { useConversation } from "../conversation/conversation-context";
+import { conversationPageCache } from "../conversation/conversation-page-cache";
 import { useDirectMessages } from "../conversation/direct-messages-context";
 import { useSetup } from "../onboarding/onboarding-context";
 import { useSidebar } from "../sidebar/sidebar-context";
@@ -381,7 +382,9 @@ const ServerScope = createSimpleContext({
     createEffect(
       () => centralAuth().status === "signed_out",
       (signedOut) => {
-        if (signedOut) deleteRemoteWorkspaceFrames(null);
+        if (!signedOut) return;
+        deleteRemoteWorkspaceFrames(null);
+        conversationPageCache.deleteAll(null);
       },
     );
     createEffect(
@@ -394,6 +397,11 @@ const ServerScope = createSimpleContext({
         if (!key) return;
         const [account = "", ...serverIds] = key.split("\0");
         deleteRemoteWorkspaceFrames(account, serverIds);
+        // The local server keeps its chats too. Its id is in the list, as a remote server's is.
+        conversationPageCache.deleteAll(
+          account,
+          servers().map((server) => server.id),
+        );
       },
     );
     createEffect(
@@ -408,6 +416,10 @@ const ServerScope = createSimpleContext({
         if (!key) return;
         const [account = "", serverId = ""] = key.split("\0");
         deleteRemoteWorkspaceFrame(account, serverId);
+        conversationPageCache.deleteAll(
+          account,
+          untrack(servers).flatMap((server) => (server.id === serverId ? [] : [server.id])),
+        );
       },
     );
 

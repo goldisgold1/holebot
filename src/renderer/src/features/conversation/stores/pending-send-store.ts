@@ -39,6 +39,33 @@ export interface PendingSend {
    * starts it, so for a short time the chat keeps this row and the queue panel does not show it.
    */
   starting: boolean;
+  /**
+   * HoleA.I (from Vincent's bot app): sent into the running turn, by an agent in steer mode or by Steer.
+   * The message joins the chat, so the chat shows it from the moment it is sent, as the bot app does, and
+   * the queue panel does not show it a second time while the host steers it in.
+   */
+  steered: boolean;
+}
+
+/** Where the host shows its messages now: the transcript, the queue panel, and the deliveries that ended. */
+export interface HostDrawnIds {
+  transcriptIds: ReadonlySet<string>;
+  panelIds: ReadonlySet<string>;
+  endedIds: ReadonlySet<string>;
+}
+
+/** Whether the host's own row of a sent message is on screen, so its pending row can go. */
+export function pendingSendDrawn(send: PendingSend, drawn: HostDrawnIds): boolean {
+  const id = send.messageId;
+  if (send.state !== "sent" || id === null) return false;
+  if (drawn.transcriptIds.has(id) || drawn.endedIds.has(id)) return true;
+  return !send.steered && drawn.panelIds.has(id);
+}
+
+/** Whether the chat shows a pending row, by its own rules: a send for the queue panel waits there. */
+export function pendingSendShownInChat(send: PendingSend, drawn: HostDrawnIds, failedBefore: boolean): boolean {
+  if (pendingSendDrawn(send, drawn)) return false;
+  return !send.queued || send.steered || failedBefore;
 }
 
 export type DeliverPendingSend = (send: PendingSend) => Promise<SendMessageResult>;
@@ -123,13 +150,14 @@ export function createPendingSendStore() {
   function add(
     target: ConversationTarget,
     input: Pick<PendingSend, "draft" | "text" | "retrySafe"> &
-      Partial<Pick<PendingSend, "voiceRecordingDraftId" | "queued">>,
+      Partial<Pick<PendingSend, "voiceRecordingDraftId" | "queued" | "steered">>,
     deliver: DeliverPendingSend,
   ): void {
     const key = composerDraftKey(target);
     const send: PendingSend = {
       voiceRecordingDraftId: null,
       queued: false,
+      steered: false,
       ...input,
       starting: false,
       clientMessageId: crypto.randomUUID(),
@@ -176,11 +204,10 @@ export function createPendingSendStore() {
   }
 
   /** Drops the sent rows whose host message is now drawn, in the transcript or the queue panel. */
-  function settle(target: ConversationTarget, drawnIds: ReadonlySet<string>): void {
+  function settle(target: ConversationTarget, drawnIds: HostDrawnIds): void {
     const key = composerDraftKey(target);
     const queue = queues.get(key) ?? [];
-    const drawn = (send: PendingSend) =>
-      send.state === "sent" && send.messageId !== null && drawnIds.has(send.messageId);
+    const drawn = (send: PendingSend) => pendingSendDrawn(send, drawnIds);
     if (!queue.some(drawn)) return;
     queues.set(
       key,

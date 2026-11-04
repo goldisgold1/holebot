@@ -29,6 +29,7 @@ import {
 } from "@/features/auth/api/mobile-auth";
 import { deleteAgentAvatars } from "@/features/workspace/model/agent-avatar-cache";
 import { type QueryScope, queryKeys } from "@/features/workspace/model/query-keys";
+import { deleteWorkspaceCaches } from "@/features/workspace/model/workspace-cache-files";
 import { queryClient } from "@/shared/lib/query-client";
 import { untilForeground } from "@/shared/lib/until-foreground";
 import { useAppForeground } from "@/shared/lib/use-app-foreground";
@@ -145,6 +146,7 @@ export function MobileSessionProvider({ children }: PropsWithChildren) {
     if (!current) return;
     await mobileAnalytics.operation("account_sign_out", {}, () => logoutMobileSession(current));
     deleteAgentAvatars();
+    deleteWorkspaceCaches();
     if (sessionRef.current?.sessionToken === current.sessionToken && sessionRef.current?.apiUrl === current.apiUrl) {
       setCurrentSession(null);
     }

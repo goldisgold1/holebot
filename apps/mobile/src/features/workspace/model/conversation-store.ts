@@ -26,8 +26,33 @@ export class MobileConversationStore {
   #latestPages = new Map<string, { firstId: string; pageInfo: ConversationPage["pageInfo"] }>();
   /** Chats whose latest page loaded on the current connection, so events keep them up to date. */
   #upToDate = new Set<string>();
+  /** Chats shown from the phone's cache. Their first latest page replaces them, with no merge. */
+  #seeded = new Set<string>();
+  #cacheTried = new Set<string>();
 
-  constructor(private schedule: (flush: () => void) => () => void) {}
+  constructor(
+    private schedule: (flush: () => void) => () => void,
+    /** Each published chat, and `undefined` when one goes, for the phone's cache. */
+    private onChange?: (agentId: string, entry: MobileConversation | undefined) => void,
+    private readCached?: (agentId: string) => ConversationPage | null,
+  ) {}
+
+  /**
+   * HoleA.I (from Vincent's bot app): puts a chat's cached latest messages in place before its first
+   * read, so the chat opens on them. It runs while a screen renders, so it tells no listener: the
+   * screen reads the entry right after. The revision is unknown, so any read replaces the window.
+   */
+  seedCached(agentId: string) {
+    if (this.#entries.has(agentId) || this.#cacheTried.has(agentId) || !this.readCached) return;
+    this.#cacheTried.add(agentId);
+    const page = this.readCached(agentId);
+    if (!page?.messages.length || page.agentId !== agentId) return;
+    this.#seeded.add(agentId);
+    const firstId = page.messages[0]?.id;
+    if (firstId) this.#latestPages.set(agentId, { firstId, pageInfo: page.pageInfo });
+    this.#entries.set(agentId, { ...page, revision: -1, olderLoading: false, olderError: false, detached: false });
+    this.#indices.set(agentId, new Map(page.messages.map((message, index) => [message.id, index])));
+  }
 
   get(agentId: string) {
     return this.#entries.get(agentId);
@@ -76,14 +101,21 @@ export class MobileConversationStore {
         this.#listeners.delete(agentId);
         const entry = this.get(agentId);
         // A window around a searched message is not the chat that the next reader opens.
-        if (entry?.detached) this.remove(agentId);
+        if (entry?.detached) this.#drop(agentId);
         else if (entry) this.#publish(agentId, entry);
       }
     };
   }
 
+  /** Drops a chat for good, from the phone's cache as well. */
   remove(agentId: string) {
+    this.#drop(agentId);
+    this.onChange?.(agentId, undefined);
+  }
+
+  #drop(agentId: string) {
     this.#entries.delete(agentId);
+    this.#seeded.delete(agentId);
     this.#latestPages.delete(agentId);
     this.#upToDate.delete(agentId);
     this.#indices.delete(agentId);
@@ -112,7 +144,7 @@ export class MobileConversationStore {
   #publish(agentId: string, next: MobileConversation, reindex = true) {
     const entry = this.isObserved(agentId) ? next : this.#trim(agentId, next);
     if (!entry) {
-      this.remove(agentId);
+      this.#drop(agentId);
       return;
     }
     const current = this.get(agentId);
@@ -121,6 +153,7 @@ export class MobileConversationStore {
     if (reindex || entry !== next)
       this.#indices.set(agentId, new Map(entry.messages.map((message, index) => [message.id, index])));
     for (const listener of this.#listeners.get(agentId) ?? []) listener();
+    this.onChange?.(agentId, entry);
   }
 
   /**
@@ -149,7 +182,9 @@ export class MobileConversationStore {
     const current = this.get(page.agentId);
     if (cursor && (!current || current.threadId !== page.threadId || current.pageInfo.olderCursor !== cursor)) return;
     if (!cursor && current && page.revision < current.revision) return;
-    const sameThread = current?.threadId === page.threadId;
+    // A cached window does not join a page: the page is the chat now.
+    const seeded = !cursor && this.#seeded.delete(page.agentId);
+    const sameThread = !seeded && current?.threadId === page.threadId;
     const indices = sameThread ? this.#indices.get(page.agentId) : undefined;
     const overlap = page.messages.find((message) => indices?.has(message.id));
     // A window around a searched message stays until a latest page meets it or the reader asks for the latest messages.

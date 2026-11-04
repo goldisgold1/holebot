@@ -50,7 +50,11 @@ export function MobileChatView({
     (notify: () => void) => conversationStore.subscribe(agent.id, notify),
     [agent.id, conversationStore],
   );
-  const snapshot = useCallback(() => conversationStore.get(agent.id), [agent.id, conversationStore]);
+  // HoleA.I (from Vincent's bot app): a chat the phone kept opens on its cached messages while it reads.
+  const snapshot = useCallback(() => {
+    conversationStore.seedCached(agent.id);
+    return conversationStore.get(agent.id);
+  }, [agent.id, conversationStore]);
   const stopTurn = useCallback(
     (turnId: string) => workspace().interruptTurn(agent.id, turnId, agent.serverId),
     [agent.id, agent.serverId, workspace],

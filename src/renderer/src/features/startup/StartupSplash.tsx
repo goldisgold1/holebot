@@ -9,6 +9,9 @@ const EXIT_LIMIT_MS = 1500;
 const EXIT_ANIMATION = "startup-splash-exit";
 // The splash does not fade before the eyes are drawn, so a fast start does not show a half-drawn logo.
 const INTRO_ANIMATION = "startup-splash-eye-draw";
+// HoleA.I (from Vincent's bot app): the window opens on the app, not on a logo. The logo shows only when
+// the start takes longer than this, and an app ready before then ends the splash with no fade.
+const REVEAL_DELAY_MS = 400;
 
 /** The sum of the segment lengths of an SVG `points` list, in the mark's own units. */
 function strokeLength(points: string): number {
@@ -54,7 +57,8 @@ export function StartupSplash(props: StartupSplashProps) {
   let exitTimer: ReturnType<typeof setTimeout> | undefined;
   let exited = false;
   const [introDone, setIntroDone] = createSignal(false);
-  const exiting = () => props.ready && introDone();
+  const [revealed, setRevealed] = createSignal(false);
+  const exiting = () => props.ready && (introDone() || !revealed());
 
   function finishExit(): void {
     if (exited) return;
@@ -78,7 +82,21 @@ export function StartupSplash(props: StartupSplashProps) {
     },
   );
 
+  createEffect(
+    () => props.ready,
+    (ready) => {
+      if (ready) return;
+      const timer = setTimeout(() => setRevealed(true), REVEAL_DELAY_MS);
+      return () => clearTimeout(timer);
+    },
+  );
+
   createEffect(exiting, (exit) => {
+    // A splash that never showed its logo has nothing to fade.
+    if (exit && !revealed()) {
+      queueMicrotask(finishExit);
+      return;
+    }
     // Without the stylesheet, or in a test DOM, the exit does not animate: end the splash now.
     if (exit && root && !getComputedStyle(root).animationName.includes(EXIT_ANIMATION)) queueMicrotask(finishExit);
   });
@@ -95,6 +113,7 @@ export function StartupSplash(props: StartupSplashProps) {
       }}
       class="startup-splash"
       data-phase={exiting() ? "exit" : "loading"}
+      data-revealed={revealed() ? "true" : "false"}
       role="status"
       aria-label={t("app.loading")}
       aria-busy={exiting() ? "false" : "true"}

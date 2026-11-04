@@ -25,6 +25,7 @@ import { usePlatform } from "../../platform";
 import { createScopeGuard } from "../../scope-lifetime";
 import { createSimpleContext } from "../../simple-context";
 import { useTurns } from "../../turns";
+import { useAuth } from "../account/account-context";
 import { useAgentReadTracking } from "../agents/agent-read-tracking";
 import { appendLatestRuntimeMessages, attentionKey } from "../agents/agent-runtime-snapshot";
 import { useAgents } from "../agents/agents-context";
@@ -41,6 +42,7 @@ import {
   promptRequestKey,
 } from "./conversation-keys";
 import { mergeConversationPage, missingReplyOriginals, windowedSnapshotMessages } from "./conversation-merge";
+import { conversationPageCache, createConversationPrefetcher } from "./conversation-page-cache";
 import { conversationPort } from "./conversation-port";
 import {
   decideAgentAutoRead,
@@ -113,6 +115,7 @@ const Conversation = createSimpleContext({
     const windowPage = useWindowPage();
     const { appFocused, chatWindow } = usePlatform();
     const { activeServerId, activeServer } = useServers();
+    const { signedInAccount } = useAuth();
     const { agentChatsToMarkRead, agentChatsToRetryRead, autoReadAgentMessages } = useAgentReadTracking();
     const scopeIsCurrent = createScopeGuard();
     const { activeDirectMemberId } = useDirectMessages();
@@ -200,6 +203,8 @@ const Conversation = createSimpleContext({
         openRevision: agentChatOpenRevision(),
         serverState: activeServer()?.state,
         sequence: activeServer()?.connectionSequence,
+        // A saved account restores after the first open at a cold start; the cached page then shows.
+        account: signedInAccount()?.id,
       }),
       ({ agentId }) => {
         if (!agentId) return;
@@ -208,11 +213,15 @@ const Conversation = createSimpleContext({
         const pageRequest = (conversationPageRequests.get(agentId) ?? 0) + 1;
         conversationPageRequests.set(agentId, pageRequest);
         const server = untrack(activeServer);
+        // HoleA.I (from Vincent's bot app): the chat shows its cached latest page at once, also while
+        // the server still connects, and the fresh page below replaces it.
+        untrack(() => seedCachedConversation(agentId, serverId));
         if (server?.kind === "remote" && server.state !== "online") return;
         updateConversation(agentId, (conversation) => {
           conversation.loading = true;
           conversation.loadError = null;
         });
+        prefetcher.noteRead(agentId);
         void conversationPort()
           .agent.readConversationPage({ agentId, anchor: { type: "latest" }, limit: 50 }, serverId)
           .then((page) => {
@@ -220,6 +229,7 @@ const Conversation = createSimpleContext({
             updateConversation(agentId, (conversation) => {
               conversation.loading = false;
             });
+            rememberPage(page, serverId);
             const pageApplied = applyConversationPage(page, "replace", "latest");
             if (!pageApplied) {
               if (agentChatsToMarkRead.has(trackingKey)) {
@@ -254,6 +264,86 @@ const Conversation = createSimpleContext({
           });
       },
     );
+
+    const cacheAccount = () => signedInAccount()?.id ?? null;
+
+    /** Keeps the latest page of a chat on the device, for the next open of the chat. */
+    function rememberPage(page: ConversationPage, serverId: string): void {
+      const account = untrack(cacheAccount);
+      if (account) conversationPageCache.remember(account, serverId, page);
+    }
+
+    /** Shows the cached page of a chat that has none loaded. It moves no read state and no turn. */
+    function seedCachedConversation(agentId: string, serverId: string): void {
+      if (conversations[agentId]?.loaded) return;
+      const account = cacheAccount();
+      const page = account ? conversationPageCache.read(account, serverId, agentId) : null;
+      if (!page) return;
+      const mapped = toAgentMessages(page.messages, agentId);
+      updateConversation(agentId, (conversation) => {
+        if (conversation.loaded) return;
+        const cachedIds = new Set(mapped.map((message) => message.id));
+        // A live message that came before the open stays after the cached ones.
+        const live = conversation.messages.filter((message) => !cachedIds.has(message.id));
+        conversation.messages = [
+          ...mapped.map((message) => createStoredMessage({ ...message, animate: false })),
+          ...live,
+        ];
+        conversation.references = Object.fromEntries(
+          Object.entries(page.references).map(([id, message]) => [id, toAgentMessage(message, agentId)]),
+        );
+        conversation.page = page.pageInfo;
+        conversation.windowMode = "latest";
+        conversation.loaded = true;
+      });
+    }
+
+    // HoleA.I (from Vincent's bot app): as the bot app warms the chats of its sidebar, the latest pages
+    // of the first agents load in the background, two at a time, and a pointer on a row loads its chat.
+    const prefetcher = createConversationPrefetcher({
+      read: async (agentId) => {
+        const serverId = untrack(activeServerId);
+        if (!untrack(cacheAccount)) return;
+        const page = await conversationPort().agent.readConversationPage(
+          { agentId, anchor: { type: "latest" }, limit: 50 },
+          serverId,
+        );
+        if (scopeIsCurrent() && untrack(activeServerId) === serverId) rememberPage(page, serverId);
+      },
+    });
+    onCleanup(() => prefetcher.dispose());
+    const PREFETCHED_AGENTS = 8;
+    createEffect(
+      () => {
+        const server = activeServer();
+        if (chatWindow || !server || server.state !== "online" || !cacheAccount()) return "";
+        const agents = agentList();
+        // Unread chats first: they are the ones the user opens next.
+        const unread = agents.filter((agent) => (conversations[agent.id]?.read?.unreadCount ?? 0) > 0);
+        return [...new Set([...unread, ...agents].map((agent) => agent.id))]
+          .filter((agentId) => !conversations[agentId]?.loaded)
+          .slice(0, PREFETCHED_AGENTS)
+          .join(" ");
+      },
+      (ids) => {
+        if (ids) prefetcher.request(ids.split(" "));
+      },
+    );
+    if (!chatWindow && typeof document !== "undefined") {
+      const warmRow = (event: Event) => {
+        const row =
+          event.target instanceof Element ? event.target.closest<HTMLElement>(".agent-row[data-agent-id]") : null;
+        const agentId = row?.dataset.agentId;
+        if (!agentId || conversations[agentId]?.loaded || activeServer()?.state !== "online") return;
+        prefetcher.request([agentId], true);
+      };
+      document.addEventListener("pointerover", warmRow, { passive: true });
+      document.addEventListener("pointerdown", warmRow, { passive: true });
+      onCleanup(() => {
+        document.removeEventListener("pointerover", warmRow);
+        document.removeEventListener("pointerdown", warmRow);
+      });
+    }
 
     function initializeConversation(agentId: string): void {
       updateConversation(agentId, (conversation) => {
@@ -760,6 +850,7 @@ const Conversation = createSimpleContext({
         limit: 50,
       });
       if (!scopeIsCurrent() || conversationPageRequests.get(agentId) !== request) return;
+      rememberPage(page, activeServerId());
       applyConversationPage(page, "replace", "latest");
     }
 

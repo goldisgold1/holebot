@@ -102,6 +102,20 @@ export function createChannelsController(env: ChannelsEnvironment) {
   let refreshId = 0;
   let failedCommand: ChannelCommand | null = null;
   const readThrough = new Map<string, number>();
+  /**
+   * HoleA.I (from Vincent's bot app): the last page of the channels opened in this scope, so a channel
+   * opens on what it showed last while its fresh page loads. In memory only, for the latest few.
+   */
+  const recentPages = new Map<string, ChannelPage>();
+  const RECENT_PAGES = 12;
+  function rememberPage(page: ChannelPage): void {
+    recentPages.delete(page.channel.id);
+    recentPages.set(page.channel.id, page);
+    for (const channelId of recentPages.keys()) {
+      if (recentPages.size <= RECENT_PAGES) break;
+      recentPages.delete(channelId);
+    }
+  }
 
   const supported = env.supported;
   /**
@@ -160,9 +174,12 @@ export function createChannelsController(env: ChannelsEnvironment) {
     const account = env.scopeKey();
     const selected = selectedOverride === undefined ? state.selectedId : selectedOverride;
     try {
+      // The page is read beside the list, not after it: an open waits for one round trip, not two.
+      const pageRead = selected === null ? null : env.port().agent.readChannel({ channelId: selected });
+      pageRead?.catch(() => undefined);
       const channels = await env.port().agent.listChannels();
       const selectedExists = selected !== null && channels.some((channel) => channel.id === selected);
-      const page = selectedExists ? await env.port().agent.readChannel({ channelId: selected }) : null;
+      const page = selectedExists && pageRead ? await pageRead : null;
       if (disposed || account !== env.scopeKey() || id !== refreshId || selected !== state.selectedId) return;
       env.onList?.(channels, account);
       setState((state) => {
@@ -183,6 +200,7 @@ export function createChannelsController(env: ChannelsEnvironment) {
           Object.assign(state.page, { channel: page.channel, throughSequence: page.throughSequence });
           if (merged.takeFetchedCursor) takeOlderWindow(state.page, page);
         } else state.page = page;
+        if (page) rememberPage(page);
         state.loading = false;
         if (!failedCommand) state.error = null;
       });
@@ -219,7 +237,12 @@ export function createChannelsController(env: ChannelsEnvironment) {
     env.writeSelection(channelId);
     flush(() =>
       setState((state) => {
-        Object.assign(state, { selectedId: channelId, page: null, editing: null, loading: true });
+        Object.assign(state, {
+          selectedId: channelId,
+          page: recentPages.get(channelId) ?? null,
+          editing: null,
+          loading: true,
+        });
       }),
     );
     await refreshAfter();

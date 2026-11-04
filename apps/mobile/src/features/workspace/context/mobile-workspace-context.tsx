@@ -1,5 +1,6 @@
 import {
   type AgentEvent,
+  type ChannelSummary,
   type CreateAgentInput,
   canAdministerServer,
   isQueuedMessageReceipt,
@@ -168,6 +169,8 @@ import { applyBrowserEvent, syncEventQueries } from "@/features/workspace/model/
 import { runTeamRequest } from "@/features/workspace/model/team-request";
 import { trustedHostKeys } from "@/features/workspace/model/trusted-host-keys";
 import { appendTurnStepLine, latestThoughtId } from "@/features/workspace/model/turn-step-lines";
+import { chatsToPrefetch } from "@/features/workspace/model/workspace-cache";
+import { createWorkspaceCacheFiles } from "@/features/workspace/model/workspace-cache-files";
 import {
   decodeAgent,
   decodeAgentSummaries,
@@ -209,6 +212,7 @@ export type {
 
 const NO_IDS: string[] = [];
 const NO_AGENTS: MobileAgent[] = [];
+const NO_SERVERS: MobileServer[] = [];
 /** The longest that the servers which are not selected wait for the selected one on a return to the app. */
 const OTHER_SERVERS_RETURN_DELAY_MS = 3_000;
 /** How long the app waits at start for the first server before it opens a server that is online. */
@@ -284,19 +288,31 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
       }),
     [session.apiUrl, session.sessionToken, session.user.id, session.host],
   );
+  // HoleA.I (from Vincent's bot app): the last known workspace shows at once, and the host replaces it.
+  const cacheFiles = useMemo(
+    () => createWorkspaceCacheFiles(session.apiUrl, session.user.id),
+    [session.apiUrl, session.user.id],
+  );
+  useEffect(() => () => cacheFiles.dispose(), [cacheFiles]);
+  const [cached] = useState(() => cacheFiles.readSnapshot());
+  const saveSnapshotSoon = useRef<() => void>(() => undefined);
+  /** The account directory listed the servers, so their connections may start. */
+  const [directoryListed, setDirectoryListed] = useState(false);
   const connections = useRef(new Map<string, ServerConnectionHandle>());
   const [connectionWaits] = useState(() => new ConnectionWaits());
   const loadGeneration = useRef(0);
   const directoryGeneration = useRef(0);
   const foreground = useAppForeground();
-  const [servers, setServers] = useState<MobileServer[]>([]);
+  const [servers, setServers] = useState<MobileServer[]>(() => cached?.servers ?? []);
   const [serverDirectoryState, setServerDirectoryState] = useState<MobileServerDirectoryState>("loading");
   const [serverDirectoryError, setServerDirectoryError] = useState<string | null>(null);
   const serversRef = useRef(servers);
   serversRef.current = servers;
   const [sidebarByServer, setSidebarByServer] = useState<
     Record<string, { layout: SidebarLayoutSnapshot | null; error: string | null }>
-  >({});
+  >(() =>
+    Object.fromEntries(Object.entries(cached?.sidebar ?? {}).map(([id, layout]) => [id, { layout, error: null }])),
+  );
   const applySidebarLayout = useCallback((serverId: string, layout: SidebarLayoutSnapshot) => {
     if (removedServers.current.has(serverId)) return;
     setSidebarByServer((current) => {
@@ -305,11 +321,17 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
       return { ...current, [serverId]: { layout, error: null } };
     });
   }, []);
-  const [agents, setAgents] = useState<MobileAgent[]>([]);
+  const [agents, setAgents] = useState<MobileAgent[]>(() => cached?.agents ?? []);
   const agentsRef = useRef(agents);
   agentsRef.current = agents;
   // Keep former agent IDs too, so leaving also removes cached chats of deleted agents.
-  const serverAgentIds = useRef(new Map<string, Set<string>>());
+  const [cachedAgentIds] = useState(() => {
+    const byServer = new Map<string, Set<string>>();
+    for (const agent of cached?.agents ?? [])
+      byServer.set(agent.serverId, (byServer.get(agent.serverId) ?? new Set<string>()).add(agent.id));
+    return byServer;
+  });
+  const serverAgentIds = useRef(cachedAgentIds);
   const removedServers = useRef(new Set<string>());
   const readRefresh = useMemo(() => createRemoteReadRefresh(), []);
   const serverCapabilities = useRef(new Map<string, readonly string[]>());
@@ -325,11 +347,18 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
   activeServerIdRef.current = activeServerId;
   const conversationStore = useMemo(
     () =>
-      new MobileConversationStore((flush) => {
-        const frame = requestAnimationFrame(flush);
-        return () => cancelAnimationFrame(frame);
-      }),
-    [],
+      new MobileConversationStore(
+        (flush) => {
+          const frame = requestAnimationFrame(flush);
+          return () => cancelAnimationFrame(frame);
+        },
+        (agentId, entry) => {
+          if (!entry) cacheFiles.forgetConversation(agentId);
+          else if (!entry.detached) cacheFiles.saveConversation(entry);
+        },
+        (agentId) => cacheFiles.readConversation(agentId),
+      ),
+    [cacheFiles],
   );
   useEffect(() => () => conversationStore.dispose(), [conversationStore]);
   const [liveState] = useState(() => new LiveWorkspaceStore());
@@ -454,6 +483,7 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
           serverFromHost(host, serverKind(host.hostId, session.host?.hostId), previousServers.get(host.hostId)),
         );
       });
+      setDirectoryListed(true);
       setActiveServerId((current) =>
         hosts.some((host) => host.hostId === current)
           ? current
@@ -579,9 +609,11 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
 
   /** The open channels of each server that the routine calendar last read its owners from. */
   const calendarChannels = useRef(new Map<string, string>());
-  const channelStore = useMemo(
-    () =>
-      new MobileChannelStore(request, (serverId, channels) => {
+  const channelStore = useMemo(() => {
+    const store = new MobileChannelStore(
+      request,
+      (serverId, channels) => {
+        saveSnapshotSoon.current();
         // HoleA.I: group chat mutes follow the chats' threads, and teammates' messages notify.
         refreshMutedThreads(serverId, channels);
         notifyGroupChatPeople(serverId, channels);
@@ -612,10 +644,28 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
             currentText().t("mobile.workspace.alert.preferencesBody"),
           );
         }
-      }),
-    [request, preferenceStore, queryClient, queryScope],
-  );
+      },
+      { read: cacheFiles.readChannelPage, write: cacheFiles.saveChannelPage },
+    );
+    for (const [serverId, channels] of Object.entries(cached?.channels ?? {})) store.seed(serverId, channels);
+    return store;
+  }, [request, preferenceStore, queryClient, queryScope, cacheFiles, cached]);
   useEffect(() => () => channelStore.dispose(), [channelStore]);
+  useEffect(() => {
+    const save = () => {
+      if (serverDirectoryState !== "ready") return;
+      const sidebar: Record<string, SidebarLayoutSnapshot> = {};
+      for (const [id, entry] of Object.entries(sidebarByServer)) if (entry.layout) sidebar[id] = entry.layout;
+      const channels: Record<string, ChannelSummary[]> = {};
+      for (const server of servers) {
+        const list = channelStore.get(server.id).channels;
+        if (list.length) channels[server.id] = list;
+      }
+      cacheFiles.saveSnapshot({ servers, agents, sidebar, channels });
+    };
+    saveSnapshotSoon.current = save;
+    save();
+  }, [cacheFiles, channelStore, servers, agents, sidebarByServer, serverDirectoryState]);
   useEffect(() => channelStore.setActive(foreground), [channelStore, foreground]);
   useEffect(() => {
     channelStore.retainServers(servers.map((server) => server.id));
@@ -853,10 +903,18 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
       const ordered = [...summaries].sort(
         (a, b) => Number(conversationStore.isObserved(b.id)) - Number(conversationStore.isObserved(a.id)),
       );
+      // HoleA.I (from Vincent's bot app): the first chats of home load too, one at a time, so they open at once.
+      const prefetch = new Set(
+        chatsToPrefetch(
+          summaries.map((agent) => agent.id),
+          preferencesRef.current[serverId]?.pinned ?? [],
+          (agentId) => Boolean(conversationStore.get(agentId)),
+        ),
+      );
       void (async () => {
         for (const agent of ordered) {
           if (!context.isCurrent()) return;
-          if (!conversationStore.get(agent.id)) continue;
+          if (!conversationStore.get(agent.id) && !prefetch.has(agent.id)) continue;
           await conversationStore
             .loadLatest(
               agent.id,
@@ -1037,7 +1095,7 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
   const startupFallback = useRef(true);
   const [startupWaitOver, setStartupWaitOver] = useState(false);
   // The wait starts when the list of servers arrives, because the connections start then.
-  const startServerListed = servers.some((server) => server.id === activeServerId);
+  const startServerListed = directoryListed && servers.some((server) => server.id === activeServerId);
   useEffect(() => {
     if (!startServerListed) return;
     const timer = setTimeout(() => setStartupWaitOver(true), STARTUP_SERVER_WAIT_MS);
@@ -1883,7 +1941,7 @@ export function MobileWorkspaceProvider({ children }: PropsWithChildren) {
             serversReady={serverDirectoryState === "ready"}
             agents={agents}
           />
-          {servers.map((server) => (
+          {(directoryListed ? servers : NO_SERVERS).map((server) => (
             <ServerConnection
               key={server.id}
               hostId={server.id}

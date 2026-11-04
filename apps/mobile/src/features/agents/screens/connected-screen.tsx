@@ -320,6 +320,9 @@ function openFromMenu(href: Href): void {
   router.push(href);
 }
 
+/** A wait shorter than this shows no loader. */
+const LOADER_DELAY_MS = 400;
+
 /**
  * Home: the chat list of the selected server. On a narrow window it is the first screen of the stack,
  * under the native bar. On a wide window it is the pane beside the detail column and draws its own
@@ -359,9 +362,19 @@ export function ConnectedScreen({ variant = "screen" }: { variant?: "screen" | "
   const hasSelectedServer = servers.some((server) => server.id === activeServer.id);
   const planLimits = usePlanLimits(activeServer.id);
   const showsPlanLimits = hasSelectedServer && planLimits.rows.length > 0;
+  // HoleA.I (from Vincent's bot app): home shows the agents and chats it kept from the last run while the
+  // server connects, and the loader comes only when there is nothing to show and the wait is not short.
+  const keptHome = activeAgents.length > 0 || channels.channels.length > 0;
   const showLoader =
     (serverDirectoryState === "loading" && servers.length === 0) ||
-    (hasSelectedServer && activeServer.initialConnectionPending);
+    (hasSelectedServer && activeServer.initialConnectionPending && !keptHome);
+  const [loaderDue, setLoaderDue] = useState(false);
+  useEffect(() => {
+    setLoaderDue(false);
+    if (!showLoader) return;
+    const timer = setTimeout(() => setLoaderDue(true), LOADER_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [showLoader]);
   // The list comes in as the loader starts to roll up, so the two overlap instead of waiting in turn.
   const listReady = !showLoader && !isLoaderPresent;
   // A new account gets the first-run flow in place of the empty home. The flow shows its own
@@ -381,7 +394,7 @@ export function ConnectedScreen({ variant = "screen" }: { variant?: "screen" | "
   // belongs to this screen while it is the route on top.
   useScreenLoadingLabel(
     "/connected",
-    showLoader && !onboarding.active
+    showLoader && loaderDue && !onboarding.active
       ? t(hasSelectedServer ? "mobile.agent.home.connecting" : "mobile.agent.home.loadingServers")
       : null,
   );

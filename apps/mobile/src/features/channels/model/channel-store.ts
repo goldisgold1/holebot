@@ -84,7 +84,19 @@ export class MobileChannelStore {
   constructor(
     private request: ChannelRequest,
     private onList?: (serverId: string, channels: ChannelSummary[]) => void,
+    /** HoleA.I (from Vincent's bot app): the phone's cache of group chats, read and written here. */
+    private cache?: {
+      read: (serverId: string, channelId: string) => ChannelPage | null;
+      write: (serverId: string, page: ChannelPage) => void;
+    },
   ) {}
+
+  /** The group chats of the last run, shown until the host lists them. */
+  seed(serverId: string, channels: ChannelSummary[]) {
+    const entry = this.entry(serverId);
+    if (entry.state.listed || entry.state.channels.length || !channels.length) return;
+    this.publish(entry, { channels, supported: true });
+  }
 
   private entry(serverId: string): Entry {
     let entry = this.entries.get(serverId);
@@ -177,6 +189,10 @@ export class MobileChannelStore {
   }
   observe(serverId: string, channelId: string) {
     const entry = this.entry(serverId);
+    if (!entry.state.pages.has(channelId)) {
+      const cached = this.cache?.read(serverId, channelId);
+      if (cached) this.publish(entry, { pages: new Map(entry.state.pages).set(channelId, cached) });
+    }
     entry.observed.set(channelId, (entry.observed.get(channelId) ?? 0) + 1);
     if (entry.observed.get(channelId) === 1) void this.refresh(serverId);
     return () => {
@@ -266,6 +282,7 @@ export class MobileChannelStore {
               const nextPages = new Map(entry.state.pages);
               nextPages.set(id, merged);
               this.publish(entry, { pages: nextPages });
+              this.cache?.write(serverId, merged);
             }
             this.finishHistory(entry, id, true);
           };

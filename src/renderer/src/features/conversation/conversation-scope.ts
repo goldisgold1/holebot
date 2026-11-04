@@ -60,7 +60,12 @@ import { conversationOwnerId, createComposerStore, currentConversationTarget } f
 import { createMcpServersStore } from "./stores/mcp-servers-store";
 import { createMessageActions } from "./stores/message-actions";
 import { createPanelsStore, SIDE_PANEL_MODES } from "./stores/panels-store";
-import { PENDING_SEND_ID_PREFIX, pendingSendMessage } from "./stores/pending-send-store";
+import {
+  type HostDrawnIds,
+  PENDING_SEND_ID_PREFIX,
+  pendingSendMessage,
+  pendingSendShownInChat,
+} from "./stores/pending-send-store";
 import { createQueueStore } from "./stores/queue-store";
 import { createReplyJumpStore } from "./stores/reply-jump-store";
 import { createScrollStore } from "./stores/scroll-store";
@@ -372,7 +377,12 @@ export function createConversationViewScope(props: ConversationProps) {
   // The host queues a message for a moment before it starts it. A send made while the agent was idle
   // stays in the chat for that moment, so it does not jump to the queue panel and back.
   const startingDeliveryIds = createMemo(
-    () => new Set(currentPendingSends().flatMap((send) => (send.starting && send.messageId ? [send.messageId] : []))),
+    () =>
+      new Set(
+        currentPendingSends().flatMap((send) =>
+          (send.starting || send.steered) && send.state === "sent" && send.messageId ? [send.messageId] : [],
+        ),
+      ),
   );
   const queue = createQueueStore({ props, hiddenAwaitingReplyIds, startingDeliveryIds });
   const { activeDeliveries, orderedQueuedDeliveries, presentedQueueDeliveries, queuePanelVisible } = queue;
@@ -568,13 +578,23 @@ export function createConversationViewScope(props: ConversationProps) {
   let attachmentPicker: HTMLInputElement | undefined;
   // The host rows on screen: a sent message hands over to its row in the transcript or the queue.
   // Built only while a send waits for its row, so a streaming reply does not rebuild it for nothing.
-  const drawnHostIds = createMemo(() =>
-    currentPendingSends().some((send) => send.messageId)
-      ? new Set([
-          ...props.messages.map((message) => message.id),
-          ...presentedQueueDeliveries().map((delivery) => delivery.id),
-        ])
-      : new Set<string>(),
+  const noDrawnIds: HostDrawnIds = { transcriptIds: new Set(), panelIds: new Set(), endedIds: new Set() };
+  const drawnHostIds = createMemo(
+    (): HostDrawnIds =>
+      currentPendingSends().some((send) => send.messageId)
+        ? {
+            transcriptIds: new Set(props.messages.map((message) => message.id)),
+            panelIds: new Set(presentedQueueDeliveries().map((delivery) => delivery.id)),
+            // A steered message whose delivery ended without a row of its own has nothing to hand over to.
+            endedIds: new Set(
+              (props.queue?.deliveries ?? []).flatMap((delivery) =>
+                delivery.status === "queued" || delivery.status === "starting" || delivery.status === "running"
+                  ? []
+                  : [delivery.id],
+              ),
+            ),
+          }
+        : noDrawnIds,
   );
   // Filtered here as well as settled below, so the two rows never stand together for a frame. A send
   // made while the agent works goes to the queue panel; drawn here first, it would jump there.
@@ -583,9 +603,9 @@ export function createConversationViewScope(props: ConversationProps) {
   const pendingMessages = createMemo(() => {
     const sends = currentPendingSends();
     const firstFailed = sends.findIndex((send) => send.state === "failed");
+    const drawn = drawnHostIds();
     return sends
-      .filter((send) => !(send.messageId && drawnHostIds().has(send.messageId)))
-      .filter((send) => !send.queued || (firstFailed !== -1 && sends.indexOf(send) >= firstFailed))
+      .filter((send) => pendingSendShownInChat(send, drawn, firstFailed !== -1 && sends.indexOf(send) >= firstFailed))
       .map(pendingSendMessage);
   });
   /** The pending send a timeline row draws, by the row's message id. */

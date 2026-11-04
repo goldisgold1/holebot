@@ -20,6 +20,11 @@
   animation: startup-splash-in var(--openbot-duration-overlay) var(--openbot-ease-out) backwards;
 }
 
+/* HoleA.I (from Vincent's bot app): a fast start never shows the logo; see REVEAL_DELAY_MS. */
+.startup-splash[data-revealed="false"] .startup-splash-logo {
+  display: none;
+}
+
 /* The fade also runs with reduced motion: its animationend removes the splash. */
 .startup-splash[data-phase="exit"] {
   pointer-events: none;

@@ -1,3 +1,4 @@
+import { providerSteersTurns } from "@openbot/contracts/agent-providers";
 import {
   attachmentReferenceIds,
   expandAttachmentReferences,
@@ -790,26 +791,36 @@ export function createComposerActions(deps: ComposerActionsDeps) {
           Boolean(server.compatibility?.capabilities.includes(TEAM_MESSAGE_CLIENT_ID_CAPABILITY))));
     const voiceRecordingDraftId = voice?.recordingDraftId ?? null;
     const dictatedSent = claimDictatedSend(target);
-    deps.pendingSends.add(target, { draft, text, retrySafe, voiceRecordingDraftId, queued }, async (pending) => {
-      rememberAttachmentKinds(pending.draft.attachments);
-      const result = await send(
-        pending.text,
-        pending.draft.attachments.map((item) => item.id),
-        pending.draft.replyToMessageId,
-        target,
-        pending.clientMessageId,
-        pending.voiceRecordingDraftId ?? undefined,
-      );
-      if ("error" in result) {
-        playActionSound("error");
-        voice?.onFailed();
-      } else {
-        dictatedSent?.(result.messageId);
-        // The id is the delivery's. Steer acts on the chat on screen, so not after a switch.
-        if (steer && onScreen()) steerQueued(result.messageId);
-      }
-      return result;
-    });
+    // Into the running turn: Steer was asked, or the agent steers each message sent while it works.
+    const steered =
+      queued &&
+      Boolean(deps.props.activeTurnId) &&
+      (!deps.props.agent || providerSteersTurns(deps.props.agent.provider)) &&
+      (steer || (deps.props.agent?.busyMessageMode ?? deps.props.defaultBusyMessageMode) === "steer");
+    deps.pendingSends.add(
+      target,
+      { draft, text, retrySafe, voiceRecordingDraftId, queued, steered },
+      async (pending) => {
+        rememberAttachmentKinds(pending.draft.attachments);
+        const result = await send(
+          pending.text,
+          pending.draft.attachments.map((item) => item.id),
+          pending.draft.replyToMessageId,
+          target,
+          pending.clientMessageId,
+          pending.voiceRecordingDraftId ?? undefined,
+        );
+        if ("error" in result) {
+          playActionSound("error");
+          voice?.onFailed();
+        } else {
+          dictatedSent?.(result.messageId);
+          // The id is the delivery's. Steer acts on the chat on screen, so not after a switch.
+          if (steer && onScreen()) steerQueued(result.messageId);
+        }
+        return result;
+      },
+    );
   }
 
   function retryPendingSend(clientMessageId: string): void {
