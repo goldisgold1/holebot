@@ -71,8 +71,8 @@ export interface AgentNotificationPreview {
   redact: (text: string) => string;
 }
 
-/** About three lines of a macOS notification. The system cuts a longer body itself. */
-const PREVIEW_LIMIT = 200;
+/** HoleA.I (from Vincent's bot app): a notification body is cut at 140 characters, as in the bot app. */
+const PREVIEW_LIMIT = 140;
 /**
  * The lead that a preview shows: the first sentences of a message, about two lines on a phone Lock
  * Screen. A notification is a glance, and the chat has the full message.
@@ -192,8 +192,10 @@ export function notificationForAgentEvent(
       ...subject,
       channelId: channel.id,
     };
+  // HoleA.I (from Vincent's bot app): a wait for the user says who waits in its title.
+  const title = agentEventNeedsUser(event) ? translate("notification.waitingTitle", { name: agent.name }) : agent.name;
   // A start failure names no thread, so it opens the agent's own chat.
-  return { title: agent.name, ...subject, threadId: subject.threadId ?? agent.threadId ?? null };
+  return { title, ...subject, threadId: subject.threadId ?? agent.threadId ?? null };
 }
 
 function notificationSubject(

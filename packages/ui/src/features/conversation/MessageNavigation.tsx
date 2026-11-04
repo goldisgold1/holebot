@@ -31,12 +31,24 @@ export function newMessagesLabel(count: number, t: AppTranslate): string {
  * unread banner that already announces the same news. The count still reaches a screen reader
  * through the name of the jump button.
  */
-export function ScrollToLatestButton(props: { onClick: () => void; newMessageCount?: number; onDismiss?: () => void }) {
+export function ScrollToLatestButton(props: {
+  onClick: () => void;
+  newMessageCount?: number;
+  onDismiss?: () => void;
+  /** HoleA.I (from Vincent's bot app): the button is on its way out; it fades and drops 6px, then unmounts. */
+  leaving?: boolean;
+}) {
   const { t } = useText();
   const count = () => props.newMessageCount ?? 0;
   const showCount = () => count() > 0 && Boolean(props.onDismiss);
   return (
-    <div class="scroll-to-latest" data-new-messages={showCount() ? "true" : undefined} aria-live="off">
+    <div
+      class="scroll-to-latest"
+      data-new-messages={showCount() ? "true" : undefined}
+      data-leaving={props.leaving ? "" : undefined}
+      inert={props.leaving}
+      aria-live="off"
+    >
       <Button
         variant="ghost"
         type="button"

@@ -1,5 +1,5 @@
 import type { AvatarFaceMood } from "@openbot/brand/bloub-avatar-motion";
-import { createEffect, onSettled } from "solid-js";
+import { createEffect, createSignal, onSettled } from "solid-js";
 import { BOT_MARK_SHAPES, type BotMarkHandle, type BotMarkState, mountBotMark } from "./bot-mark/engine";
 import { settlePose } from "./bot-mark/settle-pose";
 
@@ -12,7 +12,8 @@ const MOOD_STATES: Readonly<Record<AvatarFaceMood, BotMarkState>> = {
   idle: "idle",
   working: "working",
   connecting: "thinking",
-  waiting: "waiting",
+  // HoleA.I (from Vincent's bot app): an agent that waits for the user is blocked, and drowses after a while.
+  waiting: "blocked",
   // The outcome of a turn shows only for the settle pose's moment; after it the face rests.
   responded: "idle",
   failed: "idle",
@@ -20,6 +21,9 @@ const MOOD_STATES: Readonly<Record<AvatarFaceMood, BotMarkState>> = {
   listening: "listening",
   speaking: "streaming",
 };
+
+/** The bot app's blocked hold: a face left waiting this long turns drowsy. */
+export const BLOCKED_DROWSY_MS = 120_000;
 
 function seededShape(seed: string) {
   let hash = 0x811c9dc5;
@@ -39,13 +43,28 @@ export function BotMarkFace(props: {
   followPointer: boolean;
   /** Overrides the mood's state, such as the step a working agent is on. */
   state?: BotMarkState | undefined;
+  /** The eye colour; omitted, the eyes are cut out of the body. */
+  eyeColor?: string | undefined;
   /** Receives the engine handle, for pokes. */
   handle?: (handle: BotMarkHandle | undefined) => void;
 }) {
   let host: HTMLSpanElement | undefined;
   let mark: BotMarkHandle | undefined;
+  // The engine only drifts from blocked to drowsy while it plays, and a waiting sidebar row rests on a
+  // still frame to save the GPU, so the drift is timed here: the next frame it draws is drowsy.
+  const [drowsy, setDrowsy] = createSignal(false);
+  createEffect(
+    () => props.mood === "waiting" && !props.state,
+    (waiting) => {
+      setDrowsy(false);
+      if (!waiting) return;
+      const timer = setTimeout(() => setDrowsy(true), BLOCKED_DROWSY_MS);
+      return () => clearTimeout(timer);
+    },
+  );
   const state = (): BotMarkState => {
     if (props.state) return props.state;
+    if (props.mood === "waiting" && drowsy()) return "drowsy";
     const resting = props.mood === "idle" || props.mood === "responded" || props.mood === "failed";
     return (resting ? settlePose(props.seed) : undefined) ?? MOOD_STATES[props.mood] ?? "idle";
   };
@@ -59,6 +78,7 @@ export function BotMarkFace(props: {
       followPointer: props.followPointer,
       playing: props.playing,
       maxFrameRate: 30,
+      ...(props.eyeColor ? { eyeColor: props.eyeColor } : {}),
     });
     props.handle?.(mark);
     return () => {
@@ -69,8 +89,8 @@ export function BotMarkFace(props: {
   });
   createEffect(state, (next) => mark?.setState(next));
   createEffect(
-    () => props.color,
-    (color) => mark?.setColor(color),
+    () => [props.color, props.eyeColor] as const,
+    ([color, eyeColor]) => mark?.setColor(color, eyeColor ?? null),
   );
   createEffect(
     () => seededShape(props.seed),

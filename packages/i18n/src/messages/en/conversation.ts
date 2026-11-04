@@ -151,7 +151,7 @@ export const messages = defineMessages("conversation", {
   "conversation.panels.openWorkspaceFailed": "Could not open the workspace folder",
   "conversation.panels.tryAgain": "Try again.",
   "conversation.view.label": "Conversation",
-  "conversation.view.drop": "Drop files to attach",
+  "conversation.view.drop": "Drop files to add to chat",
   "conversation.view.dropFolder": "Drop a folder to let {agent} change files in it",
   "conversation.direct.loadingLabel": "Loading direct conversation",
   "conversation.direct.olderFailed": "Older messages could not load.",

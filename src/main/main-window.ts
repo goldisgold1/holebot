@@ -199,7 +199,7 @@ export function createMainWindowController({
       currentMainWindowBounds(),
       screen.getAllDisplays().map((display) => display.workArea),
       screen.getDisplayNearestPoint(cursor).workArea,
-      { width: 1200, height: 820 },
+      { width: 1040, height: 760 },
       { width: 960, height: 640 },
     );
     const window = new BrowserWindow({

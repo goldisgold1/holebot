@@ -10,6 +10,7 @@ import type { AgentProfile } from "../../../data";
 import { currentText } from "../../../text";
 import { teamMemberName } from "../../team/TeamPersonAvatar";
 import { sidebarPinnedItemKey } from "../sidebar-pins";
+import { unreadOnly } from "../sidebar-unread-filter";
 import type { ResolvedPinnedItem, SidebarChatItem, SidebarProps } from "../sidebar-types";
 
 type PinnedItemSource = SidebarProps["agents"][number] | NonNullable<SidebarProps["channels"]>[number];
@@ -102,7 +103,12 @@ export function createSidebarDataStore(deps: {
   });
   const waitingIds = createMemo(() => new Set(waitingKey() ? waitingKey().split("\n") : []));
   const chatWaits = (chatId: string) => waitingIds().has(chatId);
-  const filteredAgents = createMemo(() => listedAgents().filter((agent) => !chatWaits(agent.id)));
+  // HoleA.I (from Vincent's bot app): "View unread" keeps only the chats with an unread reply, and the open one.
+  const agentShows = (agentId: string) =>
+    !unreadOnly() || props.agentStates[agentId]?.kind === "unread" || agentId === props.activeAgentId;
+  const filteredAgents = createMemo(() =>
+    listedAgents().filter((agent) => !chatWaits(agent.id) && agentShows(agent.id)),
+  );
   /** The hidden agents, pinned ones included, in their layout order. They are not drag sources. */
   const userHiddenAgentList = createMemo(() =>
     sortByLayoutOrder(props.agents.filter((agent) => agentIsUserHidden(agent.id))),
@@ -119,7 +125,13 @@ export function createSidebarDataStore(deps: {
   const userHiddenChannelList = createMemo(() =>
     sortByLayoutOrder(channels().filter((channel) => hiddenChannelIds().has(channel.id))),
   );
-  const filteredChannels = createMemo(() => listedChannels().filter((channel) => !chatWaits(channel.id)));
+  const filteredChannels = createMemo(() =>
+    listedChannels().filter(
+      (channel) =>
+        !chatWaits(channel.id) &&
+        (!unreadOnly() || channel.unreadCount > 0 || channel.id === props.activeChannelId),
+    ),
+  );
   function sortByLayoutOrder<T extends { id: string }>(items: T[]): T[] {
     const orderIndex = new Map(props.layout.agentOrder.map((chatId, index) => [chatId, index]));
     const naturalIndex = new Map(items.map((item, index) => [item.id, index]));

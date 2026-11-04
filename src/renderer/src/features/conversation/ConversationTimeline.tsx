@@ -28,7 +28,19 @@ import { UnreadMessagesBanner, UnreadMessagesDivider } from "@openbot/ui/feature
 import { VoicePlayer } from "@openbot/ui/features/conversation/VoicePlayer";
 import { teamMemberName } from "@openbot/ui/features/team/TeamPersonAvatar";
 import { useText } from "@openbot/ui/text";
-import { createMemo, createSignal, For, Loading, lazy, onCleanup, Show, untrack } from "solid-js";
+import { prefersReducedMotion } from "@openbot/ui/utils";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  Loading,
+  lazy,
+  onCleanup,
+  onSettled,
+  Show,
+  untrack,
+} from "solid-js";
 import { useShowAgentSteps } from "../../agent-steps-preference";
 import { planItems, planTitle } from "../../app-message-projection";
 import { currentDevicePlatform } from "../../send-shortcut-preference";
@@ -61,6 +73,7 @@ import { RoutineChatCard } from "./RoutineChatCard";
 import { createChatWebhookRoutines, RoutineWebhookChatCard } from "./RoutineWebhookChatCard";
 import { desktopChatEventRoutinesApi } from "./routine-webhooks-api";
 import { PENDING_SEND_ID_PREFIX, pendingSendRetrySafe } from "./stores/pending-send-store";
+import { attachTimestampPeek, endKeyJumpsToLatest } from "./timeline-feel";
 import { createTurnSteps, SUBAGENT_SPAN_PREFIX } from "./turn-steps";
 
 /**
@@ -195,6 +208,26 @@ export function ConversationTimeline() {
     sideThreadOpen,
   } = useConversationViewScope();
   const { t, format, sourceText } = useText();
+  /*
+   * HoleA.I (from Vincent's bot app): the scroll-to-bottom button fades and rises 6px in and out, so it stays
+   * mounted for its 150ms exit (120ms with reduced motion) after it is no longer wanted.
+   */
+  const scrollToLatestWanted = () => showScrollToLatest() || Boolean(props.discontinuous);
+  const [scrollToLatestMounted, setScrollToLatestMounted] = createSignal(untrack(scrollToLatestWanted));
+  createEffect(scrollToLatestWanted, (wanted) => {
+    if (wanted) {
+      setScrollToLatestMounted(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setScrollToLatestMounted(false), prefersReducedMotion() ? 120 : 150);
+    return () => window.clearTimeout(timer);
+  });
+  // HoleA.I (from Vincent's bot app): End from anywhere outside a text field goes to the newest message.
+  onSettled(() =>
+    endKeyJumpsToLatest(document, () => {
+      if (!sideThreadOpen()) void jumpToLatestMessage();
+    }),
+  );
   /** The mentions the @ button already went to, so each press goes to the next one. */
   const [visitedMentions, setVisitedMentions] = createSignal<ReadonlySet<string>>(new Set());
   // A named function, not a ternary in the prop: the compiler wraps a ternary prop in a memo, and
@@ -621,6 +654,7 @@ export function ConversationTimeline() {
         ref={(element) => {
           setScrollElement(element);
           rail.ref(element);
+          attachTimestampPeek(element);
         }}
         onScroll={(event) => {
           const element = event.currentTarget;
@@ -655,11 +689,12 @@ export function ConversationTimeline() {
         <Show
           when={replyJump.returnReplyId()}
           fallback={
-            <Show when={showScrollToLatest() || props.discontinuous}>
+            <Show when={scrollToLatestMounted()}>
               <ScrollToLatestButton
                 onClick={() => void jumpToLatestMessage()}
                 newMessageCount={newMessageCount()}
                 onDismiss={clearNewMessages}
+                leaving={!scrollToLatestWanted()}
               />
             </Show>
           }
@@ -720,6 +755,13 @@ export function ConversationTimeline() {
                   initialActionMarker?.kind === "routine-run"
                     ? untrack(() => markMessageSeen(`routine-run:${initialActionMarker.runId}`)) && arrives
                     : arrives;
+                // HoleA.I (from Vincent's bot app): an agent reply that arrives while the thinking line shows takes
+                // its place, so it waits for the line to fold before it pops in.
+                const enter = untrack(() =>
+                  arrives && !channel && initialMessage.author === "agent" && renderedAgentActivity() !== null
+                    ? "after-collapse"
+                    : "new",
+                );
                 /*
                  * The separator above the row. The first row always carries one, and a later row
                  * carries one when it opens a new day. A message with no stored timestamp can only
@@ -1289,6 +1331,7 @@ export function ConversationTimeline() {
                             showFace={!runContinuesBelow()}
                             showTime={!continuesRun()}
                             animate={animateEntrance}
+                            enter={enter}
                             agents={props.agents}
                             skills={installedSkills()}
                             referencedMessage={referencedMessage()}
@@ -1487,6 +1530,7 @@ export function ConversationTimeline() {
                     <AgentActivityIndicator
                       agent={activity().agent}
                       detail={activity().detail}
+                      kind={activity().kind}
                       label={activity().label}
                       phase={activity().phase}
                       since={activity().since}

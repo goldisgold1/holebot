@@ -10,6 +10,11 @@ import { playActionSound } from "../../action-sounds";
  */
 export function createAgentEventSounds(
   notifies: (agentId: string) => boolean,
+  /**
+   * HoleA.I (from Vincent's bot app): true while the task sound also plays for a wait for the user, which
+   * then is the one sound of the wait.
+   */
+  taskSoundCovers: () => boolean = () => false,
 ): (event: AgentEvent | TeamRealtimeEvent) => void {
   // A host can send the same request again, for example after a reconnect. Each agent waits for one
   // answer at a time, so the last request per agent is enough to find a repeat.
@@ -17,7 +22,7 @@ export function createAgentEventSounds(
   const ask = (agentId: string, request: string) => {
     if (askedRequests.get(agentId) === request) return;
     askedRequests.set(agentId, request);
-    if (notifies(agentId)) playActionSound("attention");
+    if (notifies(agentId) && !taskSoundCovers()) playActionSound("attention");
   };
   return (event) => {
     switch (event.type) {

@@ -1,6 +1,7 @@
 import type { AgentModelId, AgentProviderRef, AgentReasoningEffort } from "@openbot/contracts/ipc";
 import { markdownPreviewText } from "@openbot/contracts/markdown-preview-text";
 import type { AgentProfile } from "@openbot/ui/data";
+import { type ActivityTextKind, activityTextKind } from "@openbot/ui/features/agents/bot-mark/activity-state";
 import { type AgentActivityLabel, nextAgentActivityLabel } from "@openbot/ui/features/conversation/AgentActivity";
 import {
   agentActivityExitDelay,
@@ -21,6 +22,11 @@ export interface RenderedAgentActivity {
   activityId: string;
   agent: AgentProfile | undefined;
   detail: string | null;
+  /**
+   * HoleA.I (from Vincent's bot app): the kind of step when `detail` is the host's progress line, so the
+   * line shows the bot app's phrase for it. Null when `detail` is the agent's own words or a wait.
+   */
+  kind: ActivityTextKind | null;
   /** When the current line started, so the indicator can show how long a long step has run. */
   since: number;
   phase: "active" | "exiting";
@@ -108,6 +114,16 @@ export function createActivityStore(deps: ActivityStoreDeps) {
     // progress text is in the host's source English and is read here in the user's language.
     return latestActiveCommentary() ?? (progress ? currentText().sourceText(progress) : null);
   });
+  /**
+   * The kind of the running step, read from the host's progress line in its source English (the shown text
+   * can be translated). A wait, a channel hold and the agent's own commentary have no kind: they show as
+   * they are. With nothing at all, the agent is thinking about its next step.
+   */
+  const activeActivityKind = createMemo<ActivityTextKind | null>(() => {
+    if (deps.props.prompt || deps.props.approval || deps.props.browserTakeover) return null;
+    if (heldByOwnChannelWork() || latestActiveCommentary()) return null;
+    return activityTextKind(deps.props.activityDetail?.trim() || null);
+  });
   const agentActivity = createMemo<"Working" | null>(() => (activeActivityId() ? "Working" : null));
   /**
    * The saved provider, account, model and effort when this chat first saw the running turn. The host does not
@@ -177,6 +193,7 @@ export function createActivityStore(deps: ActivityStoreDeps) {
           activityId,
           agent,
           detail: untrack(activeActivityDetail),
+          kind: untrack(activeActivityKind),
           since: Date.now(),
           phase: "active" as const,
           label,
@@ -192,7 +209,11 @@ export function createActivityStore(deps: ActivityStoreDeps) {
           agentActivityShowTimer = undefined;
           if (untrack(activeActivityId) === activityId) {
             setAgentActivitySpaceReserved(true);
-            setRenderedAgentActivity({ ...nextActivity, detail: untrack(activeActivityDetail) });
+            setRenderedAgentActivity({
+              ...nextActivity,
+              detail: untrack(activeActivityDetail),
+              kind: untrack(activeActivityKind),
+            });
           }
         }, showDelay);
         return;
@@ -227,12 +248,12 @@ export function createActivityStore(deps: ActivityStoreDeps) {
   );
 
   createEffect(
-    () => ({ activityId: activeActivityId(), detail: activeActivityDetail() }),
-    ({ activityId, detail }) => {
+    () => ({ activityId: activeActivityId(), detail: activeActivityDetail(), kind: activeActivityKind() }),
+    ({ activityId, detail, kind }) => {
       if (!activityId) return;
       setRenderedAgentActivity((current) =>
-        current?.activityId === activityId && current.detail !== detail
-          ? { ...current, detail, since: Date.now() }
+        current?.activityId === activityId && (current.detail !== detail || current.kind !== kind)
+          ? { ...current, detail, kind, since: Date.now() }
           : current,
       );
     },

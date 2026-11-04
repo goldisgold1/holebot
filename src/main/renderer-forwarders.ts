@@ -41,6 +41,7 @@ import {
   type AgentNotificationChannel,
   agentEventAgentId,
   agentEventCanNotify,
+  agentEventNeedsUser,
   agentEventRequestThread,
   notificationForAgentEvent,
   notificationForUsageLimit,
@@ -68,6 +69,7 @@ import {
 } from "./desktop-notifications";
 import type { HostService } from "./host-service";
 import { withLocalHostSummary } from "./ipc/team-handlers";
+import { appPlaysNotificationSound, notificationTargetOnScreen } from "./notification-presence";
 import { decodeAgentSummaries } from "./remote-agent-decoding";
 import type { RemoteServerManager } from "./remote-server-manager";
 import { sendToRenderer } from "./renderer-ipc";
@@ -133,8 +135,28 @@ export function createRendererForwarders({
     return [window, ...getChatWindows()];
   }
 
-  function appFocused(window: BrowserWindow): boolean {
-    return window.isFocused() || getChatWindows().some((chatWindow) => chatWindow.isFocused());
+  /**
+   * HoleA.I (from Vincent's bot app): whether the user looks at the chat a notification is about: a
+   * focused window of the app shows that agent's chat, or that group chat. A notice about no chat, such
+   * as a usage limit, counts as on screen whenever the app has focus, as before.
+   */
+  function targetOnScreen(serverId: string, agentId: string | null, channelId: string | null = null): boolean {
+    const focused = appWindows()
+      .filter((window) => !window.isDestroyed() && window.isFocused())
+      .map((window) => window.webContents.id);
+    if (focused.length === 0) return false;
+    if (agentId === null && channelId === null) return true;
+    return notificationTargetOnScreen(focused, serverId, { agentId, channelId });
+  }
+
+  /**
+   * HoleA.I (from Vincent's bot app): the window plays its own sound for a finished reply and for a wait for
+   * the user, so the toast of that event is silent; with the app sound off, the system sound stays.
+   */
+  function appSoundCovers(serverId: string, event: AgentEvent): boolean {
+    if (!appPlaysNotificationSound(serverId)) return false;
+    if (agentEventNeedsUser(event)) return true;
+    return event.type === "turn-completed" && event.status === "completed" && !event.quiet && !event.continues;
   }
 
   function forwardAgentEvent(serverId: string, event: AgentEvent, bufferedLive = false): void {
@@ -219,9 +241,11 @@ export function createRendererForwarders({
     if (!previous || !Notification.isSupported()) return;
     const level = () => {
       const window = getMainWindow();
-      if (!window || window.isDestroyed() || appFocused(window)) return null;
+      if (!window || window.isDestroyed()) return null;
       return replyLevel(serverId);
     };
+    // HoleA.I (from Vincent's bot app): only the group chat the user is looking at stays quiet.
+    const onScreen = (channelId: string) => targetOnScreen(serverId, null, channelId);
     // HoleA.I: a teammate's message notifies too, and a muted chat only for a mention (Signal).
     const people = channelPeopleNotifications(previous, next, {
       translate: getTranslate(),
@@ -229,7 +253,8 @@ export function createRendererForwarders({
       redact: notificationPreviewEnabled() ? redactText : null,
       muted: (channelId) => channelIsMuted(serverId, channelId),
     });
-    for (const message of people) showChannelNotification(serverId, { ...message, agentId: "" });
+    for (const message of people)
+      if (!onScreen(message.channelId)) showChannelNotification(serverId, { ...message, agentId: "" });
     // Only "all" notifies a reply. The agent lookup is skipped at the other levels, and while a
     // reply streams, when no reply is new.
     if (level() !== "all" || newChannelReplies(previous, next).length === 0) return;
@@ -246,7 +271,8 @@ export function createRendererForwarders({
     });
     // HoleA.I: a muted chat shows no agent reply either.
     for (const reply of replies)
-      if (!channelIsMuted(serverId, reply.channelId)) showChannelNotification(serverId, reply);
+      if (!channelIsMuted(serverId, reply.channelId) && !onScreen(reply.channelId))
+        showChannelNotification(serverId, reply);
   }
 
   /** One group chat notification; a newer one of the same chat replaces it. */
@@ -358,17 +384,20 @@ export function createRendererForwarders({
     if (!agentEventCanNotify(event) && event.type !== "usage-limit-reached") return;
     // Like Discord, nothing pops up while the user is looking at the app. The level is read again
     // after the lookup, with the rest, because the user can change it while the lookup runs.
-    const notifyLevel = (agentLevels: ReadonlyMap<string, ServerNotificationLevel> | null) => {
+    const agentId = event.type === "usage-limit-reached" ? null : agentEventAgentId(event);
+    const notifyLevel = (
+      agentLevels: ReadonlyMap<string, ServerNotificationLevel> | null,
+      channelId: string | null = null,
+    ) => {
       const window = getMainWindow();
       const server = getRemoteServerManager()
         ?.list()
         .find((candidate) => candidate.id === serverId);
-      if (!window || window.isDestroyed() || appFocused(window) || !server) return null;
+      if (!window || window.isDestroyed() || targetOnScreen(serverId, agentId, channelId) || !server) return null;
       return desktopAgentEventLevel(event, server, desktopNotificationsEnabled(), agentLevels);
     };
     // The level also rules out an event before the remote lookups. The level of an agent can let more
     // through than the server level, so this first check uses the most open one.
-    const agentId = event.type === "usage-limit-reached" ? null : agentEventAgentId(event);
     const mostOpen = agentId === null ? null : new Map([[agentId, "all" as const]]);
     if (!notifyLevel(mostOpen) || !Notification.isSupported()) return;
     const requestKey = notificationRequestKey(serverId, event);
@@ -386,7 +415,10 @@ export function createRendererForwarders({
   async function showAgentNotification(
     serverId: string,
     event: AgentEvent,
-    notifyLevel: (agentLevels: ReadonlyMap<string, ServerNotificationLevel> | null) => ServerNotificationLevel | null,
+    notifyLevel: (
+      agentLevels: ReadonlyMap<string, ServerNotificationLevel> | null,
+      channelId?: string | null,
+    ) => ServerNotificationLevel | null,
     requestKey: string | null,
   ): Promise<void> {
     const preview = notificationPreviewEnabled();
@@ -400,7 +432,7 @@ export function createRendererForwarders({
     const lookup = eventChannel(serverId, event);
     const channel = lookup instanceof Promise ? await lookup : lookup;
     const levelLookup = agentNotificationLevels(serverId);
-    const level = notifyLevel(levelLookup instanceof Promise ? await levelLookup : levelLookup);
+    const level = notifyLevel(levelLookup instanceof Promise ? await levelLookup : levelLookup, channel?.id ?? null);
     const content = !level
       ? null
       : event.type === "usage-limit-reached"
@@ -416,7 +448,12 @@ export function createRendererForwarders({
           );
     // An answer from another device came in while the lookups ran.
     if (!content || (requestKey && !requestNotifications.has(requestKey))) return;
-    const notification = new Notification({ title: content.title, body: content.body });
+    const notification = new Notification({
+      title: content.title,
+      body: content.body,
+      silent: appSoundCovers(serverId, event),
+      ...(event.type !== "usage-limit-reached" && agentEventNeedsUser(event) ? { urgency: "critical" as const } : {}),
+    });
     if (requestKey) {
       // A provider can use a request id again, and a host can send a request again after a reconnect.
       // The newest notification replaces the one before it.

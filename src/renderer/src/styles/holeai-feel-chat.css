@@ -1,0 +1,1215 @@
+/* HoleA.I (from Vincent's bot app): the chat part of the source app's feel. Loaded after holeai-clean.css. */
+
+/*
+ * HoleA.I (from Vincent's bot app): the chat's own values. Colours are the base ink (the text colour) at the
+ * source app's strengths, so no literal leaves the palette; the bubble tokens of tokens-holeai.css are set
+ * again here because this file loads after it.
+ */
+:root {
+  --holeai-chat-text-caption: 11px;
+  --holeai-chat-text-h2: 17px;
+  --holeai-chat-text-h1: 22px;
+  --holeai-chat-radius-card: 24px;
+  --holeai-chat-radius-composer: 22px;
+  --holeai-chat-radius-composer-open: 18px;
+  --holeai-chat-bubble-max: min(80cqi, 560px, calc(100cqi - 82px));
+  --holeai-chat-ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --holeai-chat-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --holeai-chat-duration-quick: 120ms;
+  --holeai-chat-duration-notice: 150ms;
+  --holeai-chat-duration-normal: 160ms;
+  --holeai-chat-duration-row: 240ms;
+  --holeai-chat-duration-spring: 300ms;
+  --holeai-chat-duration-widget: 320ms;
+  --holeai-chat-delay-after-collapse: 380ms;
+  --holeai-chat-duration-reaction-pop: 500ms;
+  --holeai-chat-duration-flash: 2.5s;
+  --holeai-chat-duration-dots: 1.4s;
+  /* The source's motionSpringFast: 300ms with a slight settle, for the composer's pill. */
+  --holeai-chat-spring-fast: linear(
+    0,
+    0.01588 2%,
+    0.05618 4%,
+    0.11201 6%,
+    0.1768 8%,
+    0.2458 10%,
+    0.31562 12%,
+    0.38392 14%,
+    0.44914 16%,
+    0.51029 18%,
+    0.56683 20%,
+    0.61852 22%,
+    0.66534 24%,
+    0.70743 26%,
+    0.74501 28%,
+    0.77838 30%,
+    0.80788 32%,
+    0.83383 34%,
+    0.85658 36%,
+    0.87645 38%,
+    0.89376 40%,
+    0.92183 44%,
+    0.94282 48%,
+    0.95838 52%,
+    0.96984 56%,
+    0.97823 60%,
+    0.98435 64%,
+    0.98878 68%,
+    0.99198 72%,
+    0.99594 80%,
+    0.99829 90%,
+    1 100%
+  );
+  /* The reaction pop: about 8% past full size, then back. */
+  --holeai-chat-spring-pop: linear(
+    0 0%,
+    0.0334 2.5%,
+    0.1181 5%,
+    0.2337 7.5%,
+    0.3639 10%,
+    0.4963 12.5%,
+    0.6218 15%,
+    0.7346 17.5%,
+    0.8311 20%,
+    0.9102 22.5%,
+    0.9718 25%,
+    1.0172 27.5%,
+    1.0482 30%,
+    1.0672 32.5%,
+    1.0764 35%,
+    1.078 37.5%,
+    1.0743 40%,
+    1.0669 42.5%,
+    1.0575 45%,
+    1.0472 47.5%,
+    1.0369 50%,
+    1.0273 52.5%,
+    1.0188 55%,
+    1.0116 57.5%,
+    1.0057 60%,
+    1.0012 62.5%,
+    0.998 65%,
+    0.9958 67.5%,
+    0.9945 70%,
+    0.994 72.5%,
+    0.9939 75%,
+    0.9943 77.5%,
+    0.9949 80%,
+    0.9957 82.5%,
+    0.9965 85%,
+    0.9973 87.5%,
+    0.998 90%,
+    0.9987 92.5%,
+    0.9992 95%,
+    0.9996 97.5%,
+    1 100%
+  );
+  /* The swipe-to-peek spring back: 435ms with a small overshoot. */
+  --holeai-chat-spring-peek: linear(
+    0,
+    0.039 4%,
+    0.133 8%,
+    0.257 12%,
+    0.39 15%,
+    0.521 19%,
+    0.64 23%,
+    0.743 27%,
+    0.828 31%,
+    0.895 35%,
+    0.947 38%,
+    0.984 42%,
+    1.009 46%,
+    1.024 50%,
+    1.033 54%,
+    1.036 58%,
+    1.035 62%,
+    1.032 65%,
+    1.028 69%,
+    1.023 73%,
+    1.019 77%,
+    1.014 81%,
+    1.01 85%,
+    1.007 88%,
+    1.004 92%,
+    1.002 96%,
+    1.001
+  );
+  --holeai-chat-duration-peek: 435ms;
+  --holeai-chat-white: var(--openbot-text-on-accent);
+  --holeai-chat-black: var(--openbot-mask-solid);
+  --holeai-chat-text-secondary: color-mix(in srgb, var(--openbot-text-primary) 68%, transparent);
+  --holeai-chat-text-tertiary: color-mix(in srgb, var(--openbot-text-primary) 56%, transparent);
+  --holeai-chat-fill-secondary: color-mix(in srgb, var(--openbot-text-primary) 6%, transparent);
+  --holeai-chat-fill-secondary-hover: color-mix(in srgb, var(--openbot-text-primary) 10%, transparent);
+  --holeai-chat-fill-secondary-disabled: color-mix(in srgb, var(--openbot-text-primary) 4%, transparent);
+  --holeai-chat-border-primary: color-mix(in srgb, var(--openbot-text-primary) 24%, transparent);
+  --holeai-chat-border-secondary: color-mix(in srgb, var(--openbot-text-primary) 12%, transparent);
+  --holeai-chat-border-tertiary: color-mix(in srgb, var(--openbot-text-primary) 8%, transparent);
+  --holeai-chat-elevated: var(--openbot-bg-canvas);
+  --holeai-chat-elevated-hover: color-mix(in srgb, var(--openbot-text-primary) 4%, var(--holeai-chat-elevated));
+  --holeai-chat-shadow-control: 0 1px 3px 0 color-mix(in srgb, var(--holeai-chat-black) 12%, transparent);
+  --holeai-chat-shadow-composer:
+    0 2px 8px -1px color-mix(in srgb, var(--holeai-chat-black) 5%, transparent),
+    0 1px 2px color-mix(in srgb, var(--holeai-chat-black) 3%, transparent), 0 0 0 1px var(--openbot-shadow-ring);
+  --holeai-chat-pill-dismiss-hover: color-mix(in srgb, var(--openbot-text-primary) 50%, transparent);
+  --holeai-chat-flash: color-mix(in srgb, var(--openbot-text-primary) 8%, transparent);
+
+  /* Light: the reader's bubble is the source's solid near-black ink (ours at 96.6%, lifted toward the light
+     end) with light text; the agent's is the ink at 6%. */
+  --holeai-user-bubble: color-mix(in srgb, var(--openbot-text-primary) 96.6%, var(--holeai-chat-white));
+  --holeai-user-bubble-text: var(--holeai-chat-white);
+  --holeai-user-bubble-shine: color-mix(in srgb, var(--holeai-chat-white) 6%, transparent);
+  --holeai-bubble: color-mix(in srgb, var(--openbot-text-primary) 6%, transparent);
+  --holeai-bubble-rim: color-mix(in srgb, var(--openbot-text-primary) 6%, transparent);
+  --holeai-bubble-shine: color-mix(in srgb, var(--holeai-chat-white) 16%, transparent);
+  --holeai-chat-code-bg: color-mix(in srgb, var(--openbot-text-primary) 4%, transparent);
+}
+
+:root:not([data-openbot-color-scheme="light"]) {
+  /* Dark: the light end at 18% for the reader, the ink at 4% for the agent, softer light along the top. */
+  --holeai-user-bubble: color-mix(in srgb, var(--holeai-chat-white) 18%, transparent);
+  --holeai-user-bubble-text: var(--openbot-text-primary);
+  --holeai-user-bubble-shine: color-mix(in srgb, var(--holeai-chat-white) 1%, transparent);
+  --holeai-bubble: color-mix(in srgb, var(--openbot-text-primary) 4%, transparent);
+  --holeai-bubble-rim: color-mix(in srgb, var(--openbot-text-primary) 4%, transparent);
+  --holeai-bubble-shine: color-mix(in srgb, var(--holeai-chat-white) 3%, transparent);
+  --holeai-chat-text-secondary: color-mix(in srgb, var(--openbot-text-primary) 66%, transparent);
+  --holeai-chat-text-tertiary: color-mix(in srgb, var(--openbot-text-primary) 54%, transparent);
+  --holeai-chat-fill-secondary: color-mix(in srgb, var(--openbot-text-primary) 4%, transparent);
+  --holeai-chat-fill-secondary-hover: color-mix(in srgb, var(--openbot-text-primary) 8%, transparent);
+  --holeai-chat-fill-secondary-disabled: color-mix(in srgb, var(--openbot-text-primary) 2%, transparent);
+  --holeai-chat-border-primary: color-mix(in srgb, var(--openbot-text-primary) 22%, transparent);
+  --holeai-chat-border-secondary: color-mix(in srgb, var(--openbot-text-primary) 10%, transparent);
+  --holeai-chat-border-tertiary: color-mix(in srgb, var(--openbot-text-primary) 6%, transparent);
+  /* The source's elevated fill, 3% lighter than the pane. */
+  --holeai-chat-elevated: color-mix(in srgb, var(--openbot-text-primary) 3%, var(--openbot-bg-canvas));
+  /* Every shadow is off in the dark theme: elevation is the lighter fill and the hairline. */
+  --holeai-chat-shadow-control: 0 0 0 transparent;
+  --holeai-chat-shadow-composer: 0 0 0 1px var(--openbot-shadow-ring);
+  --holeai-chat-pill-dismiss-hover: color-mix(in srgb, var(--openbot-bg-frame) 50%, transparent);
+  --holeai-chat-code-bg: color-mix(in srgb, var(--openbot-text-primary) 2%, transparent);
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Bubbles
+ * ---------------------------------------------------------------------------------------------------------- */
+
+/* The bubble column is the chat list, so a bubble can keep the 82px the timestamp peek slides into. */
+.virtual-chat-list {
+  container-type: inline-size;
+}
+
+.message-entry .ui-bubble-content,
+.message-entry-user .ui-bubble {
+  max-width: var(--holeai-chat-bubble-max);
+}
+
+/* A single short word or glyph ("ok", "?") is a circle, not a narrow pill. */
+.message-entry .ui-bubble:not([data-emoji-only]) > .ui-bubble-content {
+  min-width: 36px;
+}
+
+.message-entry .ui-bubble[data-short] > .ui-bubble-content {
+  text-align: center;
+}
+
+/* The reader's bubble: no rim, a softer light along the top. */
+.message-entry-user .ui-bubble-content {
+  border-color: transparent;
+  background-image: linear-gradient(180deg, var(--holeai-user-bubble-shine) 0%, transparent 40%);
+}
+
+/*
+ * HoleA.I (from Vincent's bot app): on the light theme the reader's bubble is near-black, so everything inside
+ * it reads from the light end: links, inline code, code blocks and quotes. The colours are set as tokens on the bubble,
+ * so each rule inside keeps its own shape.
+ */
+:root[data-openbot-color-scheme="light"]
+  .message-entry-user
+  .ui-bubble:not([data-emoji-only])
+  > .ui-bubble-content:not(:has(.message-image-attachments, .image-gallery)),
+:root[data-openbot-color-scheme="light"]
+  .message-entry-user
+  .ui-bubble-content:has(.message-image-attachments, .image-gallery)
+  > .message-content-resize {
+  --openbot-text-primary: var(--holeai-chat-white);
+  --openbot-text-secondary: color-mix(in srgb, var(--holeai-chat-white) 74%, transparent);
+  --openbot-text-muted: color-mix(in srgb, var(--holeai-chat-white) 60%, transparent);
+  --openbot-text-dim: color-mix(in srgb, var(--holeai-chat-white) 45%, transparent);
+  --openbot-text-readable: color-mix(in srgb, var(--holeai-chat-white) 74%, transparent);
+  --openbot-border: color-mix(in srgb, var(--holeai-chat-white) 28%, transparent);
+  --openbot-border-strong: color-mix(in srgb, var(--holeai-chat-white) 45%, transparent);
+  --openbot-bg-control: color-mix(in srgb, var(--holeai-chat-white) 12%, transparent);
+  --openbot-accent-text: var(--holeai-chat-white);
+  --holeai-chat-code-bg: color-mix(in srgb, var(--holeai-chat-white) 10%, transparent);
+  --holeai-chat-text-secondary: color-mix(in srgb, var(--holeai-chat-white) 74%, transparent);
+  --holeai-chat-text-tertiary: color-mix(in srgb, var(--holeai-chat-white) 60%, transparent);
+
+  color: var(--holeai-user-bubble-text);
+}
+
+/* Links in the reader's own bubble keep an underline: the accent would not read on it. */
+.message-entry-user .ui-bubble-content .message-link {
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Rows: arrival, the reply that replaces the thinking line, the jump flash
+ * ---------------------------------------------------------------------------------------------------------- */
+
+/* A new row only rises 12px; it does not fade. */
+.message-entry-animated {
+  animation: holeai-chat-row-in var(--holeai-chat-duration-row) var(--openbot-ease-out) backwards;
+}
+
+@keyframes holeai-chat-row-in {
+  from {
+    transform: translateY(12px);
+  }
+}
+
+/*
+ * A reply that takes the thinking line's place waits for the line to fold (380ms), then pops up from the
+ * bottom corner on the speaker's side: a rise, a little scale, and a fade that finishes early.
+ */
+.message-entry-animated[data-enter="after-collapse"] {
+  transform-origin: 0% 100%;
+  animation: holeai-chat-row-pop var(--holeai-chat-duration-row) var(--openbot-ease-out)
+    var(--holeai-chat-delay-after-collapse) backwards;
+}
+
+.message-entry-user.message-entry-animated[data-enter="after-collapse"] {
+  transform-origin: 100% 100%;
+}
+
+@keyframes holeai-chat-row-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+
+  55% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A widget or question card settles in with a slight scale instead of the rise. */
+.conversation-live .conversation-interaction-card,
+.chat-action-entry-animated:has(.chat-action-card) {
+  animation: holeai-chat-widget-in var(--holeai-chat-duration-widget) var(--holeai-chat-ease-quint) backwards;
+}
+
+@keyframes holeai-chat-widget-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+/* The row a quote opened: the ink at 8%, held for 40% of 2.5s, then gone. The keyframe keeps its name,
+   because the jump code waits for its end. */
+.virtual-chat-row[data-reply-flash]::before {
+  background: var(--holeai-chat-flash);
+  animation: reply-flash var(--holeai-chat-duration-flash) ease-out;
+}
+
+@keyframes reply-flash {
+  0%,
+  40% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Time separators and the unread line
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.time-marker {
+  height: 28px;
+  margin: 14px auto 8px;
+  padding: 6px 0;
+  color: var(--holeai-chat-text-secondary);
+  font-size: var(--openbot-text-sm);
+  font-weight: var(--openbot-weight-medium);
+  line-height: var(--openbot-leading-sm);
+}
+
+/* The first row of the list needs no air above its separator. */
+.virtual-chat-row[data-index="0"] > .time-marker:first-child {
+  margin-top: 0;
+}
+
+.unread-messages-divider {
+  margin: 14px 0 8px;
+  padding-block: 2px;
+  color: var(--openbot-accent-text);
+  font-size: var(--holeai-chat-text-caption);
+  font-weight: var(--openbot-weight-medium);
+  letter-spacing: 0.005em;
+  line-height: var(--openbot-leading-sm);
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Markdown and code
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.message-markdown > :not(:first-child) {
+  margin-top: 10px;
+}
+
+.message-markdown-heading {
+  line-height: inherit;
+  letter-spacing: 0;
+}
+
+.message-markdown > .message-markdown-heading:not(:first-child) {
+  margin-top: 18px;
+}
+
+.message-markdown-heading[data-level="1"] {
+  font-size: var(--holeai-chat-text-h1);
+  line-height: 28px;
+  letter-spacing: -0.012em;
+}
+
+.message-markdown-heading[data-level="2"] {
+  font-size: var(--holeai-chat-text-h2);
+  line-height: 24px;
+  letter-spacing: -0.008em;
+}
+
+.message-markdown-heading:is([data-level="3"], [data-level="4"], [data-level="5"], [data-level="6"]) {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.message-markdown :is(ul, ol) {
+  padding-left: 20px;
+}
+
+.message-markdown li > :is(ul, ol) {
+  padding-left: 16px;
+}
+
+.message-markdown li::marker {
+  color: var(--holeai-chat-text-tertiary);
+}
+
+.message-markdown ul ul ul {
+  list-style: square;
+}
+
+.message-markdown ol ol {
+  list-style: lower-alpha;
+}
+
+.message-markdown ol ol ol {
+  list-style: lower-roman;
+}
+
+.message-markdown li:has(> .message-markdown-checkbox),
+.message-markdown-task {
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+}
+
+.message-markdown li.message-markdown-task + li.message-markdown-task {
+  margin-top: var(--openbot-space-2);
+}
+
+.message-markdown-task {
+  gap: var(--openbot-space-2);
+}
+
+.message-markdown-checkbox {
+  margin-top: var(--openbot-space-0-5);
+}
+
+/* Links are the accent with no line until the pointer is on them. */
+.message-link {
+  color: var(--openbot-accent-text);
+  font-weight: inherit;
+  text-decoration-line: none;
+  transition:
+    color var(--holeai-chat-duration-quick) ease,
+    text-decoration-color var(--holeai-chat-duration-quick) ease;
+}
+
+.message-link:hover {
+  color: var(--openbot-accent-text);
+  text-decoration-line: underline;
+  text-decoration-color: currentColor;
+}
+
+.message-markdown-image,
+.message-markdown-image-button {
+  border-radius: var(--openbot-radius-xs);
+}
+
+/*
+ * A code block in a message: no header, a quiet 4% field, 8px by 12px. The copy button (and any other action
+ * the header held) floats on a small plate in the top right, shown while the block is hovered or focused.
+ */
+.ui-bubble .message-code-block {
+  position: relative;
+  border: 0;
+  border-radius: var(--openbot-radius-md);
+  background: var(--holeai-chat-code-bg);
+}
+
+.ui-bubble .message-code-header {
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  right: 6px;
+  min-height: 0;
+  border: 0.5px solid var(--holeai-chat-border-tertiary);
+  border-radius: var(--openbot-radius-sm);
+  background: var(--holeai-chat-elevated);
+  padding: 0;
+  box-shadow: var(--holeai-chat-shadow-control);
+  opacity: 0;
+  transition: opacity var(--holeai-chat-duration-normal) ease;
+}
+
+.ui-bubble .message-code-heading {
+  display: none;
+}
+
+.ui-bubble .message-code-block:is(:hover, :focus-within) .message-code-header {
+  opacity: 1;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .ui-bubble .message-code-header {
+    opacity: 1;
+  }
+}
+
+.ui-bubble .message-code-actions {
+  display: flex;
+  align-items: center;
+}
+
+.ui-bubble :where(.ui-button).message-code-copy {
+  width: 24px;
+  height: 24px;
+  justify-content: center;
+  padding: 0;
+}
+
+.ui-bubble :where(.ui-button).message-code-copy > span:not(.message-code-copy-icons) {
+  display: none;
+}
+
+.ui-bubble .message-code-copy-icons,
+.ui-bubble .message-code-copy-icons svg {
+  width: var(--openbot-icon-sm);
+  height: var(--openbot-icon-sm);
+}
+
+.ui-bubble .message-code-scroll {
+  background: transparent;
+  padding: 8px 12px;
+  color: var(--holeai-chat-text-secondary);
+  line-height: var(--openbot-leading-lg);
+}
+
+.ui-bubble .message-code-line {
+  min-height: 20px;
+}
+
+.ui-bubble .message-code-line-number {
+  display: none;
+}
+
+.ui-bubble .message-code-line-source {
+  padding-right: 0;
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Hover actions: a small plate beside the bubble, level with its first line
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.message-entry:not(.message-entry-with-author) > .ui-message-content > .message-action-row {
+  align-self: start;
+  margin-top: 4px;
+}
+
+.message-action-row .message-actions {
+  border: 0.5px solid var(--holeai-chat-border-tertiary);
+  border-radius: var(--openbot-radius-md);
+  background: var(--holeai-chat-elevated);
+  padding: 2px;
+  box-shadow: var(--holeai-chat-shadow-control);
+}
+
+.message-action-button {
+  color: var(--holeai-chat-text-secondary);
+  transition:
+    background var(--holeai-chat-duration-quick) ease,
+    color var(--holeai-chat-duration-quick) ease;
+}
+
+.message-action-button:hover,
+.message-action-button:focus-visible,
+.message-action-button[aria-expanded="true"] {
+  background: var(--holeai-chat-fill-secondary);
+}
+
+.message-action-button:active {
+  background: var(--holeai-chat-fill-secondary-hover);
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Reactions: 30px chips that overlap the bubble's top corner by 16px
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.ui-bubble-reactions.message-reaction-anchor {
+  gap: var(--openbot-space-1);
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.ui-bubble-reactions.message-reaction-anchor.ui-bubble-reactions-side-top {
+  top: -12px;
+  translate: none;
+}
+
+.ui-bubble-reactions.message-reaction-anchor.ui-bubble-reactions-align-end {
+  right: -16px;
+}
+
+.ui-bubble-reactions.message-reaction-anchor.ui-bubble-reactions-align-start {
+  left: -16px;
+}
+
+.ui-bubble-reactions.message-reaction-anchor:has(> .message-reaction-pill:only-child) {
+  width: auto;
+  padding-inline: 0;
+}
+
+.message-reaction-anchor .message-reaction-pill,
+.ui-bubble-reactions.message-reaction-anchor:has(> .message-reaction-pill:only-child) > .message-reaction-pill {
+  width: auto;
+  min-width: 30px;
+  height: 30px;
+  gap: var(--openbot-space-1);
+  border-radius: var(--openbot-radius-pill);
+  background: var(--holeai-chat-elevated);
+  padding: 0 7px;
+  box-shadow:
+    inset 0 0 0 0.5px var(--holeai-chat-border-secondary),
+    0 0 0 2.8px var(--openbot-bg-canvas);
+  font-size: var(--openbot-text-lg);
+  transition:
+    background var(--holeai-chat-duration-quick) ease,
+    transform var(--holeai-chat-duration-quick) ease;
+}
+
+.message-reaction-anchor .message-reaction-pill:has(.message-reaction-count) {
+  padding: 0 10px 0 8px;
+}
+
+.message-reaction-anchor .message-reaction-pill:not(.message-reaction-pill-readonly):hover {
+  background: var(--holeai-chat-elevated-hover);
+}
+
+.message-reaction-anchor .message-reaction-pill:not(.message-reaction-pill-readonly):active {
+  transform: scale(0.95);
+}
+
+.message-reaction-anchor .message-reaction-pill-mine {
+  background: color-mix(in srgb, var(--openbot-accent) 16%, var(--holeai-chat-elevated));
+}
+
+.message-reaction-count {
+  color: var(--holeai-chat-text-secondary);
+  font-size: var(--openbot-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.message-reaction-anchor .ui-bubble-reaction-overflow {
+  padding-inline: 4px;
+  color: var(--holeai-chat-text-secondary);
+  font-size: var(--openbot-text-sm);
+}
+
+.message-reaction-anchor:has(.message-reaction-pill:focus-visible) {
+  box-shadow: none;
+}
+
+.message-reaction-anchor .message-reaction-pill:focus-visible {
+  box-shadow:
+    inset 0 0 0 0.5px var(--holeai-chat-border-secondary),
+    0 0 0 2px var(--openbot-bg-canvas),
+    0 0 0 4px var(--openbot-border-focus);
+}
+
+/* Room above a bubble that carries reactions, so the chips do not cover the line above. */
+.message-entry:has(.message-reaction-anchor) > .ui-message-content {
+  padding-top: 22px;
+  padding-bottom: 0;
+}
+
+/* The chips stick out past the bubble on the side where the hover plate stands; the plate steps aside. */
+.message-entry-agent:not(.message-entry-with-author):has(.message-reaction-anchor) .message-action-row {
+  margin-inline-start: 18px;
+}
+
+.message-entry-user:not(.message-entry-with-author):has(.message-reaction-anchor) .message-action-row {
+  margin-inline-end: 18px;
+}
+
+/* A new reaction pops in; a changed count bumps (ChatMessageRow.tsx). */
+.message-reaction-pill[data-enter] {
+  animation: holeai-chat-reaction-pop var(--holeai-chat-duration-reaction-pop) var(--holeai-chat-spring-pop) backwards;
+}
+
+@keyframes holeai-chat-reaction-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Scroll to bottom and the new-messages pill
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.scroll-to-latest {
+  top: calc(100% - 40px);
+  height: 32px;
+  margin-bottom: -32px;
+  border: 0;
+  background: var(--holeai-chat-elevated);
+  box-shadow:
+    inset 0 0 0 0.5px var(--holeai-chat-border-secondary),
+    var(--holeai-chat-shadow-control);
+  animation: holeai-chat-dock-in var(--holeai-chat-duration-notice) var(--holeai-ease-standard) backwards;
+}
+
+.scroll-to-latest[data-leaving] {
+  pointer-events: none;
+  animation: holeai-chat-dock-out var(--holeai-chat-duration-notice) var(--holeai-ease-standard) forwards;
+}
+
+@keyframes holeai-chat-dock-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
+@keyframes holeai-chat-dock-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
+.scroll-to-latest-button {
+  width: 32px;
+}
+
+.scroll-to-latest-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scroll-to-latest:not([data-new-messages], [data-reply-return])
+    .scroll-to-latest-button:hover:not(:disabled):not([data-disabled]) {
+    background: var(--holeai-chat-fill-secondary);
+  }
+}
+
+/* With a count it is the accent pill: light text, the arrow, the count, and a round dismiss at the end. */
+.scroll-to-latest:is([data-new-messages], [data-reply-return]) {
+  top: calc(100% - 36px);
+  height: 28px;
+  margin-bottom: -28px;
+}
+
+.scroll-to-latest[data-new-messages] {
+  background: var(--openbot-accent);
+  box-shadow:
+    inset 0 0 0 1px var(--holeai-chat-border-tertiary),
+    var(--holeai-chat-shadow-control);
+  color: var(--openbot-text-on-accent);
+}
+
+.scroll-to-latest:is([data-new-messages], [data-reply-return]) .scroll-to-latest-button {
+  gap: var(--openbot-space-1);
+  padding-inline: 8px 4px;
+}
+
+.scroll-to-latest:is([data-new-messages], [data-reply-return]) .scroll-to-latest-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.scroll-to-latest-count {
+  font-size: var(--openbot-text-md);
+  font-weight: var(--openbot-weight-medium);
+}
+
+.scroll-to-latest-dismiss {
+  padding-inline: 0 4px;
+  opacity: 0.75;
+  transition: opacity var(--holeai-chat-duration-quick) ease;
+}
+
+.scroll-to-latest-dismiss svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scroll-to-latest-dismiss:hover:not(:disabled):not([data-disabled]) {
+    opacity: 1;
+  }
+
+  .scroll-to-latest[data-new-messages] .scroll-to-latest-dismiss:hover svg {
+    background: var(--holeai-chat-pill-dismiss-hover);
+  }
+}
+
+.scroll-to-latest[data-new-messages] .scroll-to-latest-button:focus-visible,
+.scroll-to-latest[data-new-messages] .scroll-to-latest-dismiss:focus-visible svg {
+  outline-color: var(--openbot-text-on-accent);
+}
+
+/* The "@" jump stands above the smaller button. */
+.channel-mention-jump {
+  top: calc(100% - 84px);
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Send states
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.pending-send-status {
+  font-size: var(--holeai-chat-text-caption);
+}
+
+.pending-send-label,
+.pending-send-action.ui-button {
+  font-size: var(--holeai-chat-text-caption);
+  line-height: 14px;
+}
+
+/* Still sending after 2s: a small track with a shuttle, under the bubble's side. It takes no height. */
+.pending-send-progress {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--openbot-radius-xs);
+  background: var(--holeai-chat-fill-secondary);
+  animation: holeai-chat-fade-in var(--holeai-chat-duration-quick) ease 2s backwards;
+}
+
+.pending-send-progress::after {
+  position: absolute;
+  top: 0;
+  left: 6px;
+  width: 8px;
+  height: 4px;
+  border-radius: var(--openbot-radius-xs);
+  background: var(--holeai-chat-text-tertiary);
+  content: "";
+  animation: holeai-chat-send-shuttle 1s ease-in-out infinite;
+}
+
+@keyframes holeai-chat-send-shuttle {
+  0%,
+  100% {
+    transform: translateX(-14px);
+  }
+
+  50% {
+    transform: translateX(14px);
+  }
+}
+
+@keyframes holeai-chat-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The row beside the bubble shows itself once the track does. */
+.message-entry .message-action-row:has(> .pending-send-status[data-state="sending"]) {
+  animation: holeai-chat-show-row var(--holeai-chat-duration-quick) ease 2s backwards;
+  opacity: 1;
+  visibility: visible;
+}
+
+@keyframes holeai-chat-show-row {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Typing dots (group chats)
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.team-typing-dots,
+.channel-typing-dots {
+  height: 22px;
+  gap: 4px;
+}
+
+.team-typing-dots i,
+.channel-typing-dots > span {
+  width: 6px;
+  height: 6px;
+  background: var(--holeai-chat-text-tertiary);
+  animation: holeai-chat-typing var(--holeai-chat-duration-dots) ease-in-out infinite;
+}
+
+.team-typing-dots i:nth-child(1),
+.channel-typing-dots > span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.team-typing-dots i:nth-child(2),
+.channel-typing-dots > span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.team-typing-dots i:nth-child(3),
+.channel-typing-dots > span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes holeai-chat-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Composer: a 44px pill that opens into an 18px-cornered box on a spring
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.composer {
+  gap: 9px;
+  border: 0.5px solid var(--holeai-chat-border-secondary);
+  border-radius: var(--holeai-chat-radius-composer-open);
+  background: var(--holeai-chat-elevated);
+  padding: 10px 12px 9px;
+  box-shadow: var(--holeai-chat-shadow-composer);
+  transition:
+    border-color var(--holeai-chat-duration-notice) ease,
+    background-color var(--holeai-chat-duration-notice) ease,
+    border-radius var(--holeai-chat-duration-spring) var(--holeai-chat-spring-fast);
+}
+
+.composer:hover,
+.composer:focus-within {
+  border-color: var(--holeai-chat-border-primary);
+  box-shadow: var(--holeai-chat-shadow-composer);
+}
+
+.composer[data-compact] {
+  min-height: 44px;
+  gap: 8px;
+  border-radius: var(--holeai-chat-radius-composer);
+  padding: 7.5px 8px;
+}
+
+.conversation-panel:has(> .attachment-drop-overlay) .composer {
+  border-color: var(--openbot-accent);
+}
+
+.composer-input-label,
+.composer-editor-root {
+  --composer-editor-max-height: 120px;
+}
+
+.composer-input-label,
+.composer-editor-root,
+.composer-editor-surface {
+  min-height: 20px;
+}
+
+.composer:not([data-compact]) .composer-editor-surface {
+  padding: 0 2px;
+}
+
+.composer:not([data-compact]) .composer-editor-placeholder {
+  top: 0;
+}
+
+.composer[data-compact] .composer-editor-root,
+.composer[data-compact] .composer-editor-surface {
+  min-height: 20px;
+}
+
+.composer[data-compact] .composer-editor-surface {
+  padding: 4px 0;
+}
+
+.composer-editor-surface {
+  scrollbar-color: var(--holeai-chat-border-tertiary) transparent;
+}
+
+/* The "+" and the other round buttons: a 6% fill, a hairline ring, tertiary until hovered. */
+.composer-button {
+  background: var(--holeai-chat-fill-secondary);
+  box-shadow: inset 0 0 0 0.5px var(--holeai-chat-border-tertiary);
+  color: var(--holeai-chat-text-tertiary);
+}
+
+.composer-button:hover {
+  background: var(--holeai-chat-fill-secondary-hover);
+  color: var(--openbot-text-primary);
+}
+
+/* A staged file: a 220px chip, 8px in, the 36px badge, the remove button fading in on hover. */
+.composer-attachment[data-kind="file"] {
+  height: auto;
+  gap: 8px;
+  border: 0.5px solid var(--holeai-chat-border-secondary);
+  border-radius: var(--openbot-radius-lg);
+  background: var(--holeai-chat-elevated);
+  padding: 8px;
+}
+
+.composer-attachment .ui-image-remove-button {
+  transition: opacity var(--holeai-chat-duration-quick) ease;
+}
+
+/* Replying to a message: a pill over the box, the × at its end. */
+.composer-stack:has(> .composer-reply-preview):not(
+  :has(> :not(.composer-reply-preview, .agent-queue-slot), > .agent-queue-slot > .agent-queue-slot-inner > *)
+) {
+  overflow: visible;
+  margin: 0 var(--composer-stack-inset) var(--openbot-space-1-5);
+  border-color: transparent;
+  background: transparent;
+  padding-bottom: 0;
+}
+
+.composer-stack .composer-reply-preview,
+.composer-reply-preview {
+  position: relative;
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+  align-items: center;
+  gap: var(--openbot-space-1-5);
+  margin: var(--openbot-space-1-5) var(--openbot-space-2);
+  border: 0;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--holeai-chat-fill-secondary);
+  padding: 6px 30px 6px 10px;
+  box-shadow: inset 0 0 0 1px var(--holeai-chat-border-secondary);
+  color: var(--holeai-chat-text-secondary);
+  transition:
+    background var(--holeai-chat-duration-quick) ease,
+    color var(--holeai-chat-duration-quick) ease;
+}
+
+.composer-reply-preview:hover {
+  background: var(--holeai-chat-fill-secondary-hover);
+  color: var(--openbot-text-primary);
+}
+
+.composer-reply-preview > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--openbot-space-1-5);
+}
+
+.composer-reply-preview > div > span {
+  flex: 0 0 auto;
+  color: inherit;
+  font-size: var(--openbot-text-md);
+  font-weight: var(--openbot-weight-medium);
+  line-height: var(--openbot-leading-md);
+}
+
+.composer-reply-preview .message-reply-quote {
+  min-width: 0;
+  max-height: var(--openbot-leading-md);
+  overflow: hidden;
+  margin: 0;
+  color: var(--holeai-chat-text-tertiary);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  mask-image: none;
+}
+
+.composer-reply-preview .message-reply-quote .message-markdown > :not(:first-child) {
+  display: none;
+}
+
+.composer-reply-preview .message-reply-quote .message-markdown > * {
+  overflow: hidden;
+  font-size: inherit;
+  line-height: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-reply-preview > .ui-button {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  width: 20px;
+  min-width: 0;
+  height: 20px;
+  border-radius: var(--openbot-radius-pill);
+  padding: 0;
+  translate: 0 -50%;
+}
+
+.composer-reply-preview > .ui-button svg {
+  width: var(--openbot-icon-xs);
+  height: var(--openbot-icon-xs);
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Cards in the chat: the source's 24px corners and widths that keep the 82px peek lane
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.conversation-scroll .conversation-interaction-card {
+  border-radius: var(--holeai-chat-radius-card);
+}
+
+.conversation-scroll .ui-block-card {
+  max-width: min(88%, 520px, calc(100% - 82px));
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Swipe-to-peek timestamps (ConversationTimeline.tsx): a sideways trackpad swipe slides the bubbles and shows
+ * each message's time at the end of its row.
+ * ---------------------------------------------------------------------------------------------------------- */
+
+.message-peek-time {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: none;
+  padding-inline-start: 10px;
+  color: var(--holeai-chat-text-tertiary);
+  font-size: var(--openbot-text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--openbot-weight-medium);
+  line-height: 36px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.conversation-scroll[data-peek] .message-peek-time {
+  display: block;
+  opacity: var(--holeai-chat-peek-progress, 0);
+  transform: translateX(calc(82px - var(--holeai-chat-peek, 0px)));
+}
+
+.conversation-scroll[data-peek] .message-entry > :not(.message-peek-time) {
+  transform: translateX(calc(-1 * var(--holeai-chat-peek, 0px)));
+}
+
+.conversation-scroll[data-peek="settling"] :is(.message-peek-time, .message-entry > :not(.message-peek-time)) {
+  transition:
+    transform var(--holeai-chat-duration-peek) var(--holeai-chat-spring-peek),
+    opacity var(--holeai-chat-duration-peek) ease;
+}
+
+.conversation-scroll[data-peek] .message-action-row {
+  visibility: hidden;
+}
+
+/* ------------------------------------------------------------------------------------------------------------
+ * Reduced motion: every move above becomes a 120ms fade.
+ * ---------------------------------------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .message-entry-animated,
+  .message-entry-animated[data-enter="after-collapse"],
+  .conversation-live .conversation-interaction-card,
+  .chat-action-entry-animated:has(.chat-action-card),
+  .message-reaction-pill[data-enter],
+  .scroll-to-latest {
+    animation: holeai-chat-fade-in var(--holeai-chat-duration-quick) ease backwards;
+  }
+
+  .scroll-to-latest[data-leaving] {
+    animation: holeai-chat-fade-out var(--holeai-chat-duration-quick) ease forwards;
+  }
+
+  /* The flash holds still at 8%, then goes. */
+  .virtual-chat-row[data-reply-flash]::before {
+    animation-timing-function: step-end;
+  }
+
+  .team-typing-dots i,
+  .channel-typing-dots > span {
+    animation-name: holeai-chat-typing-fade;
+    animation-duration: 1.6s;
+  }
+
+  .pending-send-progress::after {
+    animation: none;
+  }
+
+  .composer {
+    transition:
+      border-color var(--holeai-chat-duration-quick) ease,
+      background-color var(--holeai-chat-duration-quick) ease,
+      border-radius var(--holeai-chat-duration-quick) ease;
+  }
+
+  .conversation-scroll[data-peek="settling"] :is(.message-peek-time, .message-entry > :not(.message-peek-time)) {
+    transition: opacity var(--holeai-chat-duration-quick) ease;
+  }
+}
+
+@keyframes holeai-chat-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes holeai-chat-typing-fade {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+  }
+
+  30% {
+    opacity: 1;
+  }
+}

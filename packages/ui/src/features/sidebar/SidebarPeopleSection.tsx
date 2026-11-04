@@ -38,7 +38,11 @@ export function SidebarPeopleSection(sectionProps: { sectionId: string }) {
         onFocusIn={() => props.onPreloadDirectConversation?.()}
         onPointerEnter={() => props.onPreloadDirectConversation?.()}
       >
-        <SidebarSectionHeader sectionId={sectionId()} name={t("sidebar.section.people")} />
+        <SidebarSectionHeader
+          sectionId={sectionId()}
+          name={t("sidebar.section.people")}
+          count={orderedPeople().length}
+        />
         <div
           class="sidebar-section-collapse"
           data-collapsed={sectionIsCollapsed(sectionId()) ? "" : undefined}

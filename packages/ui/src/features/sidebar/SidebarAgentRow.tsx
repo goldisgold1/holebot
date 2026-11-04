@@ -95,6 +95,12 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
     if (minutes >= FINISHED_LABEL_MINUTES) return undefined;
     return minutes < 1 ? t("sidebar.finished.now") : t("sidebar.finished.minutes", { minutes });
   };
+  // HoleA.I (from Vincent's bot app): a chat with unsent text says "Draft: …" in place of its last message.
+  // The open chat shows the draft in its own composer.
+  const draft = () =>
+    rowProps.userHidden || wait() || props.activeAgentId === rowProps.agent.id
+      ? undefined
+      : props.agentDrafts?.[rowProps.agent.id]?.trim() || undefined;
   const reels = () => (role() === "reel" ? reelWorkerReels(rowProps.agent.name, props.reelFactoryLive) : []);
   const limit = () => {
     const current = state();
@@ -199,7 +205,18 @@ export function SidebarAgentRow(rowProps: { agent: AgentProfile; waiting?: boole
           <Show
             when={working() && hasWorkStrip(role())}
             fallback={
-              <Show when={liveStep() ?? finishedLabel()} fallback={<span class="agent-row-preview">{detail()}</span>}>
+              <Show
+                when={liveStep() ?? (draft() ? undefined : finishedLabel())}
+                fallback={
+                  <Show when={draft()} fallback={<span class="agent-row-preview">{detail()}</span>}>
+                    {(text) => (
+                      <span class="agent-row-preview agent-row-draft">
+                        <span class="agent-row-draft-label">{t("sidebar.draft")}</span> {text()}
+                      </span>
+                    )}
+                  </Show>
+                }
+              >
                 {(step) => (
                   <span class={`agent-row-preview ${liveStep() ? "agent-row-live-step" : "agent-row-finished"}`}>
                     {step()}

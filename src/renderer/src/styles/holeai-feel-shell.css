@@ -1,0 +1,366 @@
+/* HoleA.I (from Vincent's bot app): the shell part of the source app's feel. Loaded after holeai-clean.css. */
+
+/* ---- Global: soft corners, no stray text selection, keyboard-only focus rings, a light press ---------------- */
+
+/* Every corner is a squircle (Electron's corner smoothing); a browser ignores it. */
+:where(*),
+::before,
+::after {
+  /* biome-ignore lint/correctness/noUnknownProperty: Electron's own property, which Biome does not know. */
+  -electron-corner-smoothing: 60%;
+}
+
+/* Chrome text is not selectable; fields, editors and message text (message-content.css) are. */
+body {
+  user-select: none;
+}
+
+:where(input, textarea, select, [contenteditable]:not([contenteditable="false"])) {
+  user-select: text;
+}
+
+/* Focus rings only after the keyboard moved focus (keyboard-nav.ts sets data-keyboard-nav). */
+:root:not([data-keyboard-nav]) {
+  --openbot-focus-ring: 0 0 0 0 transparent;
+}
+
+:root:not([data-keyboard-nav]) :focus-visible {
+  outline-color: transparent;
+}
+
+:root[data-keyboard-nav]
+  :where(a, button, [role="button"], [role="tab"], [role="menuitem"], [role="option"]):focus-visible {
+  outline-offset: var(--holeai-focus-offset);
+}
+
+/* Buttons press to .98. `scale` composes with any transform a button already has. Rows keep their own. */
+:where(.ui-button:not(.agent-row, .sidebar-section-toggle):active:not(:disabled, [data-disabled])) {
+  scale: var(--holeai-press-scale);
+}
+
+/* ---- Menus, selects and tooltips: the source app's enters ---------------------------------------------------- */
+
+:root {
+  --ui-menu-duration: var(--holeai-duration-menu-rise);
+  --ui-menu-ease: var(--holeai-ease-popover);
+}
+
+/* A menu rises 2px as it fades in. (These replace the keyframes of the same name in action-menu.css.) */
+@keyframes ui-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--holeai-rise-menu));
+  }
+}
+
+@keyframes ui-menu-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--holeai-rise-menu));
+  }
+}
+
+/* A select's list drops 6px and grows from .98. */
+@keyframes ui-select-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--holeai-drop-select)) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ui-select-content {
+  animation-duration: var(--holeai-duration-select);
+  animation-timing-function: var(--holeai-ease-select);
+}
+
+/* A tooltip rises 6px over 150ms; one below its control comes down instead. */
+.ui-tooltip {
+  transition:
+    opacity var(--holeai-duration-tooltip) ease,
+    transform var(--holeai-duration-tooltip) var(--holeai-ease-popover);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(var(--holeai-rise-tooltip));
+  }
+}
+
+.ui-tooltip[data-placement="bottom"] {
+  @starting-style {
+    opacity: 0;
+    transform: translateY(calc(var(--holeai-rise-tooltip) * -1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-select-content {
+    animation-duration: var(--holeai-duration-reduced);
+  }
+
+  .ui-tooltip,
+  .ui-tooltip[data-placement="bottom"] {
+    transition: opacity var(--holeai-duration-reduced) ease-out;
+
+    @starting-style {
+      opacity: 0;
+      transform: none;
+    }
+  }
+}
+
+/* ---- Shell: the sidebar column opens and folds over 200ms on the quint curve -------------------------------- */
+
+.app-frame {
+  transition: grid-template-columns var(--panel-resize-duration, var(--holeai-duration-sidebar))
+    var(--holeai-ease-quint);
+}
+
+/* ---- Sidebar rows: 54px, a 36px face, the time on the right ------------------------------------------------- */
+
+.agent-row {
+  --agent-row-avatar-size: var(--holeai-row-avatar);
+
+  height: var(--holeai-row-height);
+  min-height: var(--holeai-row-height);
+}
+
+.agent-row + .agent-row {
+  margin-top: 0;
+}
+
+/* A spawned worker sits under its parent, a size smaller. */
+.sidebar-spawned-agent .agent-row {
+  --agent-row-avatar-size: var(--holeai-row-avatar-spawned);
+}
+
+/* The state marks were drawn for a 46px face; on a 36px one they sit a little smaller in the corner. */
+.agent-row:not(.sidebar-pinned-row) .agent-row-agent-status {
+  scale: 0.85;
+  transform-origin: bottom right;
+}
+
+/* Unread: an accent pill with figures on it. */
+.agent-row-agent-status-unread {
+  background: var(--holeai-unread-badge);
+  padding: 0 var(--openbot-space-1);
+  color: var(--holeai-on-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar .agent-row-time {
+  display: block;
+  margin-inline-start: auto;
+  color: var(--openbot-text-muted);
+  font-size: var(--holeai-text-preview);
+  font-variant-numeric: tabular-nums;
+}
+
+@container (max-width: 210px) {
+  .sidebar .agent-row-time {
+    display: none;
+  }
+}
+
+.agent-row-preview {
+  min-height: 18px;
+  color: var(--openbot-text-secondary);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+}
+
+.agent-row-draft-label {
+  color: var(--openbot-text-primary);
+  font-weight: var(--openbot-weight-medium);
+}
+
+/* Folding to the rail: the copy fades and the face slides to the middle, 200ms on the quint curve. */
+.agent-row-avatar {
+  transition: transform var(--panel-resize-duration, var(--holeai-duration-sidebar)) var(--holeai-ease-quint);
+}
+
+.agent-row-copy {
+  transition:
+    opacity var(--holeai-duration-sidebar) var(--holeai-ease-quint),
+    transform var(--holeai-duration-sidebar) var(--holeai-ease-quint);
+}
+
+/* The 64px rail cell less its 8px padding centres a 36px face 6px in. */
+.sidebar-compact .agent-row-avatar {
+  transform: translateX(var(--holeai-rail-avatar-shift));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-row-avatar,
+  .agent-row-copy {
+    transition-duration: var(--holeai-duration-reduced);
+    transition-timing-function: ease-out;
+  }
+}
+
+/* ---- Section headers: 30px, a hover fill, the count at rest and the chevron on hover ------------------------- */
+
+.sidebar-section-toggle {
+  height: var(--holeai-section-height);
+  border-radius: var(--holeai-radius-section);
+  padding: var(--openbot-space-2) var(--openbot-space-2) var(--openbot-space-1-5);
+  transition-property: color, background-color;
+}
+
+.sidebar-section-toggle:hover,
+.sidebar-section-toggle:focus-visible {
+  background: var(--openbot-hover);
+}
+
+.sidebar-section-trailing {
+  display: grid;
+  min-width: var(--openbot-icon-md);
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.sidebar-section-trailing > :not(.sr-only) {
+  grid-area: 1 / 1;
+}
+
+.sidebar-section-count {
+  color: var(--openbot-text-muted);
+  font-size: var(--openbot-text-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--openbot-leading-sm);
+  opacity: 1;
+  transition: opacity var(--holeai-duration-quick) ease-out;
+}
+
+.sidebar-section-chevron {
+  transition:
+    opacity var(--holeai-duration-quick) ease-out,
+    transform var(--openbot-duration-fast) var(--openbot-ease-out);
+}
+
+.sidebar-section-toggle:hover .sidebar-section-count,
+.sidebar-section-toggle:focus-visible .sidebar-section-count {
+  opacity: 0;
+}
+
+.agent-list[data-sidebar-dragging] .sidebar-section-toggle:hover .sidebar-section-count {
+  opacity: 1;
+}
+
+/* ---- Empty "View unread" ------------------------------------------------------------------------------------ */
+
+.sidebar-unread-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--openbot-space-1-5);
+  padding: 10px var(--openbot-space-2);
+  color: var(--openbot-text-secondary);
+  font-size: var(--openbot-text-md);
+  line-height: var(--openbot-leading-md);
+}
+
+/* ---- Pinned tiles: a grid on an ~84px pitch, 60px faces ----------------------------------------------------- */
+
+.sidebar-pinned-list {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(var(--holeai-pin-min), 1fr));
+  justify-items: center;
+  column-gap: var(--openbot-space-1);
+  row-gap: var(--openbot-space-3);
+  padding-block: var(--openbot-space-1-5);
+}
+
+.sidebar-pinned-item {
+  width: 100%;
+  flex: none;
+}
+
+.agent-row.sidebar-pinned-row {
+  --sidebar-pinned-avatar-size: var(--holeai-pin-avatar);
+
+  height: auto;
+  min-height: 0;
+  gap: var(--openbot-space-1-5);
+  padding: var(--openbot-space-1-5) var(--openbot-space-2) var(--openbot-space-1);
+}
+
+.sidebar:not(.sidebar-compact) .sidebar-pinned-row.agent-row {
+  width: 100%;
+}
+
+.sidebar-pinned-empty-drop {
+  height: var(--holeai-pin-drop-height);
+  grid-column: 1 / -1;
+  border-color: color-mix(in srgb, var(--openbot-text-primary) 24%, transparent);
+}
+
+.sidebar-compact .sidebar-pinned-list {
+  grid-template-columns: 1fr;
+}
+
+/* ---- Hold Alt: keycaps 1–9 on the first nine rows (sidebar-shortcuts.ts) ------------------------------------ */
+
+.agent-row[data-shortcut-badge] {
+  position: relative;
+}
+
+.agent-row[data-shortcut-badge]::after {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: var(--openbot-space-2);
+  min-width: 18px;
+  border: 0.5px solid var(--openbot-border-strong);
+  border-radius: var(--holeai-radius-keycap);
+  background: var(--openbot-bg-surface);
+  padding: 1px var(--openbot-space-1);
+  color: var(--openbot-text-secondary);
+  content: attr(data-shortcut-badge);
+  font-size: var(--holeai-text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--holeai-leading-caption);
+  pointer-events: none;
+  text-align: center;
+  transform: translateY(-50%);
+  animation: holeai-keycap-in var(--holeai-duration-hint) ease-out both;
+}
+
+/* On the rail and on a pinned tile the keycap sits over the face. */
+.sidebar-compact .agent-row[data-shortcut-badge]::after,
+.agent-row.sidebar-pinned-row[data-shortcut-badge]::after {
+  top: var(--openbot-space-1);
+  right: var(--openbot-space-1);
+  transform: none;
+}
+
+@keyframes holeai-keycap-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- Chat header and cards ---------------------------------------------------------------------------------- */
+
+.conversation-title:not(.channel-title) > .agent-avatar {
+  width: var(--holeai-header-avatar);
+  height: var(--holeai-header-avatar);
+}
+
+/* Widget and question cards: 24px corners and the source widths, which leave room for the face column. */
+.conversation-interaction-card {
+  border-radius: var(--holeai-radius-card);
+}
+
+.ui-block-card {
+  max-width: min(88%, 520px, calc(100% - 82px));
+}
+
+.chat-action-card {
+  max-width: min(80%, 560px, calc(100% - 82px));
+}

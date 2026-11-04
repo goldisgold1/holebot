@@ -6,6 +6,7 @@ import { App } from "./App";
 import { startActionSounds } from "./action-sounds";
 import { syncAppearance } from "./appearance-choice";
 import { readChatWindowTarget } from "./features/window/chat-window";
+import { installKeyboardNavMarker } from "./keyboard-nav";
 import { syncLogoColor } from "./logo-color";
 import "./styles.css";
 
@@ -18,6 +19,7 @@ if (!root) {
 // A startup mark for `dev:bench`, after the bundle is parsed.
 performance.mark("openbot:renderer-start");
 installPointerFocusGuard();
+installKeyboardNavMarker();
 syncAppearance({ windowGlass: true });
 syncLogoColor();
 startActionSounds();

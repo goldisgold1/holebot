@@ -30,6 +30,8 @@ import { agentThreadAttention } from "../agents/agent-thread-attention";
 import { useAgents } from "../agents/agents-context";
 import { useChannels } from "../channels/channels-context";
 import { useConversation } from "../conversation/conversation-context";
+import { useConversationController } from "../conversation/conversation-controller-context";
+import { composerDraftKey } from "../conversation/conversation-keys";
 import { useDirectMessages } from "../conversation/direct-messages-context";
 import { useServerActions } from "../servers/server-actions";
 import { serverRoleCanAdminister } from "../servers/server-capabilities";
@@ -46,11 +48,14 @@ import { createCommunityCardVisibility } from "./community-card";
 import { createMachineCard } from "./machine-card";
 import { SidebarAccountRow } from "./SidebarAccountRow";
 import { useSidebar } from "./sidebar-context";
+import { installSidebarShortcuts } from "./sidebar-shortcuts";
 import { createStorageCard } from "./storage-card";
 
 /** Dismissing the mobile app card is a choice of this computer, like the sidebar width. The key is
  * new with the Android release, so a computer that dismissed the iPhone-only card sees it once more. */
 const MOBILE_APP_DISMISSED_STORAGE_KEY = "openbot:mobile-app-card-dismissed";
+/** How long the sidebar waits after a key in the composer before its row shows the draft. */
+const DRAFT_PREVIEW_DELAY_MS = 400;
 
 /**
  * The list of Agents and people. It reads the most domains of any pane, and every
@@ -152,9 +157,39 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
     Object.fromEntries(Object.entries(turnProgress()).map(([agentId, progress]) => [agentId, progress?.detail])),
   );
   const { unreadReplies, recentReplies, markAllAgentMessagesRead } = useConversation();
+  // HoleA.I (from Vincent's bot app): the rows say "Draft: …" for unsent text. The composer changes the
+  // drafts on every key, so the sidebar takes them a little after typing stops.
+  const conversationController = useConversationController();
+  const [agentDrafts, setAgentDrafts] = createSignal<Record<string, string>>({});
+  createEffect(
+    () => ({ drafts: conversationController.drafts(), serverId: activeServerId(), agents: agentList() }),
+    ({ drafts, serverId, agents }) => {
+      const timer = setTimeout(() => {
+        const next: Record<string, string> = {};
+        for (const agent of agents) {
+          const text = drafts[composerDraftKey({ agentId: agent.id, serverId })]?.text.trim();
+          if (text) next[agent.id] = text.replace(/\s+/gu, " ");
+        }
+        setAgentDrafts((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next));
+      }, DRAFT_PREVIEW_DELAY_MS);
+      return () => clearTimeout(timer);
+    },
+  );
   const { directPeople, teamPresence } = usePresence();
   const { activeDirectMember, activeDirectMemberId, directThreads } = useDirectMessages();
   const { selectAgent, selectDirectMember, setGlobalSearchVisibility, chatHistory } = useNavigation();
+  const createAgent = () => {
+    channels.close();
+    openAgentSetup();
+  };
+  onSettled(() =>
+    installSidebarShortcuts({
+      mac: () => platform.appInfo()?.platform === "darwin",
+      newAgent: createAgent,
+      toggleCompact: () => (layout.leftPanelCompact() ? layout.expandSidebar() : layout.setSidebarCollapsed(true)),
+      selectAgent: (agentId) => void selectAgent(agentId),
+    }),
+  );
   const agentTasks = useAgentTasks();
   const agentThreads = useAgentThreads();
   /**
@@ -395,6 +430,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       activeDirectMemberId={activeDirectMemberId()}
       agentStates={sidebarAgentStates()}
       agentActivity={agentActivity()}
+      agentDrafts={agentDrafts()}
       reelFactoryLive={reelFactoryLive()}
       channelWaits={channelWaits()}
       channelPreviewsPending={!channels.state.listed}
@@ -418,10 +454,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       onSelectAgent={selectAgent}
       onSelectPerson={(memberId) => void selectDirectMember(memberId)}
       onPreloadDirectConversation={props.peopleEnabled ? () => void DirectConversation.preload() : undefined}
-      onCreateAgent={() => {
-        channels.close();
-        openAgentSetup();
-      }}
+      onCreateAgent={createAgent}
       onEditAgent={editAgent}
       duplicateSupported={activeServerSupportsCapability("agent-duplication")}
       duplicatingAgentIds={duplicatingAgentIds()}

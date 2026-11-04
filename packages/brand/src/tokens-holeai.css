@@ -167,3 +167,231 @@
   --holeai-more-unreads-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 0 4px 8px var(--openbot-bg-sidebar);
 }
 /* --- end message states --- */
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * HoleA.I (from Vincent's bot app): the shell feel (src/renderer/src/styles/holeai-feel-shell.css). The source app's
+ * ink-at-a-strength palette, its blue, its type roles and its motion set. Bubble and composer tokens above stay
+ * with the chat surface.
+ * ------------------------------------------------------------------------------------------------------------- */
+:root:not([data-openbot-color-scheme="light"]) {
+  /* Window #121212, sidebar #0e0e0e (deepest), chat pane #161616, menus and popovers #1f1f1f. */
+  --openbot-bg-frame: #121212;
+  --openbot-bg-sidebar: #0e0e0e;
+  --openbot-bg-native-sidebar: #0e0e0e;
+  --openbot-bg-canvas: #161616;
+  --openbot-bg-native-canvas: #161616;
+  --openbot-bg-surface: #1f1f1f;
+  --openbot-bg-sheet: #1f1f1f;
+  --openbot-bg-sheet-inset: #161616;
+  /* One ink, #f5f5f5: text at 100/66/54%, hover 6%, lines at 6/10%. */
+  --openbot-hover: rgb(245 245 245 / 0.06);
+  --openbot-text-primary: #f5f5f5;
+  --openbot-text-secondary: rgb(245 245 245 / 0.66);
+  --openbot-text-muted: rgb(245 245 245 / 0.54);
+  --openbot-text-readable: rgb(245 245 245 / 0.54);
+  --holeai-text-soft: rgb(245 245 245 / 0.54);
+  --openbot-border: rgb(245 245 245 / 0.06);
+  --openbot-border-strong: rgb(245 245 245 / 0.1);
+  /* Blue: fill #116dd2, hover #1784fb, text #4d9bff. */
+  --openbot-accent: #116dd2;
+  --openbot-accent-hover: #1784fb;
+  --openbot-accent-text: #4d9bff;
+  --openbot-accent-soft: rgb(22 128 243 / 0.14);
+  --openbot-accent-strong: rgb(22 128 243 / 0.34);
+  --openbot-success: #14c370;
+  --openbot-warning: #f69412;
+  --openbot-danger: #fc2c3e;
+  /* Rows over the #0e0e0e sidebar: 6% ink under the pointer, 8% when open. */
+  --holeai-row-hover: #1c1c1c;
+  --holeai-row-active: #212121;
+  --holeai-focus: #1884fc;
+  --holeai-unread-badge: #116dd2;
+  --holeai-shadow-popover: 0 0 0 1px rgb(245 245 245 / 0.06);
+}
+
+:root[data-openbot-color-scheme="light"] {
+  /* Window #fcfcfc, sidebar #f5f5f5, chat pane white. */
+  --openbot-bg-frame: #fcfcfc;
+  --openbot-bg-sidebar: #f5f5f5;
+  --openbot-bg-native-sidebar: #f5f5f5;
+  --openbot-bg-canvas: #ffffff;
+  --openbot-bg-native-canvas: #ffffff;
+  /* One ink, #1c1c1c: text at 100/68/56%, hover 6%, lines at 8/12%. */
+  --openbot-hover: rgb(28 28 28 / 0.06);
+  --openbot-text-primary: #1c1c1c;
+  --openbot-text-secondary: rgb(28 28 28 / 0.68);
+  --openbot-text-muted: rgb(28 28 28 / 0.56);
+  --openbot-text-readable: rgb(28 28 28 / 0.56);
+  --holeai-text-soft: rgb(28 28 28 / 0.56);
+  --openbot-border: rgb(28 28 28 / 0.08);
+  --openbot-border-strong: rgb(28 28 28 / 0.12);
+  /* Blue: fill #1680f3, hover #126fd4, text #0b6dd3. */
+  --openbot-accent: #1680f3;
+  --openbot-accent-hover: #126fd4;
+  --openbot-accent-text: #0b6dd3;
+  --openbot-accent-soft: rgb(22 128 243 / 0.12);
+  --openbot-accent-strong: rgb(22 128 243 / 0.28);
+  --openbot-success: #10ab61;
+  --openbot-warning: #da830e;
+  --openbot-danger: #e72e3b;
+  /* Rows over the #f5f5f5 sidebar: 6% ink under the pointer, 8% when open. */
+  --holeai-row-hover: #e8e8e8;
+  --holeai-row-active: #e3e3e3;
+  --holeai-focus: #1e86fc;
+  --holeai-unread-badge: #1680f3;
+  --holeai-shadow-popover:
+    0 10px 20px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.04);
+}
+
+:root {
+  --holeai-on-accent: #ffffff;
+  /* Keyboard focus: a 2px blue ring. The shell hides it until the keyboard moves focus (data-keyboard-nav). */
+  --openbot-focus-ring: 0 0 0 2px var(--holeai-focus);
+  --holeai-focus-offset: 1px;
+
+  /* Type roles: caption 11/16, body-2 13/18, body-1 14/20, 15/22, heading-3 17/24, heading-2 22/28, heading-1 26/32. */
+  --holeai-text-caption: 11px;
+  --holeai-text-body-lg: 15px;
+  --holeai-text-heading-3: 17px;
+  --holeai-text-heading-2: 22px;
+  --holeai-text-heading-1: 26px;
+  --holeai-leading-caption: 16px;
+  --holeai-leading-body-lg: 22px;
+  --holeai-leading-heading-3: 24px;
+  --holeai-leading-heading-2: 28px;
+  --holeai-leading-heading-1: 32px;
+  --holeai-tracking-heading-3: -0.008em;
+  --holeai-tracking-heading-2: -0.012em;
+  --holeai-tracking-heading-1: -0.015em;
+
+  /* Radii: cards 24, a collapsed card 18, section headers and small chips 6. */
+  --holeai-radius-card: 24px;
+  --holeai-radius-card-collapsed: 18px;
+  --holeai-radius-section: 6px;
+  --holeai-radius-hover-card: 12px;
+  --holeai-radius-keycap: 4px;
+
+  /* Motion. Buttons change colour over 140ms and press to .98. */
+  --openbot-duration-hover: 140ms;
+  --holeai-press-scale: 0.98;
+  --holeai-ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --holeai-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --holeai-ease-status: cubic-bezier(0.1, 0.9, 0.2, 1);
+  --holeai-ease-popover: cubic-bezier(0.23, 1, 0.32, 1);
+  --holeai-ease-select: cubic-bezier(0.16, 1, 0.3, 1);
+  --holeai-ease-settle: cubic-bezier(0.25, 1.15, 0.4, 1);
+  /* SPRING_FAST: a critically damped spring, 300ms (120ms reduced). */
+  --holeai-ease-spring-fast: linear(
+    0,
+    0.01588 2%,
+    0.05618 4%,
+    0.11201 6%,
+    0.1768 8%,
+    0.2458 10%,
+    0.31562 12%,
+    0.38392 14%,
+    0.44914 16%,
+    0.51029 18%,
+    0.56683 20%,
+    0.61852 22%,
+    0.66534 24%,
+    0.70743 26%,
+    0.74501 28%,
+    0.77838 30%,
+    0.80788 32%,
+    0.83383 34%,
+    0.85658 36%,
+    0.87645 38%,
+    0.89376 40%,
+    0.92183 44%,
+    0.94282 48%,
+    0.95838 52%,
+    0.96984 56%,
+    0.97823 60%,
+    0.98435 64%,
+    0.98878 68%,
+    0.99198 72%,
+    0.99594 80%,
+    0.99829 90%,
+    1 100%
+  );
+  /* REACTION_POP: overshoots to 1.078, then settles, 500ms. */
+  --holeai-ease-reaction-pop: linear(
+    0 0%,
+    0.0334 2.5%,
+    0.1181 5%,
+    0.2337 7.5%,
+    0.3639 10%,
+    0.4963 12.5%,
+    0.6218 15%,
+    0.7346 17.5%,
+    0.8311 20%,
+    0.9102 22.5%,
+    0.9718 25%,
+    1.0172 27.5%,
+    1.0482 30%,
+    1.0672 32.5%,
+    1.0764 35%,
+    1.078 37.5%,
+    1.0743 40%,
+    1.0669 42.5%,
+    1.0575 45%,
+    1.0472 47.5%,
+    1.0369 50%,
+    1.0273 52.5%,
+    1.0188 55%,
+    1.0116 57.5%,
+    1.0057 60%,
+    1.0012 62.5%,
+    0.998 65%,
+    0.9958 67.5%,
+    0.9945 70%,
+    0.994 72.5%,
+    0.9939 75%,
+    0.9943 77.5%,
+    0.9949 80%,
+    0.9957 82.5%,
+    0.9965 85%,
+    0.9973 87.5%,
+    0.998 90%,
+    0.9987 92.5%,
+    0.9992 95%,
+    0.9996 97.5%,
+    1 100%
+  );
+  --holeai-duration-hint: 90ms;
+  --holeai-duration-menu-rise: 100ms;
+  --holeai-duration-quick: 120ms;
+  --holeai-duration-row-reveal: 130ms;
+  --holeai-duration-tooltip: 150ms;
+  --holeai-duration-select: 160ms;
+  --holeai-duration-sidebar: 200ms;
+  --holeai-duration-wipe: 200ms;
+  --holeai-duration-spring-fast: 300ms;
+  --holeai-duration-reduced: 120ms;
+  --holeai-duration-reaction-pop: 500ms;
+  --holeai-hold-shortcut-badges: 500ms;
+  --holeai-rise-menu: 2px;
+  --holeai-rise-tooltip: 6px;
+  --holeai-drop-select: -6px;
+
+  /* Sidebar geometry: 54px rows with a 36px face; 30px section headers; pins on an 84px pitch with 60px faces. */
+  --holeai-row-height: 54px;
+  --holeai-row-avatar: 36px;
+  --holeai-row-avatar-spawned: 28px;
+  /* The 64px rail cell less its 8px padding: a 36px face is centred 6px in. */
+  --holeai-rail-avatar-shift: 6px;
+  --holeai-section-height: 30px;
+  --holeai-pin-avatar: 60px;
+  --holeai-pin-min: 80px;
+  --holeai-pin-drop-height: 104px;
+  --holeai-header-avatar: 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --holeai-press-scale: 1;
+    --holeai-duration-spring-fast: var(--holeai-duration-reduced);
+  }
+}
+/* --- end shell feel --- */

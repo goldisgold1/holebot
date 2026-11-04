@@ -26,8 +26,10 @@ const BOT_APP_SOUND_URLS: Readonly<Record<BotAppSound, string>> = {
   "chime-a": chimeAUrl,
   "chime-b": chimeBUrl,
 };
-/** The bot app plays its sounds at this volume. */
-const BOT_APP_SOUND_GAIN = 0.5;
+/** HoleA.I (from Vincent's bot app): the bot app plays its sounds at full volume. */
+const BOT_APP_SOUND_GAIN = 1;
+/** HoleA.I (from Vincent's bot app): an agent's sound plays at most once in this long. */
+export const TASK_SOUND_THROTTLE_MS = 5_000;
 const decodedSounds = new Map<BotAppSound, Promise<AudioBuffer>>();
 
 type NotificationAgent = Pick<ClientAgentSummary, "id" | "notifications">;
@@ -54,7 +56,16 @@ export function readTaskSound(storage?: PreferenceStorage): TaskSoundChoice {
   }
 }
 
+const taskSoundListeners = new Set<(choice: TaskSoundChoice) => void>();
+
+/** Calls `listener` with each new task sound choice of this page. Returns the unsubscribe. */
+export function onTaskSoundChange(listener: (choice: TaskSoundChoice) => void): () => void {
+  taskSoundListeners.add(listener);
+  return () => taskSoundListeners.delete(listener);
+}
+
 export function setTaskSound(choice: TaskSoundChoice, storage?: Pick<Storage, "setItem">): void {
+  for (const listener of taskSoundListeners) listener(choice);
   try {
     const target = storage ?? window.localStorage;
     // The switch goes first: when only it is saved, "off" still reads as off.
@@ -67,19 +78,76 @@ export function setTaskSound(choice: TaskSoundChoice, storage?: Pick<Storage, "s
   }
 }
 
-function shouldPlayCompletionSound(event: AgentEvent, agents: NotificationAgent[]): boolean {
-  // A quiet routine run posted nothing, so it has no reply to announce. A turn that continues its
-  // plan is not the end of the request.
-  if (event.type !== "turn-completed" || event.status !== "completed" || event.quiet || event.continues) return false;
-  return agents.some((agent) => agent.id === event.agentId && agent.notifications);
+/**
+ * HoleA.I (from Vincent's bot app): the agent and the request of an event that plays the task sound: a
+ * finished reply, and a wait for the user (a question, an approval, a browser step), as the bot app sounds
+ * for each notification it delivers. Null for any other event.
+ */
+export function taskSoundRequest(event: AgentEvent): { agentId: string; request: string; waits: boolean } | null {
+  switch (event.type) {
+    case "turn-completed":
+      // A quiet routine run posted nothing, so it has no reply to announce. A turn that continues its
+      // plan is not the end of the request.
+      if (event.status !== "completed" || event.quiet || event.continues) return null;
+      return { agentId: event.agentId, request: `turn:${event.turnId}`, waits: false };
+    case "prompt":
+      return { agentId: event.agentId, request: `prompt:${event.turnId}:${event.requestId}`, waits: true };
+    case "approval":
+      return {
+        agentId: event.approval.agentId,
+        request: `approval:${event.approval.turnId}:${event.approval.requestId}`,
+        waits: true,
+      };
+    case "browser-takeover-requested":
+      return {
+        agentId: event.request.agentId,
+        request: `browser:${event.request.turnId}:${event.request.requestId}`,
+        waits: true,
+      };
+    default:
+      return null;
+  }
 }
 
+export interface TaskSoundGate {
+  /** Whether the user has this agent's chat in front of them, which then makes no sound. */
+  chatOnScreen?: ((agentId: string) => boolean) | undefined;
+  /** Whether a wait for the user may sound; a finished reply only checks the agent's switch. */
+  waitsSound?: boolean | undefined;
+  now?: (() => number) | undefined;
+}
+
+const lastSoundAt = new Map<string, number>();
+const lastSoundRequest = new Map<string, string>();
+
+/** Whether the event plays the task sound now. Records the play, so a repeat or a quick second one is silent. */
+export function shouldPlayTaskSound(event: AgentEvent, agents: NotificationAgent[], gate: TaskSoundGate = {}): boolean {
+  const sound = taskSoundRequest(event);
+  if (!sound) return false;
+  if (sound.waits && gate.waitsSound === false) return false;
+  if (!agents.some((agent) => agent.id === sound.agentId && agent.notifications)) return false;
+  // A host can send the same request again, as after a reconnect.
+  if (lastSoundRequest.get(sound.agentId) === sound.request) return false;
+  lastSoundRequest.set(sound.agentId, sound.request);
+  if (gate.chatOnScreen?.(sound.agentId)) return false;
+  const now = gate.now?.() ?? Date.now();
+  const last = lastSoundAt.get(sound.agentId);
+  if (last !== undefined && now - last < TASK_SOUND_THROTTLE_MS) return false;
+  lastSoundAt.set(sound.agentId, now);
+  return true;
+}
+
+/** Plays the task sound for a finished reply or a wait for the user. Returns whether it played. */
 export function playCompletionSoundForAgentEvent(
   event: AgentEvent,
   agents: NotificationAgent[],
   storage?: PreferenceStorage,
-): void {
-  if (shouldPlayCompletionSound(event, agents)) playSoundChoice(readTaskSound(storage));
+  gate?: TaskSoundGate,
+): boolean {
+  const choice = readTaskSound(storage);
+  if (choice === "off" || !shouldPlayTaskSound(event, agents, gate)) return false;
+  playSoundChoice(choice);
+  return true;
 }
 
 /**

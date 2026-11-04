@@ -4,7 +4,7 @@
  * the scroll fades in that order.
  */
 
-import { Bot, CheckCheck, ContextMenu, FolderPlus, Hash } from "@openbot/ui";
+import { Bot, Button, CheckCheck, ContextMenu, FolderPlus, Hash } from "@openbot/ui";
 import { createSignal, For, Show } from "solid-js";
 import { useText } from "../../text";
 import { SidebarChannelRow } from "./SidebarChannelRow";
@@ -17,6 +17,7 @@ import { SidebarSelectionBar } from "./SidebarSelectionBar";
 import { SidebarWaitingGroup } from "./SidebarWaitingGroup";
 import { useSidebarScope } from "./sidebar-scope";
 import { selectedAgentIds } from "./sidebar-selection";
+import { setUnreadOnly, unreadOnly } from "./sidebar-unread-filter";
 
 export function SidebarNav() {
   const {
@@ -72,6 +73,15 @@ export function SidebarNav() {
         >
           <SidebarEmptyState />
         </Show>
+        {/* HoleA.I (from Vincent's bot app): "View unread" with nothing unread says so and offers the whole list. */}
+        <Show when={unreadOnly() && filteredChats().length === 0 && groupChats().length === 0}>
+          <div class="sidebar-unread-empty">
+            <span>{t("sidebar.empty.noUnread")}</span>
+            <Button variant="ghost" size="xs" type="button" onClick={() => setUnreadOnly(false)}>
+              {t("sidebar.empty.showAll")}
+            </Button>
+          </div>
+        </Show>
         <SidebarPinnedGroup />
         <SidebarWaitingGroup />
         <SidebarSectionList />
@@ -125,6 +135,9 @@ export function SidebarNav() {
                   <span>{t("sidebar.markAllRead")}</span>
                 </ContextMenu.Item>
               </Show>
+              <ContextMenu.Item onSelect={() => setUnreadOnly(!unreadOnly())}>
+                <span>{unreadOnly() ? t("sidebar.empty.showAll") : t("sidebar.viewUnread")}</span>
+              </ContextMenu.Item>
               <Show when={props.onToggleArchivedChannels}>
                 <ContextMenu.Item onSelect={() => props.onToggleArchivedChannels?.()}>
                   {props.showingArchivedChannels

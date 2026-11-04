@@ -7,7 +7,9 @@ export const messages = defineMessages("notification", {
   "notification.needsApproval": "Needs your approval.",
   "notification.needsBrowserStep": "Needs you to finish a step in the browser.",
   "notification.needsApprovalFor": "Needs your approval: {action}",
-  "notification.finished": "Finished working.",
+  "notification.finished": "Open HoleBot to see what it did.",
+  // HoleA.I (from Vincent's bot app): the title of a notification that waits for the user.
+  "notification.waitingTitle": "{name} is waiting for you",
   // A workflow step that waits for a person to approve or reject it.
   "notification.workflowApproval": "A step waits for your approval.",
   // A workflow output step that tells the user its result.

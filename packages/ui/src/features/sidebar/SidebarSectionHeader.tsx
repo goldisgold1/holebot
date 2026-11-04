@@ -10,7 +10,7 @@ import { useText } from "../../text";
 import { SidebarSectionEditor } from "./SidebarSectionEditor";
 import { useSidebarScope } from "./sidebar-scope";
 
-export function SidebarSectionHeader(headerProps: { sectionId: string; name: string }) {
+export function SidebarSectionHeader(headerProps: { sectionId: string; name: string; count?: number }) {
   const {
     customSectionById,
     duplicateSection,
@@ -64,10 +64,19 @@ export function SidebarSectionHeader(headerProps: { sectionId: string; name: str
             <span class="sidebar-section-name" title={headerProps.name}>
               {headerProps.name}
             </span>
-            <ChevronDown
-              class={`sidebar-section-chevron size-4${collapsed() ? " sidebar-section-chevron-collapsed" : ""}`}
-              aria-hidden="true"
-            />
+            {/* HoleA.I (from Vincent's bot app): the count shows at rest; the chevron takes its place on hover. */}
+            <span class="sidebar-section-trailing">
+              <Show when={(headerProps.count ?? 0) > 0}>
+                <span class="sidebar-section-count" aria-hidden="true">
+                  {headerProps.count}
+                </span>
+                <span class="sr-only">{t("sidebar.section.count", { count: headerProps.count ?? 0 })}</span>
+              </Show>
+              <ChevronDown
+                class={`sidebar-section-chevron size-4${collapsed() ? " sidebar-section-chevron-collapsed" : ""}`}
+                aria-hidden="true"
+              />
+            </span>
           </ContextMenu.Trigger>
           <Show when={layoutMutable()}>
             <ContextMenu.Portal>

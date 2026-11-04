@@ -1,7 +1,7 @@
 import { fileReferenceName } from "@openbot/brand/file-reference";
 import { chatPreviewKind } from "@openbot/contracts/chat-preview";
 import type { AttachmentSummary, InstalledSkill, MessageReaction } from "@openbot/contracts/ipc";
-import { canPreviewAttachment, MESSAGE_REACTIONS, MORE_MESSAGE_REACTIONS } from "@openbot/contracts/ipc";
+import { canPreviewAttachment } from "@openbot/contracts/ipc";
 import { parseSelectionInstruction } from "@openbot/contracts/selection-instruction";
 import {
   AudioLines,
@@ -47,6 +47,7 @@ import {
   messageImageFiles,
 } from "./MarkdownMessageText";
 import { ReplyQuote } from "./ReplyQuote";
+import { moreReactions, quickReactions, rememberReaction } from "./reaction-recents";
 import {
   nextStreamingReveal,
   type StreamingRevealChunk,
@@ -776,6 +777,11 @@ export function MessageActions(props: {
 }) {
   const { t } = useText();
   const authorName = () => props.authorName ?? t("chat.message.agentFallback");
+  const react = (emoji: MessageReaction) => {
+    const next = props.message.reaction === emoji ? null : emoji;
+    rememberReaction(next);
+    props.onReact(next);
+  };
   return (
     <div
       class={["message-actions", { "message-actions-open": props.pickerOpen }]}
@@ -826,12 +832,12 @@ export function MessageActions(props: {
             >
               <div class="reaction-picker-row">
                 <DropdownMenu.RadioGroup class="reaction-picker-options" value={props.message.reaction ?? ""}>
-                  <For each={MESSAGE_REACTIONS}>
+                  <For each={quickReactions()}>
                     {(emoji) => (
                       <DropdownMenu.RadioItem
                         value={emoji}
                         aria-label={t("chat.actions.react", { emoji })}
-                        onSelect={() => props.onReact(props.message.reaction === emoji ? null : emoji)}
+                        onSelect={() => react(emoji)}
                       >
                         {emoji}
                       </DropdownMenu.RadioItem>
@@ -850,12 +856,12 @@ export function MessageActions(props: {
               <Show when={props.expandedEmoji}>
                 <div class="reaction-picker-row reaction-picker-more">
                   <DropdownMenu.RadioGroup class="reaction-picker-options" value={props.message.reaction ?? ""}>
-                    <For each={MORE_MESSAGE_REACTIONS}>
+                    <For each={moreReactions()}>
                       {(emoji) => (
                         <DropdownMenu.RadioItem
                           value={emoji}
                           aria-label={t("chat.actions.react", { emoji })}
-                          onSelect={() => props.onReact(props.message.reaction === emoji ? null : emoji)}
+                          onSelect={() => react(emoji)}
                         >
                           {emoji}
                         </DropdownMenu.RadioItem>
@@ -924,7 +930,11 @@ export function MessageMenu(props: {
 }) {
   const { t } = useText();
   const authorName = () => props.authorName ?? t("chat.message.agentFallback");
-  const react = (emoji: MessageReaction) => props.onReact(props.message.reaction === emoji ? null : emoji);
+  const react = (emoji: MessageReaction) => {
+    const next = props.message.reaction === emoji ? null : emoji;
+    rememberReaction(next);
+    props.onReact(next);
+  };
   return (
     <ContextMenu.Content
       aria-label={
@@ -956,7 +966,7 @@ export function MessageMenu(props: {
               data-menu-layout="grid"
               aria-label={t("chat.actions.chooseReaction")}
             >
-              <For each={[MESSAGE_REACTIONS, MORE_MESSAGE_REACTIONS]}>
+              <For each={[quickReactions(), moreReactions()]}>
                 {(row, index) => (
                   <div class={["reaction-picker-row", { "reaction-picker-more": index() > 0 }]}>
                     <ContextMenu.RadioGroup class="reaction-picker-options" value={props.message.reaction ?? ""}>

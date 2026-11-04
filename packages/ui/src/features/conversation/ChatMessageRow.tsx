@@ -12,10 +12,11 @@ import {
   MessageHeader,
 } from "@openbot/ui";
 import type { JSX } from "@solidjs/web";
-import { createMemo, For, Show } from "solid-js";
+import { createEffect, createMemo, For, onSettled, Show } from "solid-js";
 import { avatarHeadColor } from "../../bloub-avatar";
 import type { AgentMessage, AgentProfile } from "../../data";
 import { useText } from "../../text";
+import { prefersReducedMotion } from "../../utils";
 import { AgentAvatar } from "../agents/AgentAvatar";
 import type { AttachmentMediaSource } from "./AttachmentCards";
 import type { MessageImageFile } from "./MarkdownMessageText";
@@ -59,6 +60,11 @@ export interface ChatMessageRowProps {
   /** Whether the time stands beside the author name. Without a name, the time is in the action row. */
   showTime?: boolean | undefined;
   animate?: boolean;
+  /**
+   * HoleA.I (from Vincent's bot app): how an arriving row enters. "after-collapse" is a reply that takes the
+   * thinking line's place: it waits for the line to fold, then pops up from the speaker's corner.
+   */
+  enter?: "new" | "after-collapse" | undefined;
   agents: AgentProfile[];
   skills?: InstalledSkill[] | undefined;
   referencedMessage?: AgentMessage | undefined;
@@ -127,8 +133,39 @@ export function isEmojiOnlyMessage(message: AgentMessage) {
   return count > 0;
 }
 
+// HoleA.I (from Vincent's bot app): a word of one or two characters ("ok", "?") centres in a round bubble.
+const SHORT_TEXT_MAX = 2;
+
+function isShortTextMessage(message: AgentMessage) {
+  if (message.attachments?.length || message.voiceRecording || message.streaming) return false;
+  const text = message.body.trim();
+  return text.length > 0 && [...emojiSegmenter.segment(text)].length <= SHORT_TEXT_MAX;
+}
+
+/** A changed reaction count bumps its chip: 1.06 and back over 240ms. */
+const REACTION_BUMP = { duration: 240, easing: "ease-out" } as const;
+
 export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
   const { t } = useText();
+  // HoleA.I (from Vincent's bot app): only a reaction added while the row is on screen pops in. A row the list
+  // mounts again on scroll draws its reactions still.
+  let settled = false;
+  onSettled(() => {
+    const frame = requestAnimationFrame(() => {
+      settled = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  });
+  const reactionEnter = () => (settled && !prefersReducedMotion() ? "" : undefined);
+  const bumpOnCount = (element: HTMLElement, count: () => number) => {
+    createEffect(count, (next, previous) => {
+      if (previous === undefined || next === previous || !settled || prefersReducedMotion()) return;
+      element.animate(
+        [{ transform: "scale(1)" }, { transform: "scale(1.06)" }, { transform: "scale(1)" }],
+        REACTION_BUMP,
+      );
+    });
+  };
   const own = () => props.author.kind === "you";
   const member = () => props.author.kind === "member";
   const person = () => own() || member();
@@ -252,6 +289,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             data-author={person() ? "user" : "assistant"}
             data-streaming={props.message.streaming === true ? "" : undefined}
             data-emoji-only={emojiOnly() ? "" : undefined}
+            data-short={!emojiOnly() && isShortTextMessage(props.message) ? "" : undefined}
           >
             <BubbleContent>
               <MessageBody
@@ -281,6 +319,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             <Show when={(props.groupReactions?.length ?? 0) > 0}>
               <BubbleReactions
                 class="message-reaction-anchor"
+                side="top"
                 align={own() ? "start" : "end"}
                 overflowCount={Math.max(0, (props.groupReactions?.length ?? 0) - CHANNEL_REACTION_GROUPS_SHOWN)}
                 role="group"
@@ -291,8 +330,10 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
                 <For each={(props.groupReactions ?? []).slice(0, CHANNEL_REACTION_GROUPS_SHOWN)}>
                   {(group) => (
                     <Button
+                      ref={(element: HTMLElement) => bumpOnCount(element, () => group.count)}
                       variant="ghost"
                       type="button"
+                      data-enter={reactionEnter()}
                       class={["message-reaction-pill", { "message-reaction-pill-mine": group.mine }]}
                       title={`${group.names.join(", ")} ${group.emoji}`}
                       aria-pressed={group.mine ? "true" : "false"}
@@ -311,6 +352,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             <Show when={!props.groupReactions && (props.reactions?.length ?? 0) > 0}>
               <BubbleReactions
                 class="message-reaction-anchor"
+                side="top"
                 align={own() ? "start" : "end"}
                 overflowCount={props.reactionOverflowCount}
                 role="group"
@@ -324,6 +366,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
                       when={reaction.actor.kind === "user"}
                       fallback={
                         <span
+                          data-enter={reactionEnter()}
                           class="message-reaction-pill message-reaction-pill-readonly"
                           role="img"
                           aria-label={t("chat.row.agentReaction", {
@@ -341,6 +384,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
                       <Button
                         variant="ghost"
                         type="button"
+                        data-enter={reactionEnter()}
                         class="message-reaction-pill"
                         aria-label={t("chat.row.removeReaction", { emoji: reaction.emoji })}
                         onClick={() => props.onRemoveReaction?.()}
@@ -364,6 +408,10 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
           </Show>
         </div>
       </MessageContent>
+      {/* HoleA.I (from Vincent's bot app): the time a sideways swipe slides in at the end of the row. */}
+      <time class="message-peek-time" datetime={props.message.createdAt} aria-hidden="true">
+        {props.message.time}
+      </time>
     </>
   );
   return (
@@ -378,6 +426,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
           data-chat-search-message={props["data-chat-search-message"]}
           style={authorStyle()}
           class={rowClass()}
+          data-enter={props.animate ? props.enter : undefined}
         >
           {body()}
         </Message>
@@ -412,6 +461,7 @@ export function ChatMessageRow(props: ChatMessageRowProps): JSX.Element {
             data-chat-search-message={props["data-chat-search-message"]}
             style={authorStyle() ?? ""}
             class={["ui-message", ...rowClass()]}
+            data-enter={props.animate ? props.enter : undefined}
           >
             {body()}
           </ContextMenu.Trigger>

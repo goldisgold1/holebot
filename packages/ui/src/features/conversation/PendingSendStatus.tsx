@@ -20,7 +20,7 @@ export interface PendingSendStatusProps {
 
 /**
  * The delivery line under a message the host has not stored yet, end-aligned under the bubble. A
- * send in flight shows nothing; a send queued behind another reads "Not delivered yet"; a failure
+ * send in flight shows a small progress track once it has taken 2s; a send queued behind another reads "Not delivered yet"; a failure
  * reads "Failed to send" with the text buttons Resend and Delete, then Edit. The status text is a
  * polite live region that stays while the send runs, so a reader hears the change without moving
  * focus. A message whose repeat the host cannot detect offers no Resend: the first send may have
@@ -31,6 +31,10 @@ export function PendingSendStatus(props: PendingSendStatusProps): JSX.Element {
   const failed = () => props.state === "failed";
   return (
     <div class="pending-send-status" data-state={props.state}>
+      {/* HoleA.I (from Vincent's bot app): a send still in flight after 2s shows a small moving track (CSS delay). */}
+      <Show when={props.state === "sending"}>
+        <span class="pending-send-progress" aria-hidden="true" />
+      </Show>
       <span role="status" class="pending-send-label">
         <Show when={props.state === "waiting"}>
           <span class="pending-send-queued">{t("conversation.send.notDelivered")}</span>

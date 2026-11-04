@@ -63,16 +63,11 @@ export function createSmoothHeightResize(options: SmoothHeightResizeOptions): vo
   onCleanup(cancelAnimation);
 }
 
+// HoleA.I (from Vincent's bot app): a row settles to its new height over 200ms on the standard curve.
 function resizeDuration(): number {
-  const value = getComputedStyle(document.documentElement).getPropertyValue("--openbot-duration-overlay").trim();
-  if (value.endsWith("ms")) return Number.parseFloat(value) || 240;
-  if (value.endsWith("s")) return (Number.parseFloat(value) || 0.24) * 1_000;
-  return 240;
+  return 200;
 }
 
 function resizeEasing(): string {
-  return (
-    getComputedStyle(document.documentElement).getPropertyValue("--openbot-ease-out").trim() ||
-    "cubic-bezier(0.23, 1, 0.32, 1)"
-  );
+  return "cubic-bezier(0.2, 0, 0, 1)";
 }

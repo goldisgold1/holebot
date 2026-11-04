@@ -31,6 +31,8 @@ export interface AgentsPort {
     | "updateAgent"
     | "updateAgentAdminSettings"
   >;
+  /** HoleA.I: what this window shows, for the desktop notifications of main. */
+  notifications: Pick<OpenBotDesktopApi["notifications"], "setPresence">;
   /** The accounts of a joined server's providers, which its released agent routes do not carry. */
   providerAdmin: Pick<OpenBotDesktopApi["providerAdmin"], "accounts" | "accountUsage">;
 }

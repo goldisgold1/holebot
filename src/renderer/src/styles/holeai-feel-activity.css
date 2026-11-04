@@ -1,0 +1,124 @@
+/* HoleA.I (from Vincent's bot app): the activity part of the source app's feel. Loaded after holeai-clean.css. */
+
+:root:not([data-openbot-color-scheme="light"]),
+:root[data-openbot-color-scheme="light"] {
+  /* The live line: a 22px face, 6px from its words. */
+  --holeai-activity-mark-size: 22px;
+  --holeai-activity-gap: 6px;
+  /* The words rise 4px into place 220ms after the line appears. */
+  --holeai-activity-rise: 4px;
+  --holeai-activity-enter-duration: 180ms;
+  --holeai-activity-enter-delay: 220ms;
+  --holeai-activity-enter-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --holeai-activity-reduced-duration: 120ms;
+  /* The shine: ink at full strength sweeping over the same ink at 40%. */
+  --holeai-shimmer-ink: var(--openbot-text-primary);
+  --holeai-shimmer-dim: color-mix(in srgb, var(--holeai-shimmer-ink) 40%, transparent);
+  --holeai-shimmer-duration: 2.2s;
+  /* The face's eyes take the chat pane's colour, so they read as cut out of the face. */
+  --holeai-activity-mark-eye: var(--openbot-bg-canvas);
+}
+
+/* The face and its words sit close, as one line. */
+.agent-activity-content {
+  gap: var(--holeai-activity-gap);
+}
+
+/* The line fades in; the words do their own rise after it. */
+@starting-style {
+  .agent-activity-content {
+    filter: none;
+    transform: none;
+  }
+}
+
+.agent-activity-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--holeai-activity-gap);
+  /* The entry ignores the pointer while it collapses; a live line can be pointed at and poked. */
+  pointer-events: auto;
+}
+
+.agent-activity-entry[data-state="exiting"] .agent-activity-line {
+  pointer-events: none;
+}
+
+.agent-activity-mark {
+  width: var(--holeai-activity-mark-size);
+  height: var(--holeai-activity-mark-size);
+}
+
+/* One line, cut at 60 characters by the indicator, so the row height never changes with the words. */
+.agent-activity-entry .agent-activity-label,
+.agent-activity-entry[data-waiting="true"] .agent-activity-label {
+  -webkit-line-clamp: 1;
+  animation: holeai-activity-label-in var(--holeai-activity-enter-duration) var(--holeai-activity-enter-ease)
+    var(--holeai-activity-enter-delay) both;
+}
+
+.agent-activity-entry:not([data-waiting="true"]) .agent-activity-label {
+  background-image: linear-gradient(
+    90deg,
+    var(--holeai-shimmer-dim) 0%,
+    var(--holeai-shimmer-dim) 25%,
+    var(--holeai-shimmer-ink) 60%,
+    var(--holeai-shimmer-dim) 75%,
+    var(--holeai-shimmer-dim) 100%
+  );
+  background-size: 200% 100%;
+  animation:
+    holeai-activity-label-in var(--holeai-activity-enter-duration) var(--holeai-activity-enter-ease)
+    var(--holeai-activity-enter-delay) both,
+    holeai-activity-shimmer var(--holeai-shimmer-duration) steps(60, end) infinite;
+}
+
+/* " · 3m" follows the words in the same colour as a dim step. */
+.agent-activity-elapsed {
+  color: var(--openbot-text-muted);
+}
+
+@keyframes holeai-activity-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--holeai-activity-rise));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes holeai-activity-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes holeai-activity-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-activity-entry .agent-activity-label,
+  .agent-activity-entry[data-waiting="true"] .agent-activity-label {
+    animation: holeai-activity-fade-in var(--holeai-activity-reduced-duration) linear both;
+  }
+
+  /* No shine: plain secondary text. */
+  .agent-activity-entry:not([data-waiting="true"]) .agent-activity-label {
+    background: none;
+    color: var(--openbot-text-secondary);
+    -webkit-text-fill-color: currentColor;
+    animation: holeai-activity-fade-in var(--holeai-activity-reduced-duration) linear both;
+  }
+}

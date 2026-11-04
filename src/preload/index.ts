@@ -1317,6 +1317,7 @@ const openbotApi: OpenBotDesktopApi = {
     setPreference: decodeNotificationPreference,
     test: decodeVoid,
     openSettings: decodeVoid,
+    setPresence: decodeVoid,
     opened: decodeNotificationOpenedEvent,
   }),
   maintenance: bridgeGroup(IPC_ENDPOINTS.maintenance, {

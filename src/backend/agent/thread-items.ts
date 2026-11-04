@@ -427,6 +427,10 @@ export function toolProgressText(item: ThreadItem, completed: boolean): string |
   if (browser !== null) {
     return completed ? sourceText("status.agent.browserReviewing") : browserProgressText(browser);
   }
+  // HoleA.I (from Vincent's bot app): a shell step says so, as the bot app's "Running commands" does.
+  if (/(commandexecution|\bbash\b|\bshell\b|exec_command)/u.test(descriptor)) {
+    return completed ? TOOL_RESULT_PROGRESS : "Running commands…";
+  }
   if (/(search|browser|fetch|navigate|open_url|web)/u.test(descriptor)) {
     return completed ? "Reviewing the sources and information I found…" : "Searching for current information…";
   }

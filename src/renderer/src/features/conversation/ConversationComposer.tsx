@@ -70,7 +70,12 @@ const [dismissedUsageLimits, setDismissedUsageLimits] = createStore<Record<strin
  */
 const COMPACT_REFOLD_SHARE = 0.85;
 /** The pill grows into the open box, and folds back, on this curve. */
-const COMPOSER_RESIZE = { duration: 300, easing: "cubic-bezier(0.2, 0, 0, 1)" } as const;
+// HoleA.I (from Vincent's bot app): the pill opens and folds on the source app's fast spring (300ms).
+const COMPOSER_RESIZE = {
+  duration: 300,
+  easing:
+    "linear(0, 0.01588 2%, 0.05618 4%, 0.11201 6%, 0.1768 8%, 0.2458 10%, 0.31562 12%, 0.38392 14%, 0.44914 16%, 0.51029 18%, 0.56683 20%, 0.61852 22%, 0.66534 24%, 0.70743 26%, 0.74501 28%, 0.77838 30%, 0.80788 32%, 0.83383 34%, 0.85658 36%, 0.87645 38%, 0.89376 40%, 0.92183 44%, 0.94282 48%, 0.95838 52%, 0.96984 56%, 0.97823 60%, 0.98435 64%, 0.98878 68%, 0.99198 72%, 0.99594 80%, 0.99829 90%, 1 100%)",
+} as const;
 
 /** @internal Stable HMR boundary for conversation composer. */
 export function ConversationComposer() {
@@ -512,10 +517,25 @@ export function ConversationComposer() {
         new ClipboardEvent("paste", { clipboardData: event.clipboardData, bubbles: true, cancelable: true }),
       );
     };
+    /*
+     * HoleA.I (from Vincent's bot app): type anywhere. A printable key with the focus on the page, the
+     * transcript or a plain button moves the focus to the end of the composer, and the browser types the
+     * character there. Shortcuts, IME composition, Space on a button and every place that keeps its paste keep
+     * their keys; a handler that already took the key wins.
+     */
+    const typeKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if ([...event.key].length !== 1 || !event.key.trim()) return;
+      const editor = editorFor(document.activeElement);
+      if (editor) focusComposerAtEnd(editor);
+    };
     document.addEventListener("keydown", pasteKey, true);
+    document.addEventListener("keydown", typeKey);
     document.addEventListener("paste", pasteEvent);
     return () => {
       document.removeEventListener("keydown", pasteKey, true);
+      document.removeEventListener("keydown", typeKey);
       document.removeEventListener("paste", pasteEvent);
     };
   });

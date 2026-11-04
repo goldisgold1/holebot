@@ -48,7 +48,9 @@ export function UnreadMessagesDivider(props: {
   return (
     <div class="unread-messages-divider" data-arrive={arrives ? "" : undefined} ref={props.elementRef}>
       <hr />
-      <span>{t("chat.unread.dividerLabel")}</span>
+      {/* HoleA.I (from Vincent's bot app): the line reads "NEW"; a screen reader still hears "New messages". */}
+      <span aria-hidden="true">{t("chat.unread.dividerShort")}</span>
+      <span class="sr-only">{t("chat.unread.dividerLabel")}</span>
       <hr />
     </div>
   );

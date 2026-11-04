@@ -73,6 +73,7 @@
     "./features/agents/AgentAvatar": "./src/features/agents/AgentAvatar.tsx",
     "./features/agents/bot-mark/settle-pose": "./src/features/agents/bot-mark/settle-pose.ts",
     "./features/agents/bot-mark/activity-state": "./src/features/agents/bot-mark/activity-state.ts",
+    "./features/agents/bot-mark/mark-stage": "./src/features/agents/bot-mark/mark-stage.ts",
     "./features/settings/KeyboardShortcutsSheet": "./src/features/settings/KeyboardShortcutsSheet.tsx",
     "./features/agents/AgentDeleteUndoToast": "./src/features/agents/AgentDeleteUndoToast.tsx",
     "./features/agents/AgentTemplateInstallDialog": "./src/features/agents/AgentTemplateInstallDialog.tsx",

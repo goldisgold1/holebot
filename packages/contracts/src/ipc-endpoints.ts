@@ -375,7 +375,7 @@ import type {
   TelegramChatInput,
   TelegramOverview,
 } from "./ipc-messaging";
-import type { NotificationOpenedEvent, NotificationPreference } from "./ipc-notifications";
+import type { NotificationOpenedEvent, NotificationPreference, NotificationPresence } from "./ipc-notifications";
 import type {
   OnePasswordConnectInput,
   OnePasswordConnectorStatus,
@@ -1352,6 +1352,8 @@ export const IPC_ENDPOINTS = {
     // Opens the operating system page where the user allows OpenBot notifications. It rejects on a
     // system that has no such page.
     openSettings: request<undefined, void>()("notifications:open-settings"),
+    // What the calling window has on screen and whether it plays its own sound (HoleA.I).
+    setPresence: request<NotificationPresence, void>()("notifications:set-presence"),
     opened: event<NotificationOpenedEvent>()("notifications:opened-event"),
   },
   agent: {

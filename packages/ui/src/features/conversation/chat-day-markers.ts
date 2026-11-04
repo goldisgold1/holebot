@@ -34,8 +34,12 @@ function timeOf(value: Date, options: DayMarkerOptions): string {
   return options.format ? options.format.date(value, time) : value.toLocaleTimeString(options.locale, time);
 }
 
-function dateOf(value: Date, options: DayMarkerOptions): string {
-  const date = { weekday: "short", month: "short", day: "numeric" } as const;
+/** HoleA.I (from Vincent's bot app): "Tue, Mar 4" this year, "Mar 4, 2025" for an earlier one. */
+function dateOf(value: Date, now: Date, options: DayMarkerOptions): string {
+  const date =
+    value.getFullYear() === now.getFullYear()
+      ? ({ weekday: "short", month: "short", day: "numeric" } as const)
+      : ({ year: "numeric", month: "short", day: "numeric" } as const);
   return options.format ? options.format.date(value, date) : value.toLocaleDateString(options.locale, date);
 }
 
@@ -70,5 +74,5 @@ export function dayMarkerLabel(
   const time = timeOf(current, options);
   if (age === 0) return t("chat.day.today", { time });
   if (age === 1) return t("chat.day.yesterday", { time });
-  return t("chat.day.date", { date: dateOf(current, options), time });
+  return t("chat.day.date", { date: dateOf(current, now, options), time });
 }

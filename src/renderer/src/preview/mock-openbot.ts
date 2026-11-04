@@ -3124,6 +3124,7 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
       setPreference: async (input) => ({ ...input }),
       test: async () => undefined,
       openSettings: async () => undefined,
+      setPresence: async () => undefined,
       onOpened: () => () => undefined,
     },
     maintenance: {

@@ -18,11 +18,14 @@ const SHORTCUT_GROUPS: readonly { title: AppTextKey; shortcuts: readonly Shortcu
     title: "settings.shortcuts.group.general",
     shortcuts: [
       { label: "settings.shortcuts.search", keys: ["Mod", "K"] },
+      { label: "settings.shortcuts.newAgent", keys: ["Mod", "N"] },
       { label: "settings.shortcuts.settings", keys: ["Mod", ","] },
       { label: "settings.shortcuts.stopAll", keys: ["Mod", "."] },
       { label: "settings.shortcuts.switchServer", keys: ["Mod", "1–9"] },
       { label: "settings.shortcuts.recentAgent", keys: ["Ctrl", "Shift", "1–5"] },
       { label: "settings.shortcuts.sheet", keys: ["Mod", "/"] },
+      { label: "settings.shortcuts.switchAgent", keys: ["Alt", "↑/↓"] },
+      { label: "settings.shortcuts.goToAgent", keys: ["Alt", "1–9"] },
     ],
   },
   {
@@ -37,6 +40,8 @@ const SHORTCUT_GROUPS: readonly { title: AppTextKey; shortcuts: readonly Shortcu
   {
     title: "settings.shortcuts.group.view",
     shortcuts: [
+      { label: "settings.shortcuts.compactSidebar", keys: ["Mod", "B"] },
+      { label: "settings.shortcuts.details", keys: ["Mod", "Alt", "B"] },
       { label: "settings.shortcuts.zoomIn", keys: ["Mod", "="] },
       { label: "settings.shortcuts.zoomOut", keys: ["Mod", "-"] },
       { label: "settings.shortcuts.actualSize", keys: ["Mod", "0"] },
@@ -52,7 +57,10 @@ export function isKeyboardShortcutsSheetShortcut(
 
 export function KeyboardShortcutsSheet(props: { open: boolean; mac: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useText();
-  const keyName = (key: string) => (key === "Mod" ? (props.mac ? "⌘" : "Ctrl") : key);
+  const keyName = (key: string) => {
+    if (key === "Mod") return props.mac ? "⌘" : "Ctrl";
+    return key === "Alt" && props.mac ? "⌥" : key;
+  };
   return (
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Dialog.Portal>

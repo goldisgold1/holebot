@@ -12,11 +12,12 @@ export const SIDEBAR_VIEW_STORAGE_KEY = "openbot:sidebar-view";
 /** The pages that the user pinned to the page rail or took off it: a JSON record of booleans. */
 export const RAIL_PINS_STORAGE_KEY = "openbot:rail-pins";
 export const LEFT_PANEL_DEFAULT = 280;
-export const LEFT_PANEL_MIN = 128;
+export const LEFT_PANEL_MIN = 240;
 export const LEFT_PANEL_MAX = 400;
 export const LEFT_PANEL_COMPACT = 88;
-export const LEFT_PANEL_COLLAPSE_THRESHOLD = 110;
-export const LEFT_PANEL_EXPAND_THRESHOLD = 118;
+/** HoleA.I (from Vincent's bot app): dragged below 210px the sidebar snaps to the 88px rail; from the rail, 220px opens it. */
+export const LEFT_PANEL_COLLAPSE_THRESHOLD = 210;
+export const LEFT_PANEL_EXPAND_THRESHOLD = 220;
 export const CONVERSATION_MIN_WIDTH = 424;
 export const MAC_SERVER_RAIL_WIDTH = 72;
 export const SERVER_RAIL_WIDTH = 64;

@@ -12,7 +12,7 @@ import { providerAccountName } from "@openbot/ui/components/provider-accounts";
 import { ConversationHeader as SharedConversationHeader } from "@openbot/ui/features/conversation/ConversationHeader";
 import { ThreadHeader } from "@openbot/ui/features/conversation/threads/ThreadHeader";
 import { MAIN_THREAD_ID } from "@openbot/ui/features/conversation/threads/thread-types";
-import { createEffect, createSignal, Show } from "solid-js";
+import { createEffect, createSignal, onSettled, Show } from "solid-js";
 import { usePlanLimitRows } from "../usage/plan-limit-rows";
 import { useWindowPage } from "../window/window-page-context";
 import { ConversationVoiceCall } from "./ConversationVoiceCall";
@@ -64,6 +64,18 @@ export function ConversationHeader() {
     activeRightPanel,
     voiceConversationAvailable,
   } = useConversationViewScope();
+  // HoleA.I (from Vincent's bot app): Ctrl+Alt+B (⌘⌥B) shows or hides the side panel, as its button does.
+  onSettled(() => {
+    const toggle = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || event.isComposing) return;
+      if (!(event.ctrlKey || event.metaKey) || !event.altKey || event.shiftKey || event.code !== "KeyB") return;
+      if (channel?.readOnly()) return;
+      event.preventDefault();
+      toggleSidePanel();
+    };
+    window.addEventListener("keydown", toggle);
+    return () => window.removeEventListener("keydown", toggle);
+  });
   /** The running voice call, keyed by server and agent, so another agent gets its own call. */
   const voiceCallKey = () =>
     activeRightPanel() === "voice" &&

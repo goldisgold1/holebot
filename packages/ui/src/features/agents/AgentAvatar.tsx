@@ -8,6 +8,7 @@ import { type AvatarMotion, avatarHeadColor, type SupportedAvatarSilhouetteId } 
 import type { AgentProfile } from "../../data";
 import { BotMarkFace } from "./BotMarkFace";
 import type { BotMarkHandle, BotMarkState } from "./bot-mark/engine";
+import { joinMarkStage, pokeMark } from "./bot-mark/mark-stage";
 
 // Cap avatar animation at 30fps: uncapped bloub clocks measured 30% renderer / 24% GPU
 // for two visible avatars. The shape is 24-40px, so the eye cannot see the difference.
@@ -48,6 +49,13 @@ function setAmbientCandidate(setAmbient: (on: boolean) => void, onScreen: boolea
   if (ambientCandidates.size > 0 && ambientClock === undefined) scheduleAmbientBurst();
 }
 
+// HoleA.I (from Vincent's bot app): a poke plays for its length (spin 0.9 s, bounce 0.62 s, nod 0.5 s), and a
+// face that stops moving keeps its clock this long so it settles instead of freezing mid-motion.
+const POKE_PLAY_MS = 1_000;
+const SETTLE_TAIL_MS = 1_400;
+// The bot app's hover gaze: the pointer offset over half the face's width, clamped to [-1, 1].
+const GAZE_REACH = 0.5;
+
 // Decor rings are sampled from the `orbit` pose, not played as a state: `orbit`
 // replaces the body, while sampling only `frame.arcs` keeps the silhouette.
 const RING_POSE = "orbit";
@@ -79,6 +87,8 @@ interface AgentAvatarProps {
   followPointer?: boolean;
   /** A bot-mark state that overrides the mood's, such as the step a working agent is on. */
   state?: BotMarkState | undefined;
+  /** The eye colour of a generated face; omitted, the eyes are cut out of the body. */
+  eyeColor?: string | undefined;
   class?: string;
   style?: Record<string, string>;
 }
@@ -133,6 +143,7 @@ export function AgentAvatar(props: AgentAvatarProps) {
           shape={props.shape}
           followPointer={props.followPointer === true}
           state={props.state}
+          eyeColor={props.eyeColor}
           breathe={breathe()}
           class={className()}
           style={style()}
@@ -298,25 +309,64 @@ function GeneratedAvatar(props: {
   shape?: SupportedAvatarSilhouetteId | undefined;
   followPointer: boolean;
   state?: BotMarkState | undefined;
+  eyeColor?: string | undefined;
   breathe?: string | undefined;
   class: string;
   style?: Record<string, string>;
 }) {
   let element: HTMLSpanElement | undefined;
-  let mark: BotMarkHandle | undefined;
+  const [mark, setMark] = createSignal<BotMarkHandle | undefined>(undefined, { equals: false });
   const [interacting, setInteracting] = createSignal(false);
   const [ambient, setAmbient] = createSignal(false);
+  const [poking, setPoking] = createSignal(false);
+  const [stageEmphasis, setStageEmphasis] = createSignal(false);
+  const [settling, setSettling] = createSignal(false);
   const [reducedMotion, setReducedMotion] = createSignal(prefersReducedMotion());
   const presentation = createMemo(() => avatarMoodPresentation(props.mood));
   // A mood that carries its own motion has to be seen without being pointed at, and so do eyes that
   // follow the pointer; the resting moods keep the hover gating that the perf note above is about.
-  const animated = () =>
+  const moving = () =>
     !reducedMotion() &&
     (props.followPointer ||
       avatarMoodIsBusy(props.mood) ||
       !STATIC_MOTIONS.has(props.motion) ||
       interacting() ||
-      ambient());
+      ambient() ||
+      poking() ||
+      stageEmphasis());
+  // HoleA.I (from Vincent's bot app): a face that stops keeps its clock for a moment, so it settles.
+  createEffect(moving, (on, before) => {
+    if (on || !before) {
+      setSettling(false);
+      return;
+    }
+    setSettling(true);
+    const timer = setTimeout(() => setSettling(false), SETTLE_TAIL_MS);
+    return () => clearTimeout(timer);
+  });
+  const animated = () => moving() || (settling() && !reducedMotion());
+  // Hover emphasis: the surprised face, while this face or any copy of it on the stage is pointed at.
+  createEffect(
+    () => [mark(), interacting() || stageEmphasis()] as const,
+    ([handle, emphasized]) => handle?.setEmphasized(emphasized),
+  );
+  // Every copy of this face on screen takes the pokes and hover emphasis of the others.
+  let pokeTimer: ReturnType<typeof setTimeout> | undefined;
+  createEffect(
+    () => props.seed,
+    (seed) =>
+      joinMarkStage(seed, {
+        poke: (kind) => {
+          if (reducedMotion()) return;
+          setPoking(true);
+          mark()?.poke(kind);
+          clearTimeout(pokeTimer);
+          pokeTimer = setTimeout(() => setPoking(false), POKE_PLAY_MS);
+        },
+        emphasize: setStageEmphasis,
+      }),
+  );
+  onCleanup(() => clearTimeout(pokeTimer));
 
   onSettled(() => {
     const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -334,35 +384,28 @@ function GeneratedAvatar(props: {
       setInteracting(false);
       lookAt(null);
     };
-    // HoleA.I: while the pointer is near, the eyes look toward it (half strength, so they never leave the
-    // face), and a press pokes the face into a quick spin. The values ride as CSS custom properties, so a
-    // pointer move restyles one element and renders nothing.
+    // HoleA.I (from Vincent's bot app): while the pointer is over the face's control, the engine turns the
+    // body and eyes toward it, and a press pokes every copy of the face: spin, then bounce, then nod.
     const lookAt = (pointer: { x: number; y: number } | null) => {
-      if (!element) return;
+      const handle = mark();
+      if (!element || !handle || props.followPointer) return;
       if (!pointer) {
-        element.removeAttribute("data-looking");
+        handle.gaze(null);
         return;
       }
       const box = element.getBoundingClientRect();
-      const dx = pointer.x - (box.left + box.width / 2);
-      const dy = pointer.y - (box.top + box.height / 2);
-      const reach = Math.max(box.width * 0.75, Math.hypot(dx, dy));
-      element.style.setProperty("--face-look-x", (dx / reach).toFixed(3));
-      element.style.setProperty("--face-look-y", (dy / reach).toFixed(3));
-      element.setAttribute("data-looking", "");
+      const reach = Math.max(1, box.width * GAZE_REACH);
+      const clamp = (value: number) => Math.min(1, Math.max(-1, value));
+      handle.gaze([
+        clamp((pointer.x - (box.left + box.width / 2)) / reach),
+        clamp(-(pointer.y - (box.top + box.height / 2)) / reach),
+      ]);
     };
     const followPointer = (event: Event) => {
       if (event instanceof PointerEvent) lookAt({ x: event.clientX, y: event.clientY });
     };
-    let pokeTimer: ReturnType<typeof setTimeout> | undefined;
     const poke = () => {
-      if (!element || reducedMotion()) return;
-      element.removeAttribute("data-poked");
-      void element.offsetWidth;
-      element.setAttribute("data-poked", "");
-      mark?.poke("spin");
-      clearTimeout(pokeTimer);
-      pokeTimer = setTimeout(() => element?.removeAttribute("data-poked"), 700);
+      if (!reducedMotion()) pokeMark(props.seed);
     };
     const pointerScope: HTMLElement | Window | undefined = props.followPointer ? window : interactionTarget;
     // Only keyboard focus starts the avatar. A click leaves the focus on the button it lands on, such as
@@ -423,9 +466,8 @@ function GeneratedAvatar(props: {
           playing={animated()}
           followPointer={props.followPointer}
           state={props.state}
-          handle={(handle) => {
-            mark = handle;
-          }}
+          eyeColor={props.eyeColor}
+          handle={setMark}
         />
       </AvatarRings>
     </span>

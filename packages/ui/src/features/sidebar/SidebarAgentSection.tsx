@@ -47,7 +47,7 @@ export function SidebarAgentSection(sectionProps: { sectionId: string }) {
         data-section-id={sectionId()}
       >
         <Show when={headed()}>
-          <SidebarSectionHeader sectionId={sectionId()} name={name()} />
+          <SidebarSectionHeader sectionId={sectionId()} name={name()} count={chats().length} />
         </Show>
         <div
           class="sidebar-section-collapse"

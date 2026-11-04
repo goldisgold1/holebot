@@ -190,6 +190,13 @@ export function createChatVirtualizer<TScrollElement extends Element, TItemEleme
 /* The reader is at the start of the loaded transcript when the first rows are on the screen. */
 const HISTORY_BOUNDARY_ROWS = 5;
 const HISTORY_BOUNDARY_DISTANCE = 80;
+/*
+ * HoleA.I (from Vincent's bot app): a reader who has scrolled up asks for the older page while it is still
+ * 4000px away, so history is there before they reach the top. A reader at the newest message does not, which
+ * keeps the case below (a short transcript under a reply that is still arriving) from paging.
+ */
+const HISTORY_PREFETCH_DISTANCE = 4_000;
+const HISTORY_PREFETCH_FROM_BOTTOM = 80;
 
 /**
  * Whether the reader has reached the start of the loaded transcript, which is what asks the chat
@@ -206,7 +213,9 @@ export function chatHistoryBoundaryReached(
   firstRenderedIndex: number,
 ): boolean {
   if (!scrollElement) return false;
-  return scrollElement.scrollTop <= HISTORY_BOUNDARY_DISTANCE && firstRenderedIndex <= HISTORY_BOUNDARY_ROWS;
+  if (scrollElement.scrollTop <= HISTORY_BOUNDARY_DISTANCE && firstRenderedIndex <= HISTORY_BOUNDARY_ROWS) return true;
+  const fromBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight;
+  return scrollElement.scrollTop <= HISTORY_PREFETCH_DISTANCE && fromBottom > HISTORY_PREFETCH_FROM_BOTTOM;
 }
 
 export function calculateChatScrollMargin(

@@ -136,6 +136,7 @@ export function SidebarPinnedGroup() {
                       title={stateLabel() || undefined}
                       aria-pressed={active() ? "true" : "false"}
                       data-cuelume-navigate=""
+                      data-pinned-agent-id={item.chat.kind === "agent" ? item.chat.id : undefined}
                       onClick={() => selectChat(item.chat)}
                     >
                       <Switch>

@@ -7,9 +7,9 @@ import { toast } from "@openbot/ui";
 import { holdSettlePose } from "@openbot/ui/features/agents/bot-mark/settle-pose";
 import { currentText } from "@openbot/ui/text";
 import { classifyUserError } from "@openbot/user-errors";
-import { flush, onSettled } from "solid-js";
+import { createEffect, createSignal, flush, onSettled } from "solid-js";
 import { withoutAgent } from "../../app-message-projection";
-import { playCompletionSoundForAgentEvent } from "../../completion-sound";
+import { onTaskSoundChange, playCompletionSoundForAgentEvent, readTaskSound } from "../../completion-sound";
 import { usePlatform } from "../../platform";
 import { useProviders } from "../../providers";
 import { queueAfterTurnCompleted } from "../../queue-reconciliation";
@@ -72,6 +72,7 @@ export function AgentEventBridge() {
     agentChatsToRetryRead,
     scheduleConversation,
     isAgentChatReadable,
+    isAgentChatOpen,
     autoMarkAgentMessageRead,
     applyConversationDelta,
     applyConversationPage,
@@ -110,8 +111,40 @@ export function AgentEventBridge() {
     if (!server) return "all";
     return server.notificationsMuted ? "nothing" : server.notificationLevel;
   };
+  const [taskSound, setTaskSoundChoice] = createSignal(readTaskSound());
   const playAgentEventSound = createAgentEventSounds(
     (agentId) => soundLevel() !== "nothing" && agentList().some((agent) => agent.id === agentId && agent.notifications),
+    () => taskSound() !== "off",
+  );
+  /**
+   * HoleA.I (from Vincent's bot app): the task sound plays for a finished reply and for a wait for the user,
+   * once per agent in 5 s, and not for the chat the user has in front of them. Only the main window plays.
+   */
+  const playTaskSound = (event: AgentEvent) => {
+    if (platform.chatWindow) return;
+    const level = soundLevel();
+    if (level === "nothing" || (level !== "all" && event.type === "turn-completed")) return;
+    playCompletionSoundForAgentEvent(event, agentList(), undefined, { chatOnScreen: isAgentChatReadable });
+  };
+  // HoleA.I (from Vincent's bot app): main hears what this window shows and whether it plays the sound, so
+  // only the chat on screen stays without a notification and a toast never chimes over the app's sound.
+  createEffect(
+    () =>
+      JSON.stringify({
+        serverId: activeServerId(),
+        agentId: agentList().find((agent) => isAgentChatOpen(agent.id))?.id ?? null,
+        channelId: channels.state.selectedId ?? null,
+        appSound: !platform.chatWindow && taskSound() !== "off",
+      }),
+    (presence) => {
+      try {
+        void agentsPort()
+          .notifications.setPresence(JSON.parse(presence))
+          .catch(() => undefined);
+      } catch {
+        // A test or story bridge without the endpoint.
+      }
+    },
   );
   let readRefresh = 0;
   let modelRefresh = 0;
@@ -273,10 +306,7 @@ export function AgentEventBridge() {
         setApprovals((current) =>
           current.filter((approval) => approval.agentId !== event.agentId || approval.threadId !== event.threadId),
         );
-        if (event.status === "completed") {
-          markReplyCompleted(event.agentId);
-          if (soundLevel() === "all" && !platform.chatWindow) playCompletionSoundForAgentEvent(event, agentList());
-        }
+        if (event.status === "completed") markReplyCompleted(event.agentId);
         return;
       case "prompt":
         setPendingPrompts((current) => ({ ...current, [attentionEventKey(event)]: event }));
@@ -414,6 +444,7 @@ export function AgentEventBridge() {
     applyRuntimeMessages(snapshot.latestMessages);
   }
 
+  onSettled(() => onTaskSoundChange(setTaskSoundChoice));
   onSettled(() => {
     const unsubscribe = agentsPort().agent.onEvent((event) => {
       if (event.type === "channels-changed") {
@@ -423,6 +454,7 @@ export function AgentEventBridge() {
       flush(() => handleAgentEvent(event));
       // The main window also gets each event, so a chat window does not play or read it a second time.
       if (platform.chatWindow) return;
+      playTaskSound(event);
       playAgentEventSound(event);
       readDictatedReplies(event, activeServerId());
     });

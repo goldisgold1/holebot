@@ -6,8 +6,9 @@ import { Notification } from "electron";
 import { runCauseEffect } from "../../backend/effect-boundary";
 import { notificationSettingsUrl, showRetainedNotification } from "../desktop-notifications";
 import type { NotificationPreferenceStore } from "../notification-preference-store";
+import { parseNotificationPresence, setNotificationPresence } from "../notification-presence";
 import { parseNotificationPreference } from "./app-inputs";
-import { handler, type IpcGroupHandlers, payloadHandler } from "./define-ipc-group";
+import { eventPayloadHandler, handler, type IpcGroupHandlers, payloadHandler } from "./define-ipc-group";
 
 export interface NotificationIpcDependencies {
   notificationPreference: NotificationPreferenceStore;
@@ -37,6 +38,10 @@ export function notificationIpcHandlers({
       test: handler(() => {
         if (!Notification.isSupported()) throw new Error(sourceText("error.app.notificationsUnsupported"));
         showRetainedNotification(new Notification({ title: "HoleBot", body: translate("notification.test") }));
+      }),
+      // HoleA.I (from Vincent's bot app): what the window shows, for per-chat suppression and a silent toast.
+      setPresence: eventPayloadHandler(parseNotificationPresence, (event, presence) => {
+        setNotificationPresence(event.sender, presence);
       }),
       openSettings: handler(async () => {
         const url = notificationSettingsUrl(process.platform);

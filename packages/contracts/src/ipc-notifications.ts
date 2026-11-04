@@ -6,6 +6,20 @@ export interface NotificationPreference {
   messagePreview: boolean;
 }
 
+/**
+ * HoleA.I (from Vincent's bot app): what one app window has on screen, so main shows no notification for
+ * the chat the user is looking at, and keeps the toast silent when the window plays its own sound.
+ */
+export interface NotificationPresence {
+  serverId: string | null;
+  /** The agent chat on screen, or null. */
+  agentId: string | null;
+  /** The group chat on screen, or null. */
+  channelId: string | null;
+  /** The window plays the task sound for the server's finished replies and waits. */
+  appSound: boolean;
+}
+
 // The conversation a clicked notification was about. The renderer opens it.
 export interface NotificationOpenedEvent {
   serverId: string;

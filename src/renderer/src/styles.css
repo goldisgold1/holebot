@@ -83,6 +83,9 @@
 /* HoleA.I: the clean sidebar and chat. Last, so it wins over the rules it replaces. */
 @import "@openbot/brand/tokens-holeai.css";
 @import "./styles/holeai-clean.css";
+@import "./styles/holeai-feel-shell.css";
+@import "./styles/holeai-feel-chat.css";
+@import "./styles/holeai-feel-activity.css";
 
 @source "../../../packages/ui/src";
 
