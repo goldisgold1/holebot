@@ -33,7 +33,7 @@ ufw --force enable >/dev/null
 
 PUBLIC_IP=$(curl -fsS -4 https://api.ipify.org)
 say "Secrets (public IP $PUBLIC_IP)"
-[ -f deploy/vps/.env ] || bun deploy/vps/make-secrets.ts "$PUBLIC_IP"
+[ -f deploy/vps/.env ] || bun deploy/vps/make-secrets.ts "$PUBLIC_IP" --email "$OWNER"
 [ -f deploy/vps/wake-hooks.json ] || echo '{}' > deploy/vps/wake-hooks.json
 
 say "DNS: the three names must point here before Caddy can get certificates"

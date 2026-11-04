@@ -1,5 +1,7 @@
 // Writes deploy/vps/.env (compose) and deploy/vps/auth-api.env (Worker secrets) with fresh secrets.
-//   bun deploy/vps/make-secrets.ts <public IPv4 of the VPS>
+//   bun deploy/vps/make-secrets.ts <public IPv4 of the VPS> [--email you@example.com]
+// --email is where Let's Encrypt writes about the HTTPS certificates. The domains are the ones the code
+// points at (bun scripts/holebot-set-domain.ts).
 // It refuses to overwrite existing files, because new keys sign everyone out and break every host.
 import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -7,8 +9,14 @@ import { createDevelopmentTicketKeyPair } from "../../scripts/development-secret
 
 const directory = import.meta.dir;
 const publicIp = process.argv[2];
+const emailAt = process.argv.indexOf("--email");
+const acmeEmail = emailAt > 0 ? process.argv[emailAt + 1] : "duy@holeacquisition.com";
+if (!acmeEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/u.test(acmeEmail)) {
+  console.error("--email needs an email address, e.g. --email you@example.com");
+  process.exit(1);
+}
 if (!publicIp || !/^\d{1,3}(\.\d{1,3}){3}$/u.test(publicIp)) {
-  console.error("Usage: bun deploy/vps/make-secrets.ts <public IPv4 of the VPS>");
+  console.error("Usage: bun deploy/vps/make-secrets.ts <public IPv4 of the VPS> [--email you@example.com]");
   process.exit(1);
 }
 const composeEnv = join(directory, ".env");
@@ -28,7 +36,7 @@ const webhookSecret = secret();
 writeFileSync(
   composeEnv,
   [
-    "ACME_EMAIL=duy@holeacquisition.com",
+    `ACME_EMAIL=${acmeEmail}`,
     "SITE_DOMAIN=bot.holeacquisition.com",
     "API_DOMAIN=api.bot.holeacquisition.com",
     "SIGNAL_DOMAIN=signal.bot.holeacquisition.com",
