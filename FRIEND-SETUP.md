@@ -5,7 +5,9 @@ your own website, sign-in and relay, with your own desktop app pointed at them.
 
 You need:
 
-- **A VPS:** Ubuntu 24.04, 4 vCPU, 8 GB memory, 40 GB+ disk.
+- **Two VPSs**, both Ubuntu 24.04: one for HoleBot (4 vCPU, 8 GB memory, 40 GB+ disk) and one for hole.fm
+  ([goldisgold1/holefm](https://github.com/goldisgold1/holefm), 4+ vCPU, 8 GB+ memory, 80 GB+ disk). Keep them
+  apart: the builds on one can run the other out of memory.
 - **A domain** where you can add DNS records. Below, `bot.example.com` stands for the name you pick.
 - **A PC** to build the desktop app: Windows, macOS or Linux, with [Bun](https://bun.sh) and Git.
 
