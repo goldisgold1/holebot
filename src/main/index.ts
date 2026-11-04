@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseInviteUrl, selfHostedApiOrigin } from "@openbot/contracts/invite-links";
 import {
@@ -192,6 +193,8 @@ try {
 }
 
 const commandLineUserDataDirectory = app.commandLine.getSwitchValue("user-data-dir").trim();
+/** The profile the HoleBot shortcuts on Vincent's PC open; see the userData choice below. */
+const SIGNED_IN_PROFILE = "HoleBot-VPS";
 const developmentProfile = !app.isPackaged ? readDevelopmentProfile(process.env.OPENBOT_DEV_PROFILE) : null;
 const developmentRemoteRole =
   !app.isPackaged &&
@@ -242,6 +245,10 @@ if (commandLineUserDataDirectory) {
       ),
     ),
   );
+} else if (process.platform === "win32" && existsSync(join(app.getPath("appData"), SIGNED_IN_PROFILE))) {
+  // HoleA.I (Vincent, Nov 4 2026): a start without --user-data-dir (a taskbar pin, a notification, Windows
+  // search) opened an empty profile on a PC whose sign-in lives in the HoleBot-VPS profile. It opens that one.
+  app.setPath("userData", join(app.getPath("appData"), SIGNED_IN_PROFILE));
 } else {
   // HoleA.I: the product is called HoleBot, but its data stays in %APPDATA%\OpenBot, where
   // Electron put it under the old product name (HOLEAI-FORK.md, "HoleBot name").
