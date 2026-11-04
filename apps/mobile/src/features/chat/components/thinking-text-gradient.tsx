@@ -44,7 +44,7 @@ export function ThinkingTextGradient({
       progress.set(
         withRepeat(
           withTiming(1, {
-            duration: 2250,
+            duration: 2200,
             easing: Easing.bezier(0.25, 0.1, 0.25, 1),
             reduceMotion: ReduceMotion.System,
           }),

@@ -420,22 +420,22 @@ export const ChannelListRow = memo(function ChannelListRow({
       ) : (
         ({ pressed }) => (
           <View
-            className="min-h-[68px] w-full flex-row items-center gap-3 py-1"
+            className="min-h-[80px] w-full flex-row items-center gap-[14px] py-4"
             style={{
               backgroundColor: rowBackground,
-              opacity: pressed ? 0.58 : 1,
+              opacity: pressed ? 0.7 : 1,
               paddingLeft: leftInset,
               paddingRight: rightInset,
             }}
           >
             {avatar}
-            <View className="min-w-0 flex-1 gap-0.5">
+            <View className="min-w-0 flex-1">
               <View className="flex-row items-center gap-2">
-                {unread ? <View className="size-2 rounded-full bg-accent" /> : null}
+                {unread ? <View className="size-2.5 rounded-full bg-accent" /> : null}
                 <Typography.Paragraph
                   className="font-medium min-w-0 flex-1"
                   numberOfLines={1}
-                  style={typeScale.rowTitle}
+                  style={typeScale.chatRowTitle}
                 >
                   {channel.name}
                 </Typography.Paragraph>
@@ -454,7 +454,7 @@ export const ChannelListRow = memo(function ChannelListRow({
                   </View>
                 ) : null}
               </View>
-              <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.preview}>
+              <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.chatRowPreview}>
                 {previewLine}
               </Typography.Paragraph>
             </View>

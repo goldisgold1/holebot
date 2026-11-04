@@ -723,7 +723,7 @@ export function ChatView({
     return () => {
       setStoppingTurnId(turnId);
       setSendError(null);
-      void haptics.impact();
+      void haptics.press();
       stopTurn(turnId).catch((error: unknown) => {
         void haptics.notification("error");
         setStoppingTurnId((current) => (current === turnId ? null : current));
@@ -758,7 +758,7 @@ export function ChatView({
     if (answersQuestion && questionForm && files.length === 0) {
       if (!body || questionForm.disabled) return;
       Keyboard.dismiss();
-      void haptics.impact();
+      void haptics.press();
       setDraft("");
       questionForm.answer([mentionDraft(body).text]);
       for (const id of takeEditedMessages()) void outbox.cancel(id);
@@ -805,7 +805,7 @@ export function ChatView({
     // the animation would hide the first message until a history that does not load.
     if (!sendsToQueue && ready) motion.beginSend();
     Keyboard.dismiss();
-    void haptics.impact();
+    void haptics.press();
     setShowStarter(false);
     // The outbox keeps the message on this phone and sends it while the server is online.
     return outbox.add(

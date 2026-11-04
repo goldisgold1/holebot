@@ -4,8 +4,8 @@ import {
   activityKind,
   THINKING_PHRASE_KEYS,
   thinkingPhraseKey,
-  thinkingPhraseStart,
   thinkingPhrasesAvailable,
+  turnPhraseDraw,
 } from "./activity-label";
 import { agentBubbleFill } from "./bubble-colors";
 
@@ -20,11 +20,21 @@ describe("thinking phrases", () => {
     expect(new Set(phrases).size).toBe(phrases.length);
   });
 
-  it("takes turns from each agent's own start and wraps around", () => {
-    const start = thinkingPhraseStart("agent-a");
-    expect(thinkingPhraseKey("agent-a", 0)).toBe(THINKING_PHRASE_KEYS[start]);
-    expect(thinkingPhraseKey("agent-a", THINKING_PHRASE_KEYS.length)).toBe(THINKING_PHRASE_KEYS[start]);
-    expect(thinkingPhraseKey("agent-a", 1)).toBe(THINKING_PHRASE_KEYS[(start + 1) % THINKING_PHRASE_KEYS.length]);
+  it("keeps one phrase for a turn and spreads turns over the pool", () => {
+    expect(thinkingPhraseKey(0)).toBe(THINKING_PHRASE_KEYS[0]);
+    expect(thinkingPhraseKey(0.999)).toBe(THINKING_PHRASE_KEYS[THINKING_PHRASE_KEYS.length - 1]);
+    expect(thinkingPhraseKey(1)).toBe(THINKING_PHRASE_KEYS[THINKING_PHRASE_KEYS.length - 1]);
+    expect(thinkingPhraseKey(Number.NaN)).toBe(THINKING_PHRASE_KEYS[0]);
+    const draw = turnPhraseDraw("agent-a:turn-1");
+    expect(draw).toBeGreaterThanOrEqual(0);
+    expect(draw).toBeLessThan(1);
+    expect(turnPhraseDraw("agent-a:turn-1")).toBe(draw);
+    const said = new Set(Array.from({ length: 40 }, (_, turn) => thinkingPhraseKey(turnPhraseDraw(`agent-a:${turn}`))));
+    expect(said.size).toBe(THINKING_PHRASE_KEYS.length);
+  });
+
+  it("says the bot app's first phrase", () => {
+    expect(mobileTranslateFor("en")(THINKING_PHRASE_KEYS[0])).toBe("Thinking it through…");
   });
 
   it("shows in English, and not in a language that has not translated them", () => {

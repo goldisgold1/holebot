@@ -12,9 +12,9 @@ import PencilLine from "lucide-react-native/icons/pencil-line";
 import Sparkles from "lucide-react-native/icons/sparkles";
 import Users from "lucide-react-native/icons/users";
 import Wrench from "lucide-react-native/icons/wrench";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { type ColorValue, Pressable, View } from "react-native";
-import Animated, { Easing, ReduceMotion, withTiming } from "react-native-reanimated";
+import Animated, { Easing, ReduceMotion, withSpring, withTiming } from "react-native-reanimated";
 import { BloubAvatarPreview } from "@/features/agents/components/bloub-avatar";
 import type { MobileAgent } from "@/features/workspace/model/workspace-types";
 import { haptics } from "@/shared/lib/haptics";
@@ -22,9 +22,9 @@ import { usePressScale } from "@/shared/lib/press-scale";
 import { useText } from "@/shared/lib/text";
 import {
   type ActivityKind,
-  THINKING_PHRASE_MS,
   thinkingPhraseKey,
   thinkingPhrasesAvailable,
+  turnPhraseDraw,
 } from "../model/activity-label";
 import { ThinkingTextGradient } from "./thinking-text-gradient";
 
@@ -51,10 +51,16 @@ const MOVE_OUT = {
   easing: EASE_OUT,
   reduceMotion: ReduceMotion.System,
 };
-// As on desktop. The label can be a whole commentary step, which must not make the row tall.
-const LABEL_LINES = 2;
-/** How far a new label rises into place. */
-const LABEL_RISE = 6;
+// The bot app's activity line: one line beside a 28 pt face, 12 pt apart. A long commentary step ends with an
+// ellipsis rather than making the row tall; a tap opens every thought of the turn.
+const LABEL_LINES = 1;
+const MARK_SIZE = 28;
+/** How far a new label rises into place, and how long it takes, as in the bot app. */
+const LABEL_RISE = 5;
+const LABEL_IN = { duration: 350, easing: EASE_OUT, reduceMotion: ReduceMotion.System };
+const LABEL_FADE_IN = { ...LABEL_IN, reduceMotion: ReduceMotion.Never };
+// The face grows in from nothing on a soft spring (the bot app's mark arrival: 340 ms, damping ratio 0.82).
+const MARK_ARRIVAL = { duration: 340, dampingRatio: 0.82, reduceMotion: ReduceMotion.System };
 const KIND_ICONS: Readonly<Record<ActivityKind, LucideIcon>> = {
   web: Globe,
   browser: MousePointerClick,
@@ -88,9 +94,17 @@ function labelEntering() {
   return {
     initialValues: { opacity: 0, transform: [{ translateY: LABEL_RISE }] },
     animations: {
-      opacity: withTiming(1, FADE_IN),
-      transform: [{ translateY: withTiming(0, MOVE_IN) }],
+      opacity: withTiming(1, LABEL_FADE_IN),
+      transform: [{ translateY: withTiming(0, LABEL_IN) }],
     },
+  };
+}
+
+function markEntering() {
+  "worklet";
+  return {
+    initialValues: { transform: [{ scale: 0 }] },
+    animations: { transform: [{ scale: withSpring(1, MARK_ARRIVAL) }] },
   };
 }
 
@@ -121,8 +135,10 @@ export interface ChatActivitySpec {
   shimmer: boolean;
   /** The kind of step the agent runs, which picks the icon beside the label. */
   kind: ActivityKind | null;
-  /** The label only says that the agent thinks, so friendly phrases may take turns in its place. */
+  /** The label only says that the agent thinks, so the turn's phrase may take its place. */
   thinking: boolean;
+  /** The turn the row shows, which keeps one phrase for the whole turn. Null before the host names it. */
+  turn?: string | null;
   /** Opens every thought of the turn. Absent when the chat cannot show them. */
   onPress?: () => void;
 }
@@ -139,10 +155,11 @@ export function ChatActivityRow({
   const { t, locale } = useText();
   const { onPress } = spec;
   const press = usePressScale(Boolean(onPress));
-  const phraseKey = useThinkingPhrase(spec.key, spec.thinking && thinkingPhrasesAvailable(locale));
-  const phrase = phraseKey ? t(phraseKey) : null;
+  // One phrase per turn, as in the bot app; a step the agent runs names itself instead.
+  const draw = useTurnDraw(spec.key, spec.turn ?? null);
+  const phrase = spec.thinking && thinkingPhrasesAvailable(locale) ? t(thinkingPhraseKey(draw)) : null;
   const label = phrase ?? spec.label;
-  // The label rises in when what it names changes: a new phrase, or a step of another kind. A
+  // The label rises in when what it names changes: the turn's phrase, or a step of another kind. A
   // commentary line that grows keeps its place.
   const labelKey = phrase ?? spec.kind ?? (spec.thinking ? "thinking" : "detail");
   const firstLabelKey = useRef(labelKey);
@@ -164,18 +181,20 @@ export function ChatActivityRow({
           onPress();
         }}
       >
-        <Animated.View className="flex-row items-center gap-2 px-1 py-2" style={press.style}>
+        <Animated.View className="flex-row items-center gap-3 px-1 py-2" style={press.style}>
           {spec.agent ? (
-            <BloubAvatarPreview
-              agentId={spec.agent.id}
-              serverId={spec.agent.serverId}
-              hue={spec.agent.avatarHue}
-              seed={spec.agent.avatarSeed}
-              size={36}
-              disconnected={!spec.online}
-              mood={spec.mood}
-              animateIdle={spec.animateAvatar}
-            />
+            <Animated.View entering={markEntering}>
+              <BloubAvatarPreview
+                agentId={spec.agent.id}
+                serverId={spec.agent.serverId}
+                hue={spec.agent.avatarHue}
+                seed={spec.agent.avatarSeed}
+                size={MARK_SIZE}
+                disconnected={!spec.online}
+                mood={spec.mood}
+                animateIdle={spec.animateAvatar}
+              />
+            </Animated.View>
           ) : null}
           <Animated.View
             key={labelKey}
@@ -201,17 +220,16 @@ export function ChatActivityRow({
 }
 
 /**
- * The catalog key of the friendly phrase to show while the agent only thinks, changing every few
- * seconds, or null when the row shows its own label. Each agent starts at its own phrase.
+ * The phrase draw of the turn the row shows. The host may name the turn after the row appears, so the draw made
+ * before then stays; only another turn draws again.
  */
-function useThinkingPhrase(key: string, enabled: boolean): ReturnType<typeof thinkingPhraseKey> | null {
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    setStep(0);
-    if (!enabled) return;
-    const timer = setInterval(() => setStep((current) => current + 1), THINKING_PHRASE_MS);
-    return () => clearInterval(timer);
-  }, [enabled]);
-  if (!enabled) return null;
-  return thinkingPhraseKey(key, step);
+function useTurnDraw(key: string, turn: string | null): number {
+  const current = useRef<{ turn: string | null; draw: number } | null>(null);
+  const kept = current.current;
+  if (!kept || (kept.turn !== null && turn !== null && kept.turn !== turn)) {
+    current.current = { turn, draw: turnPhraseDraw(`${key}:${turn ?? ""}`) };
+  } else if (kept.turn === null && turn !== null) {
+    current.current = { turn, draw: kept.draw };
+  }
+  return current.current?.draw ?? 0;
 }

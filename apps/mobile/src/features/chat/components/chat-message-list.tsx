@@ -685,9 +685,9 @@ const MessageRow = memo(function MessageRow({
             corners={bubbleCorners(message.author === "user" ? "end" : "start", joinsAbove, joinsBelow)}
             className={
               message.author === "user"
-                ? `self-end px-[14px] py-[9px] ${userBubbleStyle || memberColor ? "" : "bg-bubble-user"} max-w-full`
+                ? `self-end px-[14px] py-[8px] ${userBubbleStyle || memberColor ? "" : "bg-bubble-user"} max-w-full`
                 : // An agent's reply in a pale wash of its color; neutral when the color is unknown.
-                  `max-w-full self-start ${waiting ? "" : `${replyFill ? "" : "bg-control/60"} px-[14px] py-[9px]`}`
+                  `max-w-full self-start ${waiting ? "" : `${replyFill ? "" : "bg-control/60"} px-[14px] py-[8px]`}`
             }
             style={[
               { borderCurve: "circular", overflow: "hidden" },
@@ -1446,7 +1446,9 @@ export const ChatMessageList = memo(function ChatMessageList({
       label: activityLabel,
       accessibilityLabel: `${activityAgent?.name ?? target.name}: ${activityLabel}`,
       kind: activityKind,
-      thinking: onlyThinking && animateMessages,
+      // The turn's phrase is words, not motion, so it shows with animations off too.
+      thinking: onlyThinking,
+      turn: turnId ?? null,
       agent: activityAgent,
       mood: animateMessages ? agentActivityMood(activity) : "idle",
       online,

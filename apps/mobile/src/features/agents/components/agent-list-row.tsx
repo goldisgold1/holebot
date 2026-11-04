@@ -38,7 +38,8 @@ import { typeScale } from "@/shared/lib/type-scale";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 /**
- * HoleA.I: the desktop sidebar's row, a messenger row. The face, the name and one muted line; the role and the
+ * HoleA.I: the bot app's chat row, a messenger row: a 48 pt face, 14 pt from the text and 16 pt above and below,
+ * a 17 pt name and one 15 pt muted line, 0.7 opacity while pressed. The role and the
  * time stay in the chat (and in the accessibility label).
  */
 const AVATAR_SIZE = 48;
@@ -171,29 +172,29 @@ export const AgentListRow = memo(function AgentListRow({ agent, leftInset = 20, 
     >
       {({ pressed }) => (
         <View
-          className="min-h-[68px] w-full flex-row items-center gap-3 py-1"
+          className="min-h-[80px] w-full flex-row items-center gap-[14px] py-4"
           style={{
             backgroundColor: background,
-            opacity: pressed ? 0.58 : 1,
+            opacity: pressed ? 0.7 : 1,
             paddingLeft: leftInset,
             paddingRight: rightInset,
           }}
         >
           {avatar}
           <AgentRowTextReveal active={isUnpinTarget}>
-            <View className="min-w-0 flex-1 gap-0.5">
+            <View className="min-w-0 flex-1">
               <View className="flex-row items-center gap-2">
-                {isUnread ? <View className="size-2 rounded-full bg-accent" /> : null}
+                {isUnread ? <View className="size-2.5 rounded-full bg-accent" /> : null}
                 <Typography.Paragraph
                   className="font-medium min-w-0 flex-1"
                   numberOfLines={1}
-                  style={typeScale.rowTitle}
+                  style={typeScale.chatRowTitle}
                 >
                   {agent.name}
                 </Typography.Paragraph>
                 {waitReason ? <AgentWaitChip reason={waitReason} /> : null}
               </View>
-              <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.preview}>
+              <Typography.Paragraph className="text-muted" numberOfLines={1} style={typeScale.chatRowPreview}>
                 {previewLine}
               </Typography.Paragraph>
             </View>

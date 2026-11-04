@@ -20,6 +20,12 @@ export const typeScale = {
   barTitleAndroid: { fontSize: 22, lineHeight: 28 },
   /** A row name: a chat, a server, a drawer row. */
   rowTitle: { fontSize: 16, lineHeight: 21 },
+  /**
+   * The name and the preview of a chat in the home list, as in the bot app (17 and 15 pt on 24 pt lines): the two
+   * lines are as tall as the 48 pt face beside them.
+   */
+  chatRowTitle: { fontSize: 17, lineHeight: 24 },
+  chatRowPreview: { fontSize: 15, lineHeight: 24 },
   /** A task or search row name, a little smaller than a chat name. */
   body: { fontSize: 15.5, lineHeight: 20 },
   /** One line under a row name, such as a chat preview, and a drawer row value. */

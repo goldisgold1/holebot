@@ -27,6 +27,16 @@ export const haptics = {
         }[style],
       ),
     ),
+  /**
+   * The key tap of a button that sends or stops, as the bot app gives it: Android's virtual-key tick, and a light
+   * knock on iOS, which has no such pattern.
+   */
+  press: (): Promise<void> =>
+    play(() =>
+      isAndroid
+        ? ExpoHaptics.performAndroidHapticsAsync(ExpoHaptics.AndroidHaptics.Virtual_Key)
+        : ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light),
+    ),
   /** The tick when a long press opens a menu, so the user knows the finger can lift. */
   longPress: (): Promise<void> =>
     play(() =>
