@@ -1,5 +1,6 @@
 import { BotEngine, type BotFrame, DEMI_VIEWBOX, POSES, RAYON } from "@norbert_bodziony/bloub";
 import { type AvatarFaceMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
+import type { BotMarkHandle, BotMarkState } from "@openbot/brand/bot-mark-engine";
 import type { AvatarHue } from "@openbot/contracts/ipc";
 import { prefersReducedMotion } from "@openbot/ui/utils";
 import type { JSX } from "@solidjs/web";
@@ -7,7 +8,6 @@ import { createEffect, createMemo, createSignal, createUniqueId, For, onCleanup,
 import { type AvatarMotion, avatarHeadColor, type SupportedAvatarSilhouetteId } from "../../bloub-avatar";
 import type { AgentProfile } from "../../data";
 import { BotMarkFace } from "./BotMarkFace";
-import type { BotMarkHandle, BotMarkState } from "./bot-mark/engine";
 import { joinMarkStage, pokeMark } from "./bot-mark/mark-stage";
 
 // Cap avatar animation at 30fps: uncapped bloub clocks measured 30% renderer / 24% GPU

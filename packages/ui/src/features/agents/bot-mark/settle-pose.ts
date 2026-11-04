@@ -1,5 +1,5 @@
+import type { BotMarkState } from "@openbot/brand/bot-mark-engine";
 import { createSignal } from "solid-js";
-import type { BotMarkState } from "./engine";
 
 /**
  * HoleA.I (Vincent, Nov 3 2026): as in the bot app, a turn that ends shows its outcome on the face for a

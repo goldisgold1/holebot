@@ -1,4 +1,4 @@
-import type { BotMarkState } from "./engine";
+import type { BotMarkState } from "@openbot/brand/bot-mark-engine";
 
 /**
  * HoleA.I (Vincent, Nov 3 2026): what the agent is doing, as the bot app reads it: each step of a turn has a

@@ -8,6 +8,7 @@
     "./bloub-avatar": "./src/bloub-avatar.ts",
     "./bloub-avatar-motion": "./src/bloub-avatar-motion.ts",
     "./cute-face": "./src/cute-face.ts",
+    "./bot-mark-engine": "./src/bot-mark-engine.js",
     "./logo.css": "./src/logo.css",
     "./tokens.css": "./src/tokens.css",
     "./tokens-light.css": "./src/tokens-light.css",

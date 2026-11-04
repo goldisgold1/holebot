@@ -1,7 +1,9 @@
+import { avatarHeadColor } from "@openbot/brand/bloub-avatar";
 import { type AvatarMood, avatarMoodIsBusy, avatarMoodPresentation } from "@openbot/brand/bloub-avatar-motion";
 import { type BotEye, botClosedEyes, botToken } from "@openbot/brand/cute-face";
 import type { AvatarHue } from "@openbot/contracts/ipc";
 import { memo, useEffect, useMemo } from "react";
+import { Platform, View } from "react-native";
 import Animated, {
   cancelAnimation,
   convertToRGBA,
@@ -41,6 +43,7 @@ import { agentActivityMood } from "@/features/workspace/model/agent-activity";
 import { showsOnline } from "@/features/workspace/model/server-status";
 import { useReducedMotion } from "@/shared/lib/motion";
 import { AgentPhoto, type AgentPhotoProps } from "./agent-photo";
+import { BotMarkFace } from "./bot-mark-face";
 
 interface BloubAvatarProps extends AgentPhotoProps {
   agentId: string;
@@ -126,14 +129,10 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
   disconnected = false,
   mood = "idle",
   animateIdle = true,
-  animatedColor,
 }: Omit<BloubAvatarProps, "agentId"> & AvatarPreviewOptions) {
   const appearance = useConnectionAppearance(disconnected);
   const appearanceStyle = useAnimatedStyle(() => ({ opacity: appearance.get().opacity }));
   const color = getBloubAvatarColor(seed, hue);
-  const bodyColor = useDerivedValue(() =>
-    saturateColor(animatedColor ? animatedColor.get() : color, appearance.get().saturation),
-  );
   const reducedMotion = useReducedMotion();
   const busy = !disconnected && avatarMoodIsBusy(mood);
   const animate = (animateIdle || busy) && !disconnected && !reducedMotion;
@@ -165,9 +164,20 @@ const AnimatedAvatarPreview = memo(function AnimatedAvatarPreview({
 
   // The opacity stays on the native view: react-native-svg on Android crashes with
   // "Underflow in restore" when a filtered <G> has an opacity other than 1.
+  // HoleA.I (Vincent, Nov 4 2026): the desktop's face (the bot app's engine). On the web the engine plays
+  // its own motion; in the native app its still frame rides the mood's sway above.
   return (
-    <Animated.View pointerEvents="none" style={[{ width: size, height: size }, appearanceStyle, bodyStyle]}>
-      <CuteFaceSvg seed={seed} mood={mood} size={size} color={bodyColor} eyes={face.eyes} />
+    <Animated.View
+      pointerEvents="none"
+      style={[{ width: size, height: size }, appearanceStyle, Platform.OS === "web" ? null : bodyStyle]}
+    >
+      <BotMarkFace
+        seed={seed}
+        color={disconnected ? thumbnailColor(color, true) : avatarHeadColor(seed, hue)}
+        mood={disconnected ? "idle" : mood}
+        size={size}
+        playing={animate}
+      />
     </Animated.View>
   );
 });
@@ -372,12 +382,14 @@ export const AvatarThumbnail = memo(function AvatarThumbnail({
   /** Eases the body to a new colour, for a picker where the colour changes in place. */
   animateColor?: boolean;
 }) {
-  const color = thumbnailColor(getBloubAvatarColor(seed, hue), disconnected);
+  const color = thumbnailColor(avatarHeadColor(seed, hue), disconnected);
   const opacity = disconnected ? DISCONNECTED_APPEARANCE.opacity : 1;
   return animateColor ? (
     <AnimatedThumbnailFace seed={seed} size={size} color={color} opacity={opacity} />
   ) : (
-    <CuteFaceSvg seed={seed} mood="idle" size={size} color={color} opacity={opacity} />
+    <View style={{ opacity }}>
+      <BotMarkFace seed={seed} color={color} mood="idle" size={size} playing={false} />
+    </View>
   );
 });
 

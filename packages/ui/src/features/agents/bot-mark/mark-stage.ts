@@ -1,4 +1,4 @@
-import type { BotMarkPoke } from "./engine";
+import type { BotMarkPoke } from "@openbot/brand/bot-mark-engine";
 
 /**
  * HoleA.I (from Vincent's bot app): the shared stage of the bot marks on screen. A poke or a hover on one

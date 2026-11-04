@@ -1,6 +1,6 @@
 import type { AvatarFaceMood } from "@openbot/brand/bloub-avatar-motion";
+import { BOT_MARK_SHAPES, type BotMarkHandle, type BotMarkState, mountBotMark } from "@openbot/brand/bot-mark-engine";
 import { createEffect, createSignal, onSettled } from "solid-js";
-import { BOT_MARK_SHAPES, type BotMarkHandle, type BotMarkState, mountBotMark } from "./bot-mark/engine";
 import { settlePose } from "./bot-mark/settle-pose";
 
 /**

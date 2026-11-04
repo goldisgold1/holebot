@@ -38,7 +38,7 @@
       "!!.worktrees",
       "!!.agents",
       "!src/renderer/src/vendor",
-      "!packages/ui/src/features/agents/bot-mark/engine.js",
+      "!packages/brand/src/bot-mark-engine.js",
       "!marketplace/production-catalog/bundles"
     ]
   },
