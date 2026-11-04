@@ -271,6 +271,14 @@ function fitItem(item: OutfitItem, face: FaceFit): OutfitItem {
 }
 
 /** The outfit goes on only while the agent works (Vincent): an idle agent is just its round body. */
+const attribute = (value: string | number) => String(value).replace(/[&"<>]/gu, (char) => `&#${char.charCodeAt(0)};`);
+
+/** One outfit item as SVG markup, at the place fitted to the face. */
+function outfitImageMarkup(item: OutfitItem, place: OutfitItem): string {
+  const motion = item.motion ? ` data-motion="${attribute(item.motion)}"` : "";
+  return `<image class="ao-item"${motion} href="${attribute(item.src)}" x="${attribute(place.x)}" y="${attribute(place.y)}" width="${attribute(place.w)}" height="${attribute(place.h)}" preserveAspectRatio="xMidYMid meet"></image>`;
+}
+
 export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
   const [face, setFace] = createSignal<FaceFit | undefined>();
   let frame = 0;
@@ -299,16 +307,9 @@ export function AgentOutfit(props: { role: AgentWorkRole; working: boolean }) {
         >
           <For each={outfit().items}>
             {(item) => (
-              <image
-                class="ao-item"
-                data-motion={item.motion}
-                href={item.src}
-                x={placed(item).x}
-                y={placed(item).y}
-                width={placed(item).w}
-                height={placed(item).h}
-                preserveAspectRatio="xMidYMid meet"
-              />
+              // The web build's template check reads a JSX <image> as HTML <img> and fails, so the
+              // image goes in as SVG markup. Every value is the app's own outfit data.
+              <g innerHTML={outfitImageMarkup(item, placed(item))} />
             )}
           </For>
           <Show when={outfit().waves}>
